@@ -52,7 +52,8 @@ export default function Scene(props: SceneProps) {
     >
       <fog attach="fog" args={[BG, 28, 75]} />
       <World {...props} />
-      {!props.lowPower && (
+      {/* Bloom is for the blueprint exterior only; the lit interior stays natural and never blows out. */}
+      {!props.lowPower && props.phase !== "inside" && (
         <EffectComposer multisampling={0}>
           <Bloom mipmapBlur intensity={0.85} luminanceThreshold={0.62} luminanceSmoothing={0.2} />
         </EffectComposer>
@@ -149,6 +150,7 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onDoor, onEntered,
 
   return (
     <>
+      <group visible={phase !== "inside"}>
       <Grid
         position={[0, -0.01, 0]}
         args={[120, 120]}
@@ -165,6 +167,7 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onDoor, onEntered,
       <Building />
       <DataTree growth={growth} lowPower={lowPower} />
       <Door open={door} interactive={phase === "outside"} onEnter={onDoor} />
+      </group>
       <Interior
         visible={phase === "inside" || phase === "entering" || phase === "exiting"}
         interactive={phase === "inside"}

@@ -19,7 +19,8 @@ const PARTICLES = Array.from({ length: 36 }, (_, i) => {
   const a = (i * 137.508 * Math.PI) / 180;
   const r = 34 + ((i * 53) % 40);
   return {
-    x: `${Math.cos(a) * r}vmax`, y: `${Math.sin(a) * r * 0.7}vmax`,
+    // Rounded so server and browser render identical strings.
+    x: `${(Math.cos(a) * r).toFixed(2)}vmax`, y: `${(Math.sin(a) * r * 0.7).toFixed(2)}vmax`,
     tx: `${-150 + ((i * 29) % 300)}px`, ty: `${-18 + ((i * 7) % 36)}px`,
     delay: `${(i % 12) * 0.07}s`, d: `${1.5 + (i % 5) * 0.12}s`,
   };
@@ -36,13 +37,19 @@ function useMedia(query: string, server = false) {
   return useSyncExternalStore(subscribeMedia(query), () => window.matchMedia(query).matches, () => server);
 }
 
+// Probed once: getSnapshot runs on every render, and each probe would otherwise create (and leak) a WebGL context.
+let webglSupport: boolean | undefined;
 function hasWebGL() {
+  if (webglSupport !== undefined) return webglSupport;
   try {
     const canvas = document.createElement("canvas");
-    return Boolean(canvas.getContext("webgl2") ?? canvas.getContext("webgl"));
+    const gl = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
+    webglSupport = Boolean(gl);
+    gl?.getExtension("WEBGL_lose_context")?.loseContext();
   } catch {
-    return false;
+    webglSupport = false;
   }
+  return webglSupport;
 }
 const subscribeNever = () => () => {};
 
