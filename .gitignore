@@ -2,6 +2,7 @@ node_modules/
 .next/
 .tooling/
 .vercel/
+.netlify/
 .playwright/
 playwright-report/
 test-results/

@@ -1,7 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const port = Number(process.env.PLAYWRIGHT_PORT ?? 3100);
-const baseURL = `http://127.0.0.1:${port}`;
+const previewURL = process.env.PLAYWRIGHT_PREVIEW_URL ? new URL(process.env.PLAYWRIGHT_PREVIEW_URL) : null;
+if (previewURL && (previewURL.protocol !== "https:" || previewURL.username || previewURL.password)) {
+  throw new Error("PLAYWRIGHT_PREVIEW_URL must be an HTTPS URL without credentials.");
+}
+const baseURL = previewURL?.origin ?? `http://127.0.0.1:${port}`;
 const installedChannel = process.env.PLAYWRIGHT_BROWSER_CHANNEL;
 
 export default defineConfig({
@@ -15,7 +19,7 @@ export default defineConfig({
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },
     { name: "mobile", use: { ...devices["Pixel 7"] } },
   ],
-  webServer: {
+  webServer: previewURL ? undefined : {
     command: `node ./node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port ${port}`,
     url: baseURL,
     env: { APP_ORIGIN: baseURL, NEXT_PUBLIC_SUPABASE_URL: "", NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "" },
