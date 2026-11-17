@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { signOut } from "@/app/account-actions";
-import { changeMaterialState } from "@/app/inventari/actions";
+import { signOut } from "@/app/(legacy)/account-actions";
+import { changeMaterialState } from "@/app/(legacy)/inventari/actions";
 import { Empty, Field, Notice, PageIntro } from "@/components/ui";
 import { inventoryColumns } from "@/lib/catalogue";
 import { categoryName, priceLabel, type InventoryEntry } from "@/lib/data";

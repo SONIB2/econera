@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createMaterial, editMaterial } from "@/app/inventari/actions";
+import { createMaterial, editMaterial } from "@/app/(legacy)/inventari/actions";
 import { Field } from "@/components/ui";
 import { conditions, currencies, fulfillment, regions, units, type InventoryEntry } from "@/lib/data";
 import { MaterialClassification } from "@/components/material-classification";

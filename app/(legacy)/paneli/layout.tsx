@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Boxes, Building2, ClipboardList, LayoutGrid, Settings, Store } from "lucide-react";
-import { signOut } from "@/app/account-actions";
+import { signOut } from "@/app/(legacy)/account-actions";
 import { Brand } from "@/components/brand";
 import { requireAccount } from "@/lib/supabase";
 import "./workspace.css";

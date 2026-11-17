@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BrandArtwork } from "@/components/brand";
-import { requestRecovery, signIn, signUp, updatePassword } from "@/app/account-actions";
+import { requestRecovery, signIn, signUp, updatePassword } from "@/app/(legacy)/account-actions";
 import { Field, Notice, PageIntro } from "@/components/ui";
 import { supabaseSettings } from "@/lib/supabase";
 

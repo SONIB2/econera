@@ -6,7 +6,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   if (!origin || isPreview()) return [];
   const languages = { sq: new URL("/sq/platform", origin).href, en: new URL("/en/platform", origin).href };
   return [
-    ...["/", "/materiale", "/aksesueshmeria"].map((route) => ({ url: new URL(route, origin).href })),
+    ...["/", "/treg", "/ai", "/certifikata", "/furnitore", "/rreth-nesh", "/kontakt", "/privatesia", "/materiale", "/aksesueshmeria"].map((route) => ({ url: new URL(route, origin).href })),
     ...Object.values(languages).map((url) => ({ url, alternates: { languages } })),
   ];
 }

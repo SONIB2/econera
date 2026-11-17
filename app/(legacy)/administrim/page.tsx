@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { reviewMaterial } from "@/app/administrim/actions";
+import { reviewMaterial } from "@/app/(legacy)/administrim/actions";
 import { Empty, Notice, PageIntro } from "@/components/ui";
 import { inventoryColumns } from "@/lib/catalogue";
 import { categoryName, conditions, fulfillment, priceLabel, type InventoryEntry } from "@/lib/data";
