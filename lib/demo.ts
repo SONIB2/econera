@@ -1,4 +1,5 @@
 import co2 from "@/data/demo/co2.json";
+import { formatNumber } from "./format";
 import stockData from "@/data/demo/stock.json";
 import supplierData from "@/data/demo/suppliers.json";
 
@@ -57,5 +58,5 @@ export function stockFor(categories: string[], from = TIRANA, limit = 4) {
     .slice(0, limit);
 }
 
-export const formatLek = (value: number) => `${new Intl.NumberFormat("sq-AL", { maximumFractionDigits: 0 }).format(value)} L`;
-export const formatQty = (value: number) => new Intl.NumberFormat("sq-AL", { maximumFractionDigits: 1 }).format(value);
+export const formatLek = (value: number) => `${formatNumber(value, 0)} L`;
+export const formatQty = (value: number) => formatNumber(value, 1);
