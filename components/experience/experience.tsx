@@ -5,8 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { ctaNav, siteNav } from "@/components/site/nav";
+import { HOTSPOTS, hotspotById } from "@/lib/interior";
 import { createAmbient } from "./ambient";
 import { LogoDraw } from "./logo-draw";
+import { MaterialPanel } from "./material-panel";
 import type { Phase } from "./scene";
 import { StaticFallback } from "./static-fallback";
 import "./experience.css";
@@ -55,6 +57,9 @@ export function Experience() {
   const [progress, setProgress] = useState(0);
   const [sound, setSound] = useState(false);
   const [menu, setMenu] = useState(false);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [xray, setXray] = useState(false);
   const fadeRef = useRef<HTMLDivElement>(null);
   const ambient = useMemo(() => (typeof window === "undefined" ? null : createAmbient()), []);
 
@@ -75,6 +80,7 @@ export function Experience() {
     return () => cancelAnimationFrame(frame);
   }, [phase, sceneReady, reducedMotion]);
 
+  const exit = useCallback(() => { setSelected(null); setHovered(null); setXray(false); setPhase("exiting"); }, []);
   useEffect(() => { ambient?.set(sound); }, [ambient, sound]);
   useEffect(() => () => ambient?.dispose(), [ambient]);
 
@@ -82,11 +88,12 @@ export function Experience() {
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       if (menu) setMenu(false);
-      else if (phase === "inside") setPhase("exiting");
+      else if (selected) setSelected(null);
+      else if (phase === "inside") exit();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [menu, phase]);
+  }, [menu, phase, selected, exit]);
 
   const onReady = useCallback(() => setSceneReady(true), []);
   const onIntroDone = useCallback(() => setPhase("outside"), []);
@@ -105,7 +112,7 @@ export function Experience() {
       <h1 className="sr-only">ECONERA: Ndërtimi takon inteligjencën. Tregu online ku materialet e tepërta të ndërtimit gjejnë projektin e radhës, me AI.</h1>
 
       <div className="absolute inset-0">
-        <Scene phase={phase} lowPower={lowPower} reducedMotion={reducedMotion} onReady={onReady} onIntroDone={onIntroDone} onDoor={onDoor} onEntered={onEntered} onExited={onExited} onFade={onFade} />
+        <Scene phase={phase} lowPower={lowPower} reducedMotion={reducedMotion} onReady={onReady} onIntroDone={onIntroDone} onDoor={onDoor} onEntered={onEntered} onExited={onExited} onFade={onFade} hovered={hovered} selected={selected} xray={xray} onHover={setHovered} onSelect={setSelected} />
       </div>
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(5,9,7,0.75))]" />
       <div ref={fadeRef} aria-hidden="true" className="pointer-events-none absolute inset-0 bg-bg opacity-0" />
@@ -143,14 +150,34 @@ export function Experience() {
             </div>
           </div>
         )}
-        {phase === "inside" && (
-          <div className="xp-fade-in card max-w-md bg-bg/80 p-6 text-center backdrop-blur-md">
-            <p className="eyebrow">Brenda ndërtesës</p>
-            <p className="mt-3 text-ink-2">Muri, dritaret, parketi, pllakat dhe instalimet bëhen të klikueshme në Fazën D, me panel materialesh dhe Pamjen X-Ray.</p>
-            <button type="button" className="btn-ghost mt-5" onClick={() => setPhase("exiting")}>← Kthehu jashtë</button>
+        {phase === "inside" && !selected && (
+          <div className="xp-fade-in flex w-full max-w-4xl flex-col items-center gap-3">
+            <p className="text-sm text-ink-2" aria-live="polite">{hovered ? hotspotById(hovered)?.label : "Kliko një element për të parë materialet"}</p>
+            <ul className="flex max-w-full gap-2 overflow-x-auto pb-1 [scrollbar-width:none]" aria-label="Elementet e dhomës">
+              {HOTSPOTS.map((h) => (
+                <li key={h.id} className="shrink-0">
+                  <button type="button" onClick={() => setSelected(h.id)} onMouseEnter={() => setHovered(h.id)} onMouseLeave={() => setHovered(null)} onFocus={() => setHovered(h.id)} onBlur={() => setHovered(null)}
+                    className={`rounded-full border px-3.5 py-2 text-xs font-medium backdrop-blur transition ${hovered === h.id ? "border-lime bg-lime/10 text-lime" : "border-line bg-bg/70 text-ink hover:border-lime"}`}>{h.label}</button>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </div>
+
+      {phase === "inside" && (
+        <div className="xp-fade-in absolute top-20 left-5 z-20 flex flex-col gap-2 sm:left-8">
+          <button type="button" className="btn-ghost bg-bg/70 backdrop-blur" onClick={exit}>← Kthehu jashtë</button>
+          <button type="button" aria-pressed={xray} onClick={() => setXray((v) => !v)} className={`btn ${xray ? "bg-lime text-bg" : "border border-line bg-bg/70 text-ink backdrop-blur hover:border-lime hover:text-lime"}`}>
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.4"><rect x="2" y="2" width="12" height="12" rx="1.5" /><path d="M2 6h12M2 10h12M6 2v12M10 2v12" /></svg>
+            Pamje X-Ray
+          </button>
+        </div>
+      )}
+
+      {phase === "inside" && selected && hotspotById(selected) && (
+        <MaterialPanel key={selected} hotspot={hotspotById(selected)!} xray={xray} onXray={setXray} onClose={() => setSelected(null)} />
+      )}
 
       {/* Loader */}
       <div className={`absolute inset-0 z-40 grid place-items-center bg-[#050806] transition-opacity duration-1000 ${loaderVisible ? "opacity-100" : "pointer-events-none opacity-0"}`} aria-hidden={!loaderVisible}>

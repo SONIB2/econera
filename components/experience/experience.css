@@ -28,3 +28,7 @@
   .logo-draw .ld-accent { opacity: 1; animation: none }
   .ld-particle { display: none }
 }
+
+.xp-panel { animation: xp-panel-in .55s var(--ease-out-soft) both }
+@keyframes xp-panel-in { from { opacity: 0; transform: translateY(24px) } to { opacity: 1; transform: none } }
+@media (min-width: 768px) { @keyframes xp-panel-in { from { opacity: 0; transform: translateX(32px) } to { opacity: 1; transform: none } } }

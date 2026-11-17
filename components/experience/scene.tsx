@@ -6,7 +6,9 @@ import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import gsap from "gsap";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import { hotspotById, INSIDE_VIEW } from "@/lib/interior";
 import { BUILDING, buildingSegments, dataTree, volumes } from "./geometry";
+import { Interior } from "./interior";
 
 export type Phase = "loading" | "ready" | "intro" | "outside" | "entering" | "inside" | "exiting";
 
@@ -20,6 +22,11 @@ export type SceneProps = {
   onEntered: () => void;
   onExited: () => void;
   onFade: (value: number) => void;
+  hovered: string | null;
+  selected: string | null;
+  xray: boolean;
+  onHover: (id: string | null) => void;
+  onSelect: (id: string) => void;
 };
 
 const LIME = new THREE.Color("#c8f169");
@@ -27,10 +34,12 @@ const INK = new THREE.Color("#eef3ee");
 const BG = "#0b110e";
 
 /** Orbit parameters are tweened by GSAP; the frame loop turns them into a camera pose. */
-type Rig = { angle: number; radius: number; height: number; targetY: number; targetZ: number; inside: number; fit: number };
-const ORBIT: Omit<Rig, "angle"> = { radius: 27, height: 9.5, targetY: 7.2, targetZ: 0, inside: 0, fit: 1 };
-const CRANE: Omit<Rig, "angle"> = { radius: 40, height: 30, targetY: 7, targetZ: 0, inside: 0, fit: 1 };
-const FRONT_DOOR: Omit<Rig, "angle"> = { radius: 9, height: 1.75, targetY: 1.35, targetZ: BUILDING.depth / 2, inside: 0, fit: 0.35 };
+/** Outside, radius/height orbit the target. Inside (inside = 1), camX/height/radius are the absolute camera position. */
+type Rig = { angle: number; radius: number; height: number; targetY: number; targetZ: number; inside: number; fit: number; camX: number; targetX: number; fov: number };
+const ORBIT: Omit<Rig, "angle"> = { radius: 27, height: 9.5, targetY: 7.2, targetZ: 0, inside: 0, fit: 1, camX: 0, targetX: 0, fov: 42 };
+const CRANE: Omit<Rig, "angle"> = { radius: 40, height: 30, targetY: 7, targetZ: 0, inside: 0, fit: 1, camX: 0, targetX: 0, fov: 42 };
+const FRONT_DOOR: Omit<Rig, "angle"> = { radius: 9, height: 1.75, targetY: 1.35, targetZ: BUILDING.depth / 2, inside: 0, fit: 0.35, camX: 0, targetX: 0, fov: 42 };
+const pose = (position: readonly number[], target: readonly number[]) => ({ camX: position[0], height: position[1], radius: position[2], targetX: target[0], targetY: target[1], targetZ: target[2] });
 
 export default function Scene(props: SceneProps) {
   return (
@@ -52,7 +61,7 @@ export default function Scene(props: SceneProps) {
   );
 }
 
-function World({ phase, lowPower, reducedMotion, onIntroDone, onDoor, onEntered, onExited, onFade }: SceneProps) {
+function World({ phase, lowPower, reducedMotion, onIntroDone, onDoor, onEntered, onExited, onFade, hovered, selected, xray, onHover, onSelect }: SceneProps) {
   const rig = useRef<Rig>({ angle: 0.55, ...CRANE });
   const door = useRef({ open: 0 });
   const growth = useRef({ value: 0 });
@@ -78,7 +87,8 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onDoor, onEntered,
         .to(door.current, { open: 1, duration: 0.9 * fast, ease: "power2.inOut" }, "-=0.25")
         .to(r, { radius: 5.2, height: 1.6, targetZ: -3, fit: 0, duration: 1.3 * fast, ease: "power2.in" }, "-=0.2")
         .to({ v: 0 }, { v: 1, duration: 0.45 * fast, onUpdate() { onFade(this.targets()[0].v); } }, "-=0.45")
-        .set(r, { inside: 1, radius: 2.2, height: 1.55, targetY: 1.3, targetZ: -3 })
+        .set(r, { inside: 1, ...pose(INSIDE_VIEW.position, INSIDE_VIEW.target), fov: 42 })
+        .to(r, { fov: 58, duration: 1.2 * fast, ease: "power2.out" }, "<")
         .to({ v: 1 }, { v: 0, duration: 0.6 * fast, onUpdate() { onFade(this.targets()[0].v); } });
     }
     if (phase === "exiting") {
@@ -92,6 +102,15 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onDoor, onEntered,
     if (phase === "outside" && growth.current.value < 1) growth.current.value = 1;
     return () => { tl?.kill(); };
   }, [phase, reducedMotion, onIntroDone, onEntered, onExited, onFade]);
+
+  // Focus the camera on the selected element, or return to the room overview.
+  useEffect(() => {
+    if (phase !== "inside") return;
+    const hotspot = hotspotById(selected);
+    const view = hotspot ? hotspot.focus : INSIDE_VIEW;
+    const tween = gsap.to(rig.current, { ...pose(view.position, view.target), duration: reducedMotion ? 0.001 : 1.3, ease: "power3.inOut" });
+    return () => { tween.kill(); };
+  }, [phase, selected, reducedMotion]);
 
   useEffect(() => {
     const move = (event: PointerEvent) => pointer.current.set((event.clientX / window.innerWidth) * 2 - 1, (event.clientY / window.innerHeight) * 2 - 1);
@@ -110,9 +129,12 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onDoor, onEntered,
     const px = reducedMotion ? 0 : pointer.current.x * parallax;
     const py = reducedMotion ? 0 : pointer.current.y * parallax * 0.5;
 
+    const cam = state.camera as THREE.PerspectiveCamera;
+    if (Math.abs(cam.fov - r.fov) > 0.01) { cam.fov = r.fov; cam.updateProjectionMatrix(); }
     if (r.inside) {
-      camera.position.set(px * 0.6, r.height - py * 0.3, r.radius);
-      target.set(px * 1.5, r.targetY - py, r.targetZ);
+      const look = selected ? 0.25 : 1;
+      camera.position.set(r.camX + px * 0.3 * look, r.height - py * 0.2 * look, r.radius);
+      target.set(r.targetX + px * 1.2 * look, r.targetY - py * 0.8 * look, r.targetZ);
     } else {
       // Portrait screens need a wider orbit so the whole tower and the tree stay in frame.
       const aspect = size.width / Math.max(1, size.height);
@@ -143,7 +165,15 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onDoor, onEntered,
       <Building />
       <DataTree growth={growth} lowPower={lowPower} />
       <Door open={door} interactive={phase === "outside"} onEnter={onDoor} />
-      <Interior visible={phase === "inside" || phase === "entering" || phase === "exiting"} />
+      <Interior
+        visible={phase === "inside" || phase === "entering" || phase === "exiting"}
+        interactive={phase === "inside"}
+        hovered={hovered}
+        selected={selected}
+        xray={xray}
+        onHover={onHover}
+        onSelect={onSelect}
+      />
     </>
   );
 }
@@ -269,22 +299,6 @@ function Door({ open, interactive, onEnter }: { open: React.RefObject<{ open: nu
         <planeGeometry args={[width + 0.4, 0.04]} />
         <meshBasicMaterial ref={threshold} color={glow} toneMapped={false} transparent opacity={0} />
       </mesh>
-    </group>
-  );
-}
-
-/** Placeholder interior shell. Faza D replaces it with the interactive room and hotspots. */
-function Interior({ visible }: { visible: boolean }) {
-  const floor = useMemo(() => {
-    const s: number[] = [];
-    const w = BUILDING.width / 2 - 0.1, d = BUILDING.depth / 2 - 0.1;
-    for (let x = -w; x <= w + 0.001; x += 0.6) s.push(x, 0.01, -d, x, 0.01, d);
-    for (let z = -d; z <= d + 0.001; z += 0.6) s.push(-w, 0.01, z, w, 0.01, z);
-    return Float32Array.from(s);
-  }, []);
-  return (
-    <group visible={visible}>
-      <Lines positions={floor} color={LIME} opacity={0.18} />
     </group>
   );
 }

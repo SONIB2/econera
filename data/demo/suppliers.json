@@ -1,0 +1,14 @@
+[
+  { "id": "s01", "name": "Depoja Kamëz Stok", "type": "depo", "city": "Tiranë", "area": "Kamëz", "lat": 41.3817, "lng": 19.7602 },
+  { "id": "s02", "name": "Furnitori Vora Ndërtim", "type": "furnitor", "city": "Tiranë", "area": "Vorë", "lat": 41.3905, "lng": 19.6553 },
+  { "id": "s03", "name": "Kantieri Ali Dem 7", "type": "kantier", "city": "Tiranë", "area": "Ali Dem", "lat": 41.3204, "lng": 19.8381 },
+  { "id": "s04", "name": "Magazina Lapraka Materiale", "type": "depo", "city": "Tiranë", "area": "Laprakë", "lat": 41.3421, "lng": 19.7905 },
+  { "id": "s05", "name": "Tepricat Sauk", "type": "kantier", "city": "Tiranë", "area": "Sauk", "lat": 41.2987, "lng": 19.8452 },
+  { "id": "s06", "name": "Porti Stok Durrës", "type": "depo", "city": "Durrës", "area": "Porti", "lat": 41.3133, "lng": 19.4486 },
+  { "id": "s07", "name": "Plazhi Ndërtim Durrës", "type": "kantier", "city": "Durrës", "area": "Plazh", "lat": 41.2989, "lng": 19.4831 },
+  { "id": "s08", "name": "Rozafa Materiale Shkodër", "type": "furnitor", "city": "Shkodër", "area": "Qendër", "lat": 42.0683, "lng": 19.5126 },
+  { "id": "s09", "name": "Bunë Depo Shkodër", "type": "depo", "city": "Shkodër", "area": "Bahçallëk", "lat": 42.0515, "lng": 19.4981 },
+  { "id": "s10", "name": "Lungomare Stok Vlorë", "type": "kantier", "city": "Vlorë", "area": "Lungomare", "lat": 40.4486, "lng": 19.4892 },
+  { "id": "s11", "name": "Narta Ndërtim Vlorë", "type": "furnitor", "city": "Vlorë", "area": "Skelë", "lat": 40.4621, "lng": 19.4793 },
+  { "id": "s12", "name": "Kombinat Teprica", "type": "depo", "city": "Tiranë", "area": "Kombinat", "lat": 41.3233, "lng": 19.7801 }
+]
