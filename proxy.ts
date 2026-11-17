@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { applicationOrigin, supabaseSettings } from "@/lib/deployment";
 
 export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname === "/") {
@@ -13,11 +14,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next({ request: { headers } });
   }
   let response = NextResponse.next({ request });
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) return response;
-  const db = createServerClient(url, key, {
-    cookieOptions: { httpOnly: true, secure: process.env.APP_ORIGIN?.startsWith("https://") ?? false, sameSite: "lax" },
+  const settings = supabaseSettings();
+  if (!settings) return response;
+  const db = createServerClient(settings.url, settings.key, {
+    cookieOptions: { httpOnly: true, secure: applicationOrigin()?.startsWith("https://") ?? false, sameSite: "lax" },
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll: (updates) => {

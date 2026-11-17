@@ -3,7 +3,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { Brand } from "@/components/brand";
 import { showcaseCopy } from "@/lib/showcase";
-import { applicationOrigin } from "@/lib/supabase";
+import { applicationOrigin, isPreview } from "@/lib/deployment";
 import "@fontsource/dm-sans/latin-400.css";
 import "@fontsource/dm-sans/latin-600.css";
 import "@fontsource/dm-sans/latin-700.css";
@@ -22,7 +22,7 @@ export function generateMetadata(): Metadata {
     icons: { icon: "/brand/icon.svg", apple: "/brand/icon-180.png" },
     openGraph: { siteName: "ECONERA", title, images: [{ url: "/brand/social.png", width: 1200, height: 630, alt: "ECONERA Construction Intelligence" }] },
     twitter: { card: "summary_large_image", images: ["/brand/social.png"] },
-    robots: process.env.ECONERA_PREVIEW === "1" ? { index: false, follow: false } : undefined,
+    robots: isPreview() ? { index: false, follow: false } : undefined,
   };
 }
 

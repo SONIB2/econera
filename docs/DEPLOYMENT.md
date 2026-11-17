@@ -10,6 +10,8 @@
 
 Set environment variables before building and align build and run settings. The pilot address appears as a direct mail link when configured.
 
+Vercel previews use `VERCEL_URL` over HTTPS when `APP_ORIGIN` is unset. For authenticated previews, choose a stable preview origin, use it for `APP_ORIGIN` and allow the exact callback URLs in the separate Supabase project. Vercel Preview deployments suppress search indexing by default. The app rejects local HTTP database URLs and privileged database keys on hosted builds. Keep local environment files out of uploads. The CLI ignore file excludes them.
+
 ## Hosting configuration
 
 The included `vercel.json` selects the native Next.js runtime. Vercel Hobby is for personal, non-commercial use. Confirm the appropriate plan and approve any charges before creating an ECONERA launch project. Use a user-owned repository, hosting project and Supabase organization. [Vercel plans](https://vercel.com/pricing) · [Supabase plans](https://supabase.com/pricing)
@@ -17,6 +19,8 @@ The included `vercel.json` selects the native Next.js runtime. Vercel Hobby is f
 For a read-only grant preview, set `ECONERA_PREVIEW=1` and omit both Supabase settings. The tour uses isolated code fixtures. An authenticated preview needs its own Supabase project and synthetic accounts. Apply hosting access protection if the preview is private. An indexing directive gives crawlers instructions and leaves the URL accessible.
 
 After repository and hosting access are configured, run `npx vercel` from the project folder to create a preview. Check the resulting HTTPS URL using a signed-out browser and separate staging test accounts if authentication is enabled. Run `npx vercel --prod` only for the approved production project after reviewing the preview and release gates.
+
+Before connecting Git, review which branch Vercel will treat as production and whether importing the repository triggers an initial deployment. The GitHub default branch is `sonib2`. Keep the first evaluator deployment in Preview and review its protection setting before sharing a URL.
 
 For a provisioned cloud database, run the following in the approved project context with the project's migration credentials. Use the migration files and avoid importing local snapshots.
 

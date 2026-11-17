@@ -1,0 +1,10 @@
+.env
+.env.*
+.git
+.next
+.tooling
+node_modules
+test-results
+playwright-report
+supabase/.temp
+supabase/.branches

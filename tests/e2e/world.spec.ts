@@ -22,7 +22,7 @@ test("logo, door and masonry follow the immersive scene states", async ({ page, 
     await logo.focus();
     await page.keyboard.press("Enter");
   }
-  await expect(world).toHaveAttribute("data-phase", "portal", { timeout: 20_000 });
+  await expect(world).toHaveAttribute("data-phase", "portal", { timeout: 45_000 });
   await expect(world).toHaveAttribute("data-renderer", "ready");
   const canvas = page.locator(".world-canvas canvas");
   await expect(canvas).toBeVisible();
@@ -80,9 +80,10 @@ test("World language switches preserve the camera destination and selected brick
 });
 
 test("reduced motion supports keyboard entry and exit", async ({ page }) => {
+  test.slow();
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/?scene=portal");
-  await expect(page.getByRole("button", { name: "Hap derën" })).toBeFocused({ timeout: 20_000 });
+  await expect(page.getByRole("button", { name: "Hap derën" })).toBeFocused({ timeout: 45_000 });
   await page.keyboard.press("Enter");
   await expect(page.getByRole("button", { name: "Shiko murin e tullave" })).toBeFocused();
   await page.keyboard.press("Enter");

@@ -2,12 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-
-export function supabaseSettings() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  return url && key ? { url, key } : null;
-}
+import { applicationOrigin, supabaseSettings } from "./deployment";
+export { applicationOrigin, supabaseSettings } from "./deployment";
 
 export function publicDatabase() {
   const settings = supabaseSettings();
@@ -43,13 +39,4 @@ export async function requireAccount() {
   const { data: { user } } = await db.auth.getUser();
   if (!user?.email_confirmed_at) redirect("/hyr");
   return { db, user };
-}
-
-export function applicationOrigin() {
-  const origin = process.env.APP_ORIGIN ?? (process.env.NODE_ENV === "development" ? "http://127.0.0.1:3000" : "");
-  try {
-    return new URL(origin).origin;
-  } catch {
-    return null;
-  }
 }
