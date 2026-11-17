@@ -1,0 +1,36 @@
+project_id = "econera"
+
+# Avoid the default port block, which Windows/WSL can reserve.
+[api]
+port = 55321
+
+[db]
+port = 55322
+shadow_port = 55320
+
+[studio]
+port = 55323
+
+[local_smtp]
+port = 55324
+
+[auth]
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = ["http://127.0.0.1:3000/autentikim", "http://127.0.0.1:3000/autentikim?flow=recovery"]
+minimum_password_length = 12
+
+[auth.email]
+enabled = true
+enable_confirmations = true
+secure_password_change = true
+
+[auth.email.template.confirmation]
+subject = "ECONERA | Konfirmo emailin / Confirm your email"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "ECONERA | Ndrysho fjalëkalimin / Reset your password"
+content_path = "./supabase/templates/recovery.html"
+
+[db.seed]
+enabled = false

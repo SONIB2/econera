@@ -1,0 +1,36 @@
+.workspace-layout { display: grid; grid-template-columns: minmax(13rem, 15rem) minmax(0, 1fr); align-items: start; gap: clamp(1rem, 4vw, 4rem); padding-block: clamp(1.5rem, 5vw, 4.5rem) }
+.workspace-sidebar { border-right: 1px solid var(--border); padding-right: 1rem; display: grid; gap: 1rem }
+.workspace-sidebar nav { display: grid; gap: .2rem }
+.workspace-sidebar nav a { display: flex; gap: .55rem; align-items: center; padding: .55rem .6rem; min-height: 44px; color: var(--primary); border-radius: 4px }
+.workspace-sidebar nav a:hover { background: #ebe6da }
+.workspace-sidebar nav svg { flex: none }
+.workspace-body { min-width: 0; display: grid; gap: 1.25rem; align-content: start }
+.workspace-body .page-intro { margin: 0 }
+.workspace-body h1 { font: 700 clamp(1.65rem, 3.8vw, 2.65rem)/1.15 var(--body); letter-spacing: -.04em; overflow-wrap: anywhere }
+.workspace-stack { display: grid; align-content: start; gap: 1rem; min-width: 0 }
+.workspace-heading { display: flex; justify-content: space-between; align-items: end; gap: 1rem; flex-wrap: wrap }
+.workspace-heading h2, .workspace-stack h2 { font: 700 clamp(1.2rem, 2vw, 1.55rem)/1.2 var(--body); letter-spacing: -.025em }
+.workspace-metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .7rem; margin: 0 }
+.workspace-metrics > div { background: #183c35; color: #fffdf6; padding: 1.2rem; border-radius: 4px }
+.workspace-metrics dt { font-size: .89rem; line-height: 1.35; font-weight: 700 }
+.workspace-metrics dd { margin: .45rem 0 0; font-family: var(--display); font-size: clamp(2.1rem, 3vw, 3.6rem); line-height: 1 }
+.workspace-metrics .metric-unavailable { font: 400 .85rem/1.45 var(--body) }
+.workspace-org-list { padding: 0; margin: 0; list-style: none }
+.workspace-org-list li { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem; padding: .7rem 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere }
+.workspace-org-list li:last-child { border-bottom: 0 }
+.workspace-org-list a { color: var(--primary); font-weight: 700; min-height: 30px }
+.workspace-forms { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1rem; align-items: start }
+.workspace-form { display: grid; gap: .8rem; min-width: 0 }
+.workspace-note { margin: 0; color: var(--muted); font-size: .9rem }
+.workspace-code { overflow-wrap: anywhere; font-family: var(--body) }
+@media (max-width: 740px) {
+  .workspace-layout { grid-template-columns: minmax(0, 1fr) }
+  .workspace-sidebar { border: 0; border-bottom: 1px solid var(--border); padding: 0 0 1rem }
+  .workspace-sidebar nav { grid-template-columns: repeat(2,minmax(0,1fr)) }
+}
+@media (max-width: 540px) {
+  .workspace-forms { grid-template-columns: minmax(0,1fr) }
+  .workspace-metrics { grid-template-columns: minmax(0,1fr) }
+  .workspace-metrics > div { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .9rem 1rem }
+  .workspace-metrics dd { margin: 0 }
+}

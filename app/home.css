@@ -1,0 +1,67 @@
+/* The homepage uses cinematic artwork. Commerce pages retain their shared layout. */
+.home-cinema { background: #101a16; color: #f7f0e4 }
+.home-cinema a:focus-visible, body:has(.home-cinema) .site-header a:focus-visible { outline-color: #f6bd79 }
+.home-cinema .zone-panel a:focus-visible { outline-color: var(--focus) }
+
+body:has(.home-cinema) .site-header {
+  position: absolute;
+  z-index: 3;
+  inset: 0 0 auto;
+  background: linear-gradient(#080e0ce0, #080e0c12);
+  border-color: #eee3d34d;
+}
+body:has(.home-cinema) .site-header .brand,
+body:has(.home-cinema) .site-header nav a { color: #fff8ec }
+body:has(.home-cinema) .site-header .button { color: #fff8ec; background: #16251dd9; border-color: #c9c1b1 }
+body:has(.home-cinema) .site-header .button:hover { background: #2b4437 }
+
+.home-atlas { padding-block: clamp(3rem, 7vw, 7rem); background: #101a16 }
+.home-atlas .explorer-layout {
+  grid-template-columns: minmax(0,1.65fr) minmax(0,1fr);
+  grid-template-areas: "intro intro" "stage panel";
+  align-items: start;
+  gap: 0 clamp(1rem, 3vw, 2.7rem);
+}
+.home-atlas .explorer-intro { grid-area: intro; padding: 0 0 clamp(1.3rem, 3vw, 2.5rem); gap: .65rem; display: grid }
+.home-atlas .explorer-intro h2 { color: #fff4e4; font-size: clamp(3rem, 6vw, 6.2rem) }
+.home-atlas .explorer-intro > p:not(.eyebrow) { max-width: 50ch; color: #e4dacf }
+.home-atlas .explorer-stage { grid-area: stage; min-width: 0 }
+.home-atlas .scene { border-radius: 3px 3px 0 0; box-shadow: none }
+.scene-spotlight {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse at var(--zone-x) var(--zone-y), transparent 5%, #1a160c18 26%, #18130b70 70%);
+  transition: opacity .3s;
+}
+.scene[data-engaged=true] .scene-spotlight { opacity: 1 }
+.home-atlas .hotspot { transition: box-shadow .2s }
+.home-atlas .hotspot[aria-pressed=true] { background: #f4c393; color: #19261b; box-shadow: 0 0 0 4px #fff0d385 }
+.home-atlas .zone-nav { border-radius: 0 0 3px 3px; margin-top: 0; border-color: #566458 }
+.home-atlas .zone-nav button { background: #18261e; border-color: #566458; transition: none }
+.home-atlas .zone-nav button[aria-pressed=true] { background: #f4c393; color: #19261b }
+.home-atlas .zone-nav button:hover:not([aria-pressed=true]) { background: #35473b }
+.home-atlas .zone-panel {
+  grid-area: panel;
+  grid-template-columns: minmax(0,1fr);
+  background: #eae3d6;
+  padding: clamp(1.1rem, 2.6vw, 2.5rem);
+  gap: 1.45rem;
+  transform: none;
+  border-radius: 3px;
+  align-self: stretch;
+}
+.home-atlas .zone-story h2 { font-size: clamp(2.25rem, 3.5vw, 3.85rem) }
+.home-atlas .zone-stock { border-left: 0; border-top: 1px solid #b9ad98; padding: 1.25rem 0 0 }
+.home-atlas .zone-stock > .actions { gap: .65rem 1rem }
+.home-cinema .discovery-strip { padding-block: clamp(1.5rem, 3.5vw, 3rem) }
+.home-cinema .discovery-strip h2 { color: #fff4e4 }
+.home-cinema .discovery-strip .hero-search { background: #fff8eb }
+
+@media (max-width: 900px) {
+  .home-atlas .explorer-layout { grid-template-columns: minmax(0,1fr); grid-template-areas: "intro" "stage" "panel" }
+  .home-atlas .zone-panel { border-radius: 0 0 3px 3px }
+  .home-atlas .zone-nav { border-radius: 0 }
+}

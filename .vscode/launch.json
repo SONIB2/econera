@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "ECONERA Next.js",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev",
+      "windows": {
+        "command": "if (Test-Path '.tooling/node/package/bin/node.exe') { & '.tooling/node/package/bin/node.exe' './node_modules/next/dist/bin/next' dev --hostname 127.0.0.1 } else { npm run dev }"
+      },
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
