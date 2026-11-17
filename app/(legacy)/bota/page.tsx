@@ -5,7 +5,7 @@ import type { SearchParams } from "@/lib/data";
 import { findMasonryType, masonryTypes, type MasonryType } from "@/lib/masonry";
 import { readPavilion } from "@/lib/pavilion";
 import { worldDestination } from "@/lib/world-state";
-import "./world.css";
+import "../world.css";
 
 export const dynamic = "force-dynamic";
 

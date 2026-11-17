@@ -22,8 +22,7 @@ export default async function LegacyLayout({ children }: Readonly<{ children: Re
           <Brand {...brand} />
           <nav aria-label={copy.nav}>
             {/* Full document navigation refreshes the root language across locale boundaries. */}
-            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-            <a href="/?scene=house" hrefLang="sq">{locale === "en" ? `${copy.world} (SQ)` : "Eksploruesi"}</a>
+            <a href="/bota?scene=house" hrefLang="sq">{locale === "en" ? `${copy.world} (SQ)` : "Eksploruesi"}</a>
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             <a href="/materiale" hrefLang="sq">{locale === "en" ? `${copy.catalogue} (SQ)` : copy.catalogue}</a>
             <a href={`/${locale}/platform`}>{copy.demo}</a>

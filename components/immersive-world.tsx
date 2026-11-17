@@ -21,7 +21,7 @@ function worldPath(destination: Destination, locale: Locale, kind?: MasonryType)
   if (destination !== "intro") query.set("scene", destination);
   if (destination === "masonry" && kind) query.set("tipi", kind);
   if (locale === "en") query.set("lang", locale);
-  return query.size ? `/?${query}` : "/";
+  return query.size ? `/bota?${query}` : "/bota";
 }
 
 function record(destination: Destination, locale: Locale) {

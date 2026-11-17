@@ -16,7 +16,7 @@ export default async function MasonryPage({ searchParams }: { searchParams: Prom
 
   return <div className="masonry-page">
     <header className="container studio-head">
-      <Link href="/?scene=masonry" className="text-link"><ArrowLeft size={16} aria-hidden /> Eksploruesi</Link>
+      <Link href="/bota?scene=masonry" className="text-link"><ArrowLeft size={16} aria-hidden /> Eksploruesi</Link>
       <h1>Studio e muraturës</h1>
       <p>Zgjidh tipin dhe krahaso materialet e publikuara.</p>
     </header>

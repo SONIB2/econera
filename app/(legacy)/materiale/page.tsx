@@ -20,7 +20,7 @@ export default async function Catalogue({ searchParams }: { searchParams: Promis
   return <div className="container section">
     <div className="catalogue-head">
       <PageIntro eyebrow="ZBULIMI I MATERIALEVE" title={filters.category ? categoryName(filters.category) : "Katalogu"}>Gjej materiale ndërtimi nga qarqet e Shqipërisë dhe krahaso sasinë e disponueshme, gjendjen dhe çmimin për njësi.</PageIntro>
-      <Link className="text-link" href="/?scene=house">Kthehu te Eksploruesi <ArrowRight size={16} aria-hidden /></Link>
+      <Link className="text-link" href="/bota?scene=house">Kthehu te Eksploruesi <ArrowRight size={16} aria-hidden /></Link>
     </div>
     {filters.category === "guri" && <div className="studio-catalogue-link"><Link href="/materiale/murature" className="button">Hap studion e muraturës <ArrowRight size={16} aria-hidden /></Link></div>}
     <form action="/materiale" className="panel form-grid filters" aria-label="Filtro katalogun">

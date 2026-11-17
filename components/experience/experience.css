@@ -1,0 +1,30 @@
+/* Loader: wireframe logo trace */
+.logo-draw .ld-word path, .logo-draw .ld-word ellipse { stroke: var(--color-ink); stroke-dasharray: 1; stroke-dashoffset: 1; animation: ld-trace 1.6s var(--ease-out-soft) .15s forwards; }
+.logo-draw .ld-mark { fill: transparent; stroke: var(--color-lime); stroke-width: 1; stroke-dasharray: 1; stroke-dashoffset: 1; animation: ld-trace 1.1s var(--ease-out-soft) forwards, ld-fill .8s ease 1.3s forwards; }
+.logo-draw .ld-mark-a { --fill: #e9f3ee }
+.logo-draw .ld-mark-b { --fill: #c8f169 }
+.logo-draw .ld-mark-c { --fill: #80a81c }
+.logo-draw .ld-accent { fill: var(--color-lime); opacity: 0; animation: ld-pop .5s ease 1.6s forwards; }
+@keyframes ld-trace { to { stroke-dashoffset: 0 } }
+@keyframes ld-fill { to { fill: var(--fill); stroke-opacity: 0 } }
+@keyframes ld-pop { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: none } }
+
+/* Loader: particles converging on the mark */
+.ld-particle { position: absolute; left: 50%; top: 50%; width: 3px; height: 3px; border-radius: 9999px; background: var(--color-lime); box-shadow: 0 0 10px 2px rgba(200, 241, 105, .55); opacity: 0;
+  animation: ld-converge var(--d, 1.8s) cubic-bezier(.5, 0, .2, 1) var(--delay, 0s) forwards; }
+@keyframes ld-converge {
+  0% { opacity: 0; transform: translate(var(--x), var(--y)) scale(1.4) }
+  20% { opacity: 1 }
+  85% { opacity: .9 }
+  100% { opacity: 0; transform: translate(var(--tx, 0), var(--ty, 0)) scale(.4) }
+}
+
+.xp-fade-in { animation: xp-fade .7s var(--ease-out-soft) both }
+@keyframes xp-fade { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-draw .ld-word path, .logo-draw .ld-word ellipse, .logo-draw .ld-mark { stroke-dashoffset: 0; animation: none }
+  .logo-draw .ld-mark { fill: var(--fill); stroke-opacity: 0 }
+  .logo-draw .ld-accent { opacity: 1; animation: none }
+  .ld-particle { display: none }
+}

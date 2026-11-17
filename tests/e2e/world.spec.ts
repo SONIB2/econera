@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("logo, door and masonry follow the immersive scene states", async ({ page, isMobile }, testInfo) => {
   test.slow();
-  await page.goto("/");
+  await page.goto("/bota");
   const world = page.locator(".immersive-world");
   await expect(world).toHaveAttribute("data-phase", "intro");
   const history = await world.evaluateHandle((element) => {
@@ -64,7 +64,7 @@ test("World language switches preserve the camera destination and selected brick
   test.slow();
   await page.emulateMedia({ reducedMotion: "reduce" });
   const world = page.locator(".immersive-world");
-  await page.goto("/?scene=masonry&tipi=block");
+  await page.goto("/bota?scene=masonry&tipi=block");
   await expect(world).toHaveAttribute("data-renderer", "ready", { timeout: 20_000 });
   await expect(page.getByRole("radio", { name: "Bllok murature betoni" })).toBeChecked();
   await page.getByRole("link", { name: "English", exact: true }).click();
@@ -82,7 +82,7 @@ test("World language switches preserve the camera destination and selected brick
 test("reduced motion supports keyboard entry and exit", async ({ page }) => {
   test.slow();
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/?scene=portal");
+  await page.goto("/bota?scene=portal");
   await expect(page.getByRole("button", { name: "Hap derën" })).toBeFocused({ timeout: 45_000 });
   await page.keyboard.press("Enter");
   await expect(page.getByRole("button", { name: "Shiko murin e tullave" })).toBeFocused();
@@ -101,7 +101,7 @@ test("direct entry offers the catalogue without WebGL", async ({ page }) => {
       return getContext.apply(this, args);
     } as typeof getContext;
   });
-  await page.goto("/?scene=house");
+  await page.goto("/bota?scene=house");
   await expect(page.getByRole("heading", { name: "Pamja 3D nuk u ngarkua." })).toBeVisible();
   await page.getByRole("link", { name: "Hap katalogun" }).click();
   await expect(page).toHaveURL(/\/materiale$/);

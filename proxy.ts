@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { applicationOrigin, supabaseSettings } from "@/lib/deployment";
 
 export async function proxy(request: NextRequest) {
-  if (request.nextUrl.pathname === "/") {
+  if (request.nextUrl.pathname === "/" || request.nextUrl.pathname === "/bota") {
     const headers = new Headers(request.headers);
     headers.set("x-econera-locale", request.nextUrl.searchParams.get("lang") === "en" ? "en" : "sq");
     return NextResponse.next({ request: { headers } });
@@ -32,4 +32,4 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
-export const config = { matcher: ["/", "/en/platform", "/sq/platform", "/paneli/:path*", "/inventari/:path*", "/administrim/:path*", "/disponueshmeria", "/materiale/:id/oferte", "/fjalekalimi/:path*", "/hyr", "/regjistrohu"] };
+export const config = { matcher: ["/", "/bota", "/en/platform", "/sq/platform", "/paneli/:path*", "/inventari/:path*", "/administrim/:path*", "/disponueshmeria", "/materiale/:id/oferte", "/fjalekalimi/:path*", "/hyr", "/regjistrohu"] };
