@@ -221,7 +221,7 @@ function Parts({ id, tex, reg }: { id: string; tex: Tex; reg: (m: Lit | null) =>
     case "dyer":
       return (
         <group position={[W - 0.02, 0, 1.6]}>
-          <mesh position={[0, 1.05, 0]}><boxGeometry args={[0.05, 2.1, 0.88]} /><meshStandardMaterial ref={reg} {...tex.door} roughness={0.6} /></mesh>
+          <mesh position={[0, 1.05, 0]}><boxGeometry args={[0.05, 2.1, 0.88]} /><meshStandardMaterial ref={reg} {...tex.door} color="#e0c9a6" roughness={0.6} /></mesh>
           {[[0, 2.14, 0, 0.1, 0.08, 1.0], [0, 1.07, 0.47, 0.1, 2.14, 0.06], [0, 1.07, -0.47, 0.1, 2.14, 0.06]].map(([x, y, z, w, h, d], i) => (
             <mesh key={i} position={[x, y, z]}><boxGeometry args={[w, h, d]} /><meshStandardMaterial ref={reg} color="#ece6dc" roughness={0.5} /></mesh>
           ))}
@@ -264,7 +264,7 @@ function HotspotObject({ hotspot, tex, interactive, active, xray, showLabel, sho
   const outline = useRef<THREE.Group>(null);
 
   useFrame((_, delta) => {
-    animateMaterials(mats.current, xray ? (active ? 0.35 : 0.12) : 1, active && !xray ? 0.05 : 0, delta);
+    animateMaterials(mats.current, xray ? (active ? 0.35 : 0.12) : 1, 0, delta);
     if (outline.current) outline.current.visible = active;
   });
 
