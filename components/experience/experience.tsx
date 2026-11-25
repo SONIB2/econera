@@ -55,6 +55,7 @@ export function Experience() {
   const router = useRouter();
   const reducedMotion = useMedia("(prefers-reduced-motion: reduce)");
   const small = useMedia("(max-width: 767px)");
+  const wide = useMedia("(min-width: 1024px)");
   const webgl = useSyncExternalStore(subscribeNever, hasWebGL, () => true);
   const lowPower = small;
 
@@ -70,6 +71,13 @@ export function Experience() {
   const [hotLevel, setHotLevel] = useState<Level | null>(null);
   const [hotSpot, setHotSpot] = useState<ProductId | null>(null);
   const spotRefs = useRef<Partial<Record<ProductId, HTMLElement | null>>>({});
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  const placeBubble = useCallback((x: number, y: number, visible: boolean) => {
+    const el = bubbleRef.current;
+    if (!el) return;
+    el.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0)`;
+    el.style.opacity = visible ? "1" : "0";
+  }, []);
   const placeSpot = useCallback((id: ProductId, x: number, y: number, visible: boolean) => {
     const el = spotRefs.current[id];
     if (!el) return;
@@ -123,16 +131,27 @@ export function Experience() {
 
   return (
     <section aria-label={t("Hyrja", "Introduction")} className="theme-dark relative h-[100svh] min-h-[560px] overflow-hidden bg-bg text-ink">
-      <div className={`absolute inset-0 ${exterior ? "max-md:bottom-[48%] max-md:top-28 lg:left-[34%]" : ""}`}>
+      <div className={`absolute inset-0 ${exterior ? "max-md:bottom-[48%] max-md:top-28" : ""}`}>
         {phase !== "boot" && <Scene phase={phase} lowPower={lowPower} reducedMotion={reducedMotion} onReady={noop} onIntroDone={onIntroDone} onDoor={onDoor} onEntered={onEntered} onExited={onExited} onFade={onFade} hovered={hovered} selected={selected} xray={xray} onHover={setHovered} onSelect={setSelected}
-          exploded={exploded} paused={paused} zoom={zoom} resetKey={resetKey} highlight={highlight} onHotLevel={setHotLevel} placeSpot={placeSpot} onProduct={onProduct} />}
+          exploded={exploded} paused={paused} zoom={zoom} resetKey={resetKey} highlight={highlight} onHotLevel={setHotLevel} placeSpot={placeSpot} placeBubble={placeBubble} wide={wide} onProduct={onProduct} />}
+        {/* Speech bubble that follows the robot's head (welcome and intro only). */}
+        <div ref={bubbleRef} aria-live="polite" className="pointer-events-none absolute max-sm:hidden top-0 left-0 z-40 opacity-0 transition-opacity duration-500">
+          <div className="xp-bubble ml-14 -mt-36 w-max max-w-[16rem] rounded-2xl rounded-bl-sm border border-[#c8f169]/40 bg-[#04211d]/85 px-4 py-3 text-sm leading-snug text-white shadow-[0_10px_40px_-10px_rgba(200,241,105,0.35)] backdrop-blur-md sm:max-w-xs">
+            {phase === "intro"
+              ? <><span className="block text-[11px] font-semibold text-[#c8f169]">ECONERA</span>{t("Shiko si çdo material gjen vendin e vet.", "Watch every material find its place.")}</>
+              : <><span className="block text-[11px] font-semibold text-[#c8f169]">{t("Përshëndetje, jam ECONERA", "Hi, I'm ECONERA")}</span>{t("Asistenti yt për ndërtimin qarkullues. Ta ndërtoj para syve të tu?", "Your assistant for circular construction. Shall I build it in front of you?")}</>}
+          </div>
+        </div>
         {phase !== "boot" && <ProductSpots refs={spotRefs} visible={phase === "outside"} labels={labels} onSelect={onProduct} onHover={setHotSpot} active={product} hot={hotLevel} />}
       </div>
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_60%_45%,transparent_40%,rgba(3,24,21,0.72))]" />
-      {exterior && <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(3,24,21,0.85)_0%,rgba(3,24,21,0.35)_42%,transparent_62%),linear-gradient(0deg,rgba(3,24,21,0.75),transparent_38%)]" />}
+      {phase === "outside" && <div aria-hidden="true" className="xp-fade-in pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(3,24,21,0.85)_0%,rgba(3,24,21,0.35)_42%,transparent_62%),linear-gradient(0deg,rgba(3,24,21,0.75),transparent_38%)]" />}
       <div ref={fadeRef} aria-hidden="true" className="pointer-events-none absolute inset-0 bg-bg opacity-0" />
 
-      {exterior && (
+      {phase === "intro" && (
+        <div className="xp-fade-in absolute inset-x-0 bottom-28 z-20 flex justify-center sm:bottom-10"><button type="button" onClick={() => setPhase("outside")} className="rounded-full border border-line bg-bg/70 px-5 py-2.5 text-sm text-ink backdrop-blur hover:border-lime">{t("Kalo animacionin", "Skip animation")}</button></div>
+      )}
+      {phase === "outside" && (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-5 pb-32 sm:px-8 sm:pb-14">
           <div className="xp-fade-in mx-auto w-full max-w-7xl">
             <div className="pointer-events-auto max-w-2xl">
@@ -144,9 +163,8 @@ export function Experience() {
               </div>
               <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-ink-2">
                 <Link href="/ai" className="font-medium text-lime underline-offset-4 hover:underline">{t("Zbulo mjetet AI", "Discover AI Tools")} <span aria-hidden>→</span></Link>
-                {phase === "intro"
-                  ? <button type="button" onClick={() => setPhase("outside")} className="underline-offset-4 hover:text-ink hover:underline">{t("Kalo animacionin", "Skip animation")}</button>
-                  : <><button type="button" onClick={onDoor} className="underline-offset-4 hover:text-ink hover:underline">{t("Hyr në interier", "Step inside")}</button><button type="button" onClick={start} className="underline-offset-4 hover:text-ink hover:underline">{t("Rishiko hyrjen", "Replay intro")}</button></>}
+                <button type="button" onClick={onDoor} className="underline-offset-4 hover:text-ink hover:underline">{t("Hyr në interier", "Step inside")}</button>
+                <button type="button" onClick={() => { setProduct(null); setPhase("welcome"); }} className="underline-offset-4 hover:text-ink hover:underline">{t("Rishiko hyrjen", "Replay intro")}</button>
               </div>
             </div>
           </div>
@@ -209,24 +227,27 @@ export function Experience() {
         <MaterialPanel key={selected} hotspot={hotspotById(selected)!} xray={xray} onXray={setXray} onClose={() => setSelected(null)} />
       )}
 
-      {/* Welcome: says what ECONERA is, never blocks the marketplace. */}
-      <div className={`absolute inset-0 z-30 grid place-items-center overflow-hidden transition-opacity duration-700 ${phase === "welcome" || phase === "boot" ? "opacity-100" : "pointer-events-none opacity-0"}`} aria-hidden={phase !== "welcome"} inert={phase !== "welcome"}>
-        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_38%,rgba(12,58,50,0.55),rgba(3,22,19,0.94)_62%)]" />
-        <div aria-hidden className="xp-grid absolute inset-0 opacity-[0.07]" />
-        <div aria-hidden className="xp-glow absolute top-[22%] left-1/2 h-64 w-[38rem] max-w-[90vw] -translate-x-1/2 rounded-full bg-[#c8f169]/10 blur-3xl" />
+      {/* Welcome: the robot greets the visitor in front of the blueprint; the marketplace is always one click away. */}
+      <div className={`pointer-events-none absolute inset-0 z-30 transition-opacity duration-700 ${phase === "welcome" || phase === "boot" ? "opacity-100" : "opacity-0"}`} aria-hidden={phase !== "welcome"} inert={phase !== "welcome"}>
+        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_65%_45%,transparent_25%,rgba(3,22,19,0.85)_75%)] max-lg:bg-[linear-gradient(0deg,rgba(3,22,19,0.95)_35%,transparent_70%)] lg:bg-[linear-gradient(90deg,rgba(3,22,19,0.95)_0%,rgba(3,22,19,0.6)_40%,transparent_65%)]" />
+        <div aria-hidden className="xp-grid absolute inset-0 opacity-[0.05]" />
         {phase === "welcome" && (
-          <div className="relative flex w-full max-w-2xl flex-col items-center px-6 pt-16 text-center">
-            <LogoDraw className="w-full max-w-[19rem]" />
-            <p className="mt-5 text-[11px] font-medium tracking-[0.42em] text-ink-2">CONSTRUCTION INTELLIGENCE</p>
-            <h1 className="display xp-rise mt-10 text-[clamp(2.2rem,5.4vw,4rem)] leading-[1.02] text-ink">{t("E ardhmja ndërtohet ndryshe.", "The future is built differently.")}</h1>
-            <p className="xp-rise mt-4 max-w-md text-base text-ink-2 [animation-delay:.12s] sm:text-lg">{t("Një platformë inteligjente. Mundësi pa fund për ndërtimin qarkullues.", "One intelligent platform. Endless possibilities for circular construction.")}</p>
-            <div className="xp-rise mt-9 flex flex-col items-center gap-4 [animation-delay:.24s]">
-              <button type="button" autoFocus onClick={start} className="btn-primary h-13 px-9 text-base">{t("Eksploro ECONERA", "Explore ECONERA")} <span aria-hidden>→</span></button>
-              <Link href="/treg" onClick={remember} className="text-sm text-ink-2 underline-offset-4 hover:text-ink hover:underline">{t("Kalo hyrjen · Shko te tregu", "Skip intro · Go to Marketplace")}</Link>
+          <div className="pointer-events-auto absolute inset-x-0 bottom-0 px-5 pb-28 sm:px-8 lg:top-0 lg:flex lg:items-center lg:pb-0">
+            <div className="mx-auto w-full max-w-7xl">
+              <div className="max-w-xl">
+                <LogoDraw className="w-full max-w-[15rem] max-sm:hidden" />
+                <p className="mt-4 text-[11px] font-medium tracking-[0.42em] text-ink-2 max-sm:hidden">CONSTRUCTION INTELLIGENCE</p>
+                <h1 className="display mt-6 text-[clamp(2.3rem,5.6vw,4.6rem)] leading-[0.98] text-ink sm:mt-8">{(lang === "en" ? ["The future is", "built differently."] : ["E ardhmja", "ndërtohet ndryshe."]).map((line, i) => <span key={line} className="block overflow-hidden pb-[0.08em]"><span className="xp-line block" style={{ animationDelay: `${0.35 + i * 0.14}s` }}>{line}</span></span>)}</h1>
+                <p className="xp-rise-soft mt-4 max-w-md text-base text-ink-2 sm:text-lg">{t("Një platformë inteligjente. Mundësi pa fund për ndërtimin qarkullues.", "One intelligent platform. Endless possibilities for circular construction.")}</p>
+                <div className="xp-rise-soft mt-7 flex flex-wrap items-center gap-x-5 gap-y-3 [animation-delay:.7s]">
+                  <button type="button" autoFocus onClick={start} className="btn-primary h-13 px-8 text-base">{t("Eksploro ECONERA", "Explore ECONERA")} <span aria-hidden>→</span></button>
+                  <Link href="/treg" onClick={remember} className="text-sm text-ink-2 underline-offset-4 hover:text-ink hover:underline">{t("Kalo hyrjen · Shko te tregu", "Skip intro · Go to Marketplace")}</Link>
+                </div>
+                <ul className="mt-10 hidden flex-wrap gap-x-6 gap-y-2 border-t border-line pt-4 text-[11px] tracking-[0.18em] text-ink-2 sm:flex">
+                  <li>{t("EKONOMI QARKULLUESE", "CIRCULAR ECONOMY")}</li><li>{t("ME AI", "AI POWERED")}</li><li>{t("TREG MATERIALESH", "MATERIALS MARKETPLACE")}</li>
+                </ul>
+              </div>
             </div>
-            <ul className="mt-14 hidden flex-wrap justify-center sm:flex gap-x-6 gap-y-2 border-t border-line pt-5 text-[11px] tracking-[0.18em] text-ink-2">
-              <li>{t("EKONOMI QARKULLUESE", "CIRCULAR ECONOMY")}</li><li>{t("ME AI", "AI POWERED")}</li><li>{t("TREG MATERIALESH", "MATERIALS MARKETPLACE")}</li>
-            </ul>
           </div>
         )}
       </div>

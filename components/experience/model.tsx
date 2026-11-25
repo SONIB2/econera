@@ -150,16 +150,27 @@ export function ArchitecturalModel({ build, explode, scan, levels, highlight, in
   const geos = useMemo(() => ({ box: new THREE.BoxGeometry(1, 1, 1), sphere: new THREE.IcosahedronGeometry(0.5, 1), cyl: new THREE.CylinderGeometry(0.5, 0.5, 1, 12) }), []);
   useEffect(() => () => { Object.values(geos).forEach((g) => g.dispose()); Object.values(mats).forEach((m) => { m.map?.dispose(); m.dispose(); }); }, [geos, mats]);
 
-  useFrame(({ clock }) => {
+  // Each piece flies in from in front of the viewer ("transforms" into place) with its own scatter and spin.
+  const scatter = useMemo(() => list.map((_, i) => {
+    const r = (n: number) => { const x = Math.sin(i * 12.9898 + n * 78.233) * 43758.5453; return x - Math.floor(x); };
+    return { dx: (r(1) - 0.5) * 16, dy: (r(2) - 0.3) * 10, dz: (r(3) - 0.5) * 16, rx: (r(4) - 0.5) * 5, ry: (r(5) - 0.5) * 5, rz: (r(6) - 0.5) * 5, far: 0.55 + r(7) * 0.35 };
+  }), [list]);
+  const toCam = useMemo(() => new THREE.Vector3(), []);
+  useFrame(({ clock, camera }) => {
     const b = build.current?.value ?? 1;
     const e = ease(explode.current?.value ?? 0);
     list.forEach((piece, i) => {
       const mesh = meshes.current[i];
       if (!mesh) return;
-      const k = ease((b - piece.d) / 0.28);
+      const k = ease((b * 1.2 - piece.d) / 0.4);
       mesh.visible = k > 0.001;
-      mesh.position.set(piece.pos[0], piece.pos[1] + (1 - k) * 3.5, piece.pos[2]);
-      mesh.scale.set(piece.size[0], piece.size[1] * (0.4 + 0.6 * k), piece.size[2]);
+      const f = scatter[i], u = 1 - k;
+      if (u > 0.0005) {
+        toCam.set(camera.position.x - piece.pos[0], camera.position.y - piece.pos[1], camera.position.z - piece.pos[2]);
+        mesh.position.set(piece.pos[0] + (toCam.x * f.far + f.dx) * u, piece.pos[1] + (toCam.y * f.far + f.dy) * u, piece.pos[2] + (toCam.z * f.far + f.dz) * u);
+        mesh.rotation.set(f.rx * u, f.ry * u, f.rz * u);
+      } else { mesh.position.set(piece.pos[0], piece.pos[1], piece.pos[2]); mesh.rotation.set(0, 0, 0); }
+      mesh.scale.set(piece.size[0], piece.size[1], piece.size[2]);
     });
     // Exploded floors float gently, each slightly out of phase, so the stack feels alive without moving much.
     const t = clock.elapsedTime;
@@ -229,7 +240,7 @@ function FloorGlow({ level, build, explode, scan, lit }: { level: Level; build: 
 /** Product hotspots, placed on the element that represents each ECONERA product. Positions are local to their level. */
 export type ProductId = "marketplace" | "verify" | "basket" | "renovation" | "smartcut" | "voice" | "sell";
 export const PRODUCT_SPOTS: { id: ProductId; level: Level; pos: [number, number, number]; side: "left" | "right" }[] = [
-  { id: "voice", level: 3, pos: [-0.9, G + F * 3 + 1.3, -0.3], side: "right" },
+  { id: "voice", level: 3, pos: [3.3, G + F * 2 + 2.2, 2.9], side: "right" },
   { id: "smartcut", level: 3, pos: [-3.8, G + F * 2 + 1.4, 0.6], side: "left" },
   { id: "renovation", level: 2, pos: [4.6, G + F + 1.5, 1.6], side: "right" },
   { id: "basket", level: 1, pos: [-4.0, G + 1.5, 1.6], side: "left" },

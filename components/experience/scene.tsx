@@ -9,6 +9,7 @@ import * as THREE from "three";
 import { hotspotById, INSIDE_VIEW } from "@/lib/interior";
 import { BUILDING, buildingSegments, dataTree, volumes } from "./geometry";
 import { Interior } from "./interior";
+import { Robot, type RobotState } from "./robot";
 import { ArchitecturalModel, LEVEL_PRODUCT, PRODUCT_SPOTS, type Level, type ProductId } from "./model";
 
 export type Phase = "boot" | "welcome" | "intro" | "outside" | "entering" | "inside" | "exiting";
@@ -36,6 +37,10 @@ export type SceneProps = {
   highlight: Level | null;
   onHotLevel: (level: Level | null) => void;
   placeSpot: (id: ProductId, x: number, y: number, visible: boolean) => void;
+  /** Screen position of the robot's head (pixels in the canvas), for its speech bubble. */
+  placeBubble: (x: number, y: number, visible: boolean) => void;
+  /** Lay the exterior out on the right half of wide screens (text on the left). */
+  wide: boolean;
   onProduct: (id: ProductId) => void;
 };
 
@@ -45,10 +50,10 @@ const BG = "#062723";
 
 /** Orbit parameters are tweened by GSAP; the frame loop turns them into a camera pose. */
 /** Outside, radius/height orbit the target. Inside (inside = 1), camX/height/radius are the absolute camera position. */
-type Rig = { angle: number; radius: number; height: number; targetY: number; targetZ: number; inside: number; fit: number; camX: number; targetX: number; fov: number };
-const ORBIT: Omit<Rig, "angle"> = { radius: 31, height: 10, targetY: 7.4, targetZ: 0, inside: 0, fit: 1, camX: 0, targetX: 0, fov: 42 };
-const CRANE: Omit<Rig, "angle"> = { radius: 40, height: 30, targetY: 7, targetZ: 0, inside: 0, fit: 1, camX: 0, targetX: 0, fov: 42 };
-const FRONT_DOOR: Omit<Rig, "angle"> = { radius: 9, height: 1.75, targetY: 1.35, targetZ: BUILDING.depth / 2, inside: 0, fit: 0.35, camX: 0, targetX: 0, fov: 42 };
+type Rig = { shift: number; angle: number; radius: number; height: number; targetY: number; targetZ: number; inside: number; fit: number; camX: number; targetX: number; fov: number };
+const ORBIT: Omit<Rig, "angle" | "shift"> = { radius: 31, height: 10, targetY: 7.4, targetZ: 0, inside: 0, fit: 1, camX: 0, targetX: 0, fov: 42 };
+const CRANE: Omit<Rig, "angle" | "shift"> = { radius: 40, height: 30, targetY: 7, targetZ: 0, inside: 0, fit: 1, camX: 0, targetX: 0, fov: 42 };
+const FRONT_DOOR: Omit<Rig, "angle" | "shift"> = { radius: 9, height: 1.75, targetY: 1.35, targetZ: BUILDING.depth / 2, inside: 0, fit: 0.35, camX: 0, targetX: 0, fov: 42 };
 const pose = (position: readonly number[], target: readonly number[]) => ({ camX: position[0], height: position[1], radius: position[2], targetX: target[0], targetY: target[1], targetZ: target[2] });
 
 export default function Scene(props: SceneProps) {
@@ -72,8 +77,9 @@ export default function Scene(props: SceneProps) {
   );
 }
 
-function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExited, onFade, hovered, selected, xray, onHover, onSelect, exploded, paused, zoom, resetKey, highlight, onHotLevel, placeSpot, onProduct }: SceneProps) {
-  const rig = useRef<Rig>({ angle: 0.55, ...CRANE });
+function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExited, onFade, hovered, selected, xray, onHover, onSelect, exploded, paused, zoom, resetKey, highlight, onHotLevel, placeSpot, placeBubble, wide, onProduct }: SceneProps) {
+  const rig = useRef<Rig>({ angle: 0.55, shift: 0, ...CRANE });
+  const robot = useRef<RobotState>({ mode: 0, wave: 0, scale: 1, fx: 0, fy: -0.9, fz: 9 });
   const door = useRef({ open: 0 });
   const growth = useRef({ value: 0 });
   const build = useRef({ value: 0 });
@@ -98,13 +104,20 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
     const r = rig.current;
     const fast = reducedMotion ? 0.001 : 1;
     let tl: gsap.core.Timeline | undefined;
+    if (phase === "welcome") { build.current.value = 0; growth.current.value = 0; gsap.to(r, { ...CRANE, duration: reducedMotion ? 0.001 : 1.2, ease: "power2.inOut" }); Object.assign(robot.current, { mode: 0, scale: 1, fx: wide ? 2.3 : 0, fy: wide ? -0.6 : 2.6, fz: wide ? 9 : 15 }); gsap.fromTo(robot.current, { wave: 1 }, { wave: 0, delay: 2.6 * (reducedMotion ? 0.001 : 1), duration: 0.5 }); }
+    if (phase === "outside") Object.assign(robot.current, { mode: 2, scale: 0.65, wave: 0 });
 
     if (phase === "intro") {
       tl = gsap.timeline({ onComplete: onIntroDone });
       // Blueprint → material assembly → finished building, about four seconds and skippable.
-      tl.to(r, { ...ORBIT, angle: r.angle + 0.9, duration: 3.4 * fast, ease: "power3.inOut" }, 0);
-      tl.to(build.current, { value: 1, duration: 3.6 * fast, ease: "power1.inOut" }, 0.3 * fast);
-      tl.to(growth.current, { value: 1, duration: 1.6 * fast, ease: "power2.out" }, 2.6 * fast);
+      const rb = robot.current;
+      tl.to(rb, { wave: 0, duration: 0.3 * fast }, 0);
+      tl.to(rb, { mode: 1, duration: 1.1 * fast, ease: "power2.inOut" }, 0);
+      tl.to(r, { ...ORBIT, angle: r.angle + 0.9, duration: 3.8 * fast, ease: "power3.inOut" }, 0);
+      tl.to(build.current, { value: 1, duration: 4.4 * fast, ease: "power1.inOut" }, 0.5 * fast);
+      tl.to(growth.current, { value: 1, duration: 1.6 * fast, ease: "power2.out" }, 3.6 * fast);
+      // The robot flies up to the roof terrace and becomes the Voice point of the building.
+      tl.to(rb, { mode: 2, scale: 0.65, duration: 1.4 * fast, ease: "power2.inOut" }, 4.2 * fast);
     }
     if (phase === "entering") {
       const front = Math.round(r.angle / (Math.PI * 2)) * Math.PI * 2;
@@ -128,7 +141,7 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
     if (phase === "outside" || phase === "inside") { build.current.value = 1; growth.current.value = 1; }
     if (phase === "outside" && r.inside === 0 && r.radius > 35) gsap.to(r, { ...ORBIT, duration: 1.2 * fast, ease: "power3.out" });
     return () => { tl?.kill(); };
-  }, [phase, reducedMotion, onIntroDone, onEntered, onExited, onFade]);
+  }, [phase, reducedMotion, onIntroDone, onEntered, onExited, onFade, wide]);
 
   // Focus the camera on the selected element, or return to the room overview.
   useEffect(() => {
@@ -220,7 +233,10 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
     const py = reducedMotion ? 0 : pointer.current.y * parallax * 0.5;
 
     const cam = state.camera as THREE.PerspectiveCamera;
-    if (Math.abs(cam.fov - r.fov) > 0.01) { cam.fov = r.fov; cam.updateProjectionMatrix(); }
+    // On wide screens the exterior sits in the right half (text on the left), by shifting the lens, not the canvas.
+    r.shift += ((wide && (phase === "outside" || phase === "intro") ? (phase === "intro" ? 0.08 : 0.17) : 0) - r.shift) * (1 - Math.exp(-dt * 2.5));
+    const film = -r.shift * 2 * Math.tan(THREE.MathUtils.degToRad(r.fov / 2)) * (size.width / Math.max(1, size.height)) * cam.filmGauge;
+    if (Math.abs(cam.fov - r.fov) > 0.01 || Math.abs(cam.filmOffset - film) > 0.001) { cam.fov = r.fov; cam.filmOffset = film; cam.updateProjectionMatrix(); }
     if (r.inside) {
       const look = selected ? 0.25 : 1;
       camera.position.set(r.camX + px * 0.3 * look, r.height - py * 0.2 * look, r.radius);
@@ -265,6 +281,9 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
         <ScanPlane scan={scan} explode={explodeEff} />
         <ArchitecturalModel build={build} explode={explodeEff} scan={scan} levels={levels} highlight={highlight} interactive={phase === "outside"} still={reducedMotion} onHover={onHotLevel} onPick={(level) => onProduct(LEVEL_PRODUCT[level])} />
         <LevelFollower levels={levels} index={3}><DataTree growth={growth} lowPower={lowPower} /></LevelFollower>
+        <Robot state={robot} pointer={pointer} visible={phase !== "entering" && phase !== "exiting"} levelY={() => levels.current[3]?.position.y ?? 0}
+          onClick={phase === "outside" ? () => onProduct("voice") : undefined}
+          onHead={(x, y, front) => placeBubble((x + 1) / 2 * size.width, (1 - y) / 2 * size.height, front && (phase === "welcome" || phase === "intro"))} />
         <Door open={door} interactive={phase === "outside"} onEnter={() => onProduct("marketplace")} />
       </group>
       <Interior
