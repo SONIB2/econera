@@ -83,7 +83,7 @@ export function SiteHeader({ account, overlay = false }: { account: Account; ove
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden className={`transition ${mega ? "rotate-180" : ""}`}><path d="M2 3.5l3 3 3-3" strokeLinecap="round" /></svg>
             </button>
             {mega && (
-              <div id="mega-ai" className="absolute left-1/2 top-[calc(100%+0.75rem)] z-50 w-[min(980px,calc(100vw-2rem))] -translate-x-1/2 overflow-hidden rounded-[1.75rem] border border-line bg-card text-ink shadow-[0_30px_80px_-30px_rgba(6,34,30,0.45)]">
+              <div id="mega-ai" className="fixed inset-x-0 top-[5.75rem] z-50 mx-auto w-[min(980px,calc(100vw-2rem))] overflow-hidden rounded-[1.75rem] border border-line bg-card text-ink shadow-[0_30px_80px_-30px_rgba(6,34,30,0.45)]">
                 <div className="flex items-end justify-between gap-6 px-6 pt-5 pb-4">
                   <div><p className="text-xs font-medium text-lime-dim">{t("Mjete me inteligjencë artificiale", "AI Tools")}</p><p className="mt-1 text-lg font-semibold tracking-tight">{t("Më shumë se një treg. Një mënyrë më e zgjuar për të ndërtuar.", "More than a marketplace. A smarter way to build.")}</p></div>
                   <Link href="/ai" onClick={() => setMega(false)} className="shrink-0 rounded-full border border-line px-4 py-2 text-sm font-medium hover:border-lime">{t("Të gjitha mjetet", "All tools")}</Link>

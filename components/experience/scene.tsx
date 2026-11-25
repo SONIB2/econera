@@ -83,6 +83,11 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
   const zoomRef = useRef({ value: 1 });
   const sway = useRef({ amount: 0 });
   const stacked = exploded && phase === "outside";
+  // Effective explode value (user setting × scroll), a light scan that sweeps the floors, and arrival state.
+  const explodeEff = useRef({ value: 0 });
+  const scan = useRef({ value: -10 });
+  const arriving = useRef(false);
+  const prevPhase = useRef<Phase>("boot");
   const projected = useRef(new THREE.Vector3());
   const pointer = useRef(new THREE.Vector2());
   const target = useMemo(() => new THREE.Vector3(), []);
@@ -137,8 +142,27 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
   // Exploded view separates the floors; the camera rises and widens to keep all labels in frame.
   useEffect(() => {
     const fast = reducedMotion ? 0.001 : 1;
-    const a = gsap.to(explode.current, { value: stacked ? 1 : 0, duration: 1.6 * fast, ease: "power3.inOut" });
-    const b = phase === "outside" ? gsap.to(rig.current, { targetY: stacked ? 9.4 : ORBIT.targetY, radius: stacked ? 44 : ORBIT.radius, height: stacked ? 12 : ORBIT.height, duration: 1.6 * fast, ease: "power3.inOut" }) : null;
+    const from = prevPhase.current;
+    prevPhase.current = phase;
+    const sweep = () => gsap.fromTo(scan.current, { value: -0.8 }, { value: 4.8, duration: 1.9 * fast, ease: "power1.inOut" });
+    const target = { targetY: stacked ? 9.4 : ORBIT.targetY, radius: stacked ? 44 : ORBIT.radius, height: stacked ? 12 : ORBIT.height };
+    // Arrival for visitors who skip the intro: the building flies in from the distance towards the viewer,
+    // the floors burst apart with a slight overshoot, then a lime scan sweeps up through every floor.
+    if (phase === "outside" && stacked && (from === "boot" || from === "welcome") && !reducedMotion) {
+      const r = rig.current;
+      arriving.current = true;
+      Object.assign(r, { radius: 170, height: 52, targetY: 3, angle: r.angle - 2.2 });
+      explode.current.value = 0;
+      const tl = gsap.timeline({ onComplete: () => { arriving.current = false; } });
+      // Rushes in past its resting distance (towards the viewer), then eases back as the floors burst open.
+      tl.to(r, { radius: 26, height: 9, targetY: 6.5, angle: r.angle + 2.0, duration: 2.1, ease: "power3.out" }, 0)
+        .to(r, { ...target, angle: r.angle + 2.2, duration: 1.5, ease: "power2.inOut" }, 2.0)
+        .to(explode.current, { value: 1, duration: 1.6, ease: "back.out(1.7)" }, 1.9)
+        .add(sweep(), 3.1);
+      return () => { tl.kill(); arriving.current = false; };
+    }
+    const a = gsap.to(explode.current, { value: stacked ? 1 : 0, duration: 1.6 * fast, ease: stacked ? "back.out(1.4)" : "power3.inOut", onComplete: () => { if (stacked && !reducedMotion) sweep(); } });
+    const b = phase === "outside" ? gsap.to(rig.current, { ...target, duration: 1.6 * fast, ease: "power3.inOut" }) : null;
     return () => { a.kill(); b?.kill(); };
   }, [stacked, phase, reducedMotion]);
   useEffect(() => { const t = gsap.to(zoomRef.current, { value: zoom, duration: reducedMotion ? 0.001 : 0.6, ease: "power2.out" }); return () => { t.kill(); }; }, [zoom, reducedMotion]);
@@ -186,7 +210,10 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
     if (phase !== "outside" && orbiting && idle && !reducedMotion) r.angle += dt * 0.025;
     const s = sway.current;
     s.amount += ((phase === "outside" && idle && !reducedMotion ? 1 : 0) - s.amount) * (1 - Math.exp(-dt * 1.5));
-    const angle = r.angle + Math.sin(state.clock.elapsedTime * 0.22) * 0.32 * s.amount;
+    // Scrolling away from the hero folds the floors back together and turns the building.
+    const scroll = phase === "outside" ? Math.min(1, Math.max(0, window.scrollY / Math.max(1, window.innerHeight))) : 0;
+    explodeEff.current.value = explode.current.value * (1 - 0.9 * scroll);
+    const angle = r.angle + Math.sin(state.clock.elapsedTime * 0.22) * 0.32 * s.amount + scroll * 1.1;
 
     const parallax = phase === "inside" ? 0.35 : 0.6;
     const px = reducedMotion ? 0 : pointer.current.x * parallax;
@@ -215,7 +242,7 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
       const v = projected.current;
       for (const spot of PRODUCT_SPOTS) {
         v.set(spot.pos[0], spot.pos[1] + (levels.current[spot.level]?.position.y ?? 0), spot.pos[2]).project(camera);
-        placeSpot(spot.id, (v.x + 1) / 2 * size.width, (1 - v.y) / 2 * size.height, v.z < 1);
+        placeSpot(spot.id, (v.x + 1) / 2 * size.width, (1 - v.y) / 2 * size.height, v.z < 1 && !arriving.current && scroll < 0.25);
       }
     }
   });
@@ -234,8 +261,9 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
       <group visible={exterior}>
         <Grid position={[0, -0.01, 0]} args={[120, 120]} infiniteGrid cellSize={1} cellThickness={0.5} cellColor="#16302a" sectionSize={6} sectionThickness={0.9} sectionColor="#284a3e" fadeDistance={60} fadeStrength={1.8} />
         {!lowPower && <ContactShadows position={[0, 0.005, 0]} scale={34} blur={2.4} opacity={0.55} far={14} resolution={512} color="#021512" />}
-        <Building build={build} explode={explode} />
-        <ArchitecturalModel build={build} explode={explode} levels={levels} highlight={highlight} interactive={phase === "outside"} still={reducedMotion} onHover={onHotLevel} onPick={(level) => onProduct(LEVEL_PRODUCT[level])} />
+        <Building build={build} explode={explodeEff} />
+        <ScanPlane scan={scan} explode={explodeEff} />
+        <ArchitecturalModel build={build} explode={explodeEff} scan={scan} levels={levels} highlight={highlight} interactive={phase === "outside"} still={reducedMotion} onHover={onHotLevel} onPick={(level) => onProduct(LEVEL_PRODUCT[level])} />
         <LevelFollower levels={levels} index={3}><DataTree growth={growth} lowPower={lowPower} /></LevelFollower>
         <Door open={door} interactive={phase === "outside"} onEnter={() => onProduct("marketplace")} />
       </group>
@@ -249,6 +277,29 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
         onSelect={onSelect}
       />
     </>
+  );
+}
+
+/** A thin lime light plane that rises through the floors once, like a scanner reading the building. */
+function ScanPlane({ scan, explode }: { scan: React.RefObject<{ value: number }>; explode: React.RefObject<{ value: number }> }) {
+  const mesh = useRef<THREE.Mesh>(null);
+  const mat = useRef<THREE.MeshBasicMaterial>(null);
+  useFrame(() => {
+    const v = scan.current?.value ?? -10, e = explode.current?.value ?? 0;
+    if (!mesh.current || !mat.current) return;
+    const on = v > -0.8 && v < 4.8;
+    mesh.current.visible = on;
+    if (!on) return;
+    const i = Math.max(0, Math.min(3, Math.floor(v))), f = Math.max(0, Math.min(1, v - i));
+    const y = (k: number) => [0, 3.2, 6, 8.8, 11.6][k] + [0, 2.3, 4.6, 6.9, 6.9][k] * e;
+    mesh.current.position.y = y(i) + (y(Math.min(4, i + 1)) - y(i)) * f + 0.3;
+    mat.current.opacity = 0.22 * Math.sin(Math.min(1, (v + 0.8) / 5.6) * Math.PI);
+  });
+  return (
+    <mesh ref={mesh} rotation-x={-Math.PI / 2} position={[0.25, 0, 0.2]} visible={false} renderOrder={6}>
+      <planeGeometry args={[11, 9]} />
+      <meshBasicMaterial ref={mat} color={new THREE.Color("#c8f169").multiplyScalar(1.6)} toneMapped={false} transparent opacity={0} depthWrite={false} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
+    </mesh>
   );
 }
 

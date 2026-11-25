@@ -137,11 +137,11 @@ export const LEVEL_PRODUCT: ProductId[] = ["marketplace", "basket", "renovation"
 export const PRODUCT_LEVEL: Record<ProductId, Level> = { marketplace: 0, verify: 0, basket: 1, renovation: 2, smartcut: 3, voice: 3, sell: 4 };
 
 type ModelProps = {
-  build: React.RefObject<{ value: number }>; explode: React.RefObject<{ value: number }>; levels: React.RefObject<(THREE.Group | null)[]>;
+  build: React.RefObject<{ value: number }>; explode: React.RefObject<{ value: number }>; scan: React.RefObject<{ value: number }>; levels: React.RefObject<(THREE.Group | null)[]>;
   highlight: Level | null; interactive: boolean; still: boolean; onHover: (level: Level | null) => void; onPick: (level: Level) => void;
 };
 
-export function ArchitecturalModel({ build, explode, levels, highlight, interactive, still, onHover, onPick }: ModelProps) {
+export function ArchitecturalModel({ build, explode, scan, levels, highlight, interactive, still, onHover, onPick }: ModelProps) {
   const list = useMemo(() => pieces(), []);
   const mats = useMaterials();
   const meshes = useRef<(THREE.Mesh | null)[]>([]);
@@ -178,7 +178,7 @@ export function ArchitecturalModel({ build, explode, levels, highlight, interact
           onPointerOver={interactive ? (ev) => { ev.stopPropagation(); onHover(level); document.body.style.cursor = "pointer"; } : undefined}
           onPointerOut={interactive ? () => { onHover(null); document.body.style.cursor = ""; } : undefined}
           onClick={interactive ? (ev) => { ev.stopPropagation(); onPick(level); } : undefined}>
-          <FloorGlow level={level} build={build} explode={explode} lit={highlight === level} />
+          <FloorGlow level={level} build={build} explode={explode} scan={scan} lit={highlight === level} />
           {list.map((piece, i) => piece.level === level && (
             <mesh key={i} ref={(m) => { meshes.current[i] = m; }} geometry={geos[piece.shape ?? "box"]} material={mats[piece.mat]} castShadow={piece.mat !== "glass" && piece.mat !== "warm"} receiveShadow renderOrder={piece.mat === "glass" ? 3 : 0} />
           ))}
@@ -198,7 +198,7 @@ const GLOW_RECTS: Record<Level, [number, number, number, number, number][]> = {
 };
 const LIME_GLOW = new THREE.Color("#c8f169").multiplyScalar(1.8);
 
-function FloorGlow({ level, build, explode, lit }: { level: Level; build: React.RefObject<{ value: number }>; explode: React.RefObject<{ value: number }>; lit: boolean }) {
+function FloorGlow({ level, build, explode, scan, lit }: { level: Level; build: React.RefObject<{ value: number }>; explode: React.RefObject<{ value: number }>; scan: React.RefObject<{ value: number }>; lit: boolean }) {
   const geometry = useMemo(() => {
     const pts: number[] = [];
     for (const [cx, y, cz, w, d] of GLOW_RECTS[level]) {
@@ -215,8 +215,9 @@ function FloorGlow({ level, build, explode, lit }: { level: Level; build: React.
     const m = material.current;
     if (!m) return;
     const b = build.current?.value ?? 1, e = explode.current?.value ?? 0;
-    const target = b < 0.95 ? 0 : lit ? 1 : 0.18 + 0.4 * e;
-    m.opacity += (target - m.opacity) * (1 - Math.exp(-delta * 8));
+    const sweep = level === 4 ? 0 : Math.max(0, 1 - Math.abs((scan.current?.value ?? -10) - level) * 1.6);
+    const target = b < 0.95 ? 0 : Math.max(lit ? 1 : 0.18 + 0.4 * e, sweep);
+    m.opacity += (target - m.opacity) * (1 - Math.exp(-delta * (sweep > 0 ? 14 : 8)));
   });
   return (
     <lineSegments geometry={geometry} renderOrder={5}>

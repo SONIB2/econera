@@ -39,3 +39,9 @@
 @keyframes xp-breathe { from { opacity: .55; transform: translateX(-50%) scale(.96) } to { opacity: 1; transform: translateX(-50%) scale(1.04) } }
 .xp-rise { animation: xp-fade .9s var(--ease-out-soft) .9s both }
 @media (prefers-reduced-motion: reduce) { .xp-glow, .xp-rise { animation: none } }
+
+/* Hero headline: each line rises out of a mask; supporting copy follows */
+.xp-line { animation: xp-line-in 1.1s cubic-bezier(.16,1,.3,1) both }
+@keyframes xp-line-in { from { transform: translateY(105%) } to { transform: none } }
+.xp-rise-soft { animation: xp-fade .9s cubic-bezier(.16,1,.3,1) .5s both }
+@media (prefers-reduced-motion: reduce) { .xp-line, .xp-rise-soft { animation: none } }

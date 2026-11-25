@@ -136,9 +136,9 @@ export function Experience() {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-5 pb-32 sm:px-8 sm:pb-14">
           <div className="xp-fade-in mx-auto w-full max-w-7xl">
             <div className="pointer-events-auto max-w-2xl">
-              <h1 className="display text-[clamp(2.3rem,7vw,5.6rem)] leading-[0.95] text-ink">{t("Çdo material ka një të ardhme.", "Every material has a future.")}</h1>
-              <p className="mt-4 max-w-lg text-sm text-ink-2 sm:mt-5 sm:text-lg">{t("Eksploro një mënyrë më të zgjuar për të ndërtuar.", "Explore a smarter way to build.")}</p>
-              <div className="mt-7 flex flex-wrap gap-2">
+              <h1 className="display text-[clamp(2.3rem,7vw,5.6rem)] leading-[0.95] text-ink">{(lang === "en" ? ["Every material", "has a future."] : ["Çdo material", "ka një të ardhme."]).map((line, i) => <span key={line} className="block overflow-hidden pb-[0.08em]"><span className="xp-line block" style={{ animationDelay: `${0.25 + i * 0.14}s` }}>{line}</span></span>)}</h1>
+              <p className="xp-rise-soft mt-4 max-w-lg text-sm text-ink-2 sm:mt-5 sm:text-lg">{t("Eksploro një mënyrë më të zgjuar për të ndërtuar.", "Explore a smarter way to build.")}</p>
+              <div className="xp-rise-soft mt-7 flex flex-wrap gap-2 [animation-delay:.65s]">
                 <Link href="/treg" className="btn-primary h-12 px-6 text-base">{t("Eksploro tregun", "Explore Marketplace")}</Link>
                 <Link href="/shit" className="btn-ghost h-12 bg-bg/60 px-6 text-base backdrop-blur">{t("Shit materiale", "Sell Materials")}</Link>
               </div>
