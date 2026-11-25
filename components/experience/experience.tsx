@@ -4,8 +4,10 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { ctaNav, siteNav } from "@/components/site/nav";
-import { HOTSPOTS, hotspotById } from "@/lib/interior";
+import { AccountMenu } from "@/components/account-menu";
+import { LangToggle, useLang } from "@/components/lang-provider";
+import { ACCOUNT_LINKS, NAV } from "@/lib/lang";
+import { HOTSPOTS, hotspotById, hotspotLabel } from "@/lib/interior";
 import { createAmbient } from "./ambient";
 import { LogoDraw } from "./logo-draw";
 import { MaterialPanel } from "./material-panel";
@@ -54,6 +56,7 @@ function hasWebGL() {
 const subscribeNever = () => () => {};
 
 export function Experience() {
+  const { lang, t } = useLang();
   const reducedMotion = useMedia("(prefers-reduced-motion: reduce)");
   const small = useMedia("(max-width: 767px)");
   const webgl = useSyncExternalStore(subscribeNever, hasWebGL, () => true);
@@ -116,7 +119,7 @@ export function Experience() {
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-bg text-ink">
-      <h1 className="sr-only">ECONERA: Ndërtimi takon inteligjencën. Tregu online ku materialet e tepërta të ndërtimit gjejnë projektin e radhës, me AI.</h1>
+      <h1 className="sr-only">{t("ECONERA: Ndërtimi takon inteligjencën. Tregu online ku materialet e tepërta të ndërtimit gjejnë projektin e radhës, me AI.", "ECONERA: Construction meets intelligence. The online market where surplus construction materials find their next project, with AI.")}</h1>
 
       <div className="absolute inset-0">
         <Scene phase={phase} lowPower={lowPower} reducedMotion={reducedMotion} onReady={onReady} onIntroDone={onIntroDone} onDoor={onDoor} onEntered={onEntered} onExited={onExited} onFade={onFade} hovered={hovered} selected={selected} xray={xray} onHover={setHovered} onSelect={setSelected} />
@@ -127,44 +130,54 @@ export function Experience() {
       {/* HUD */}
       <header className={`absolute inset-x-0 top-0 z-20 transition-opacity duration-700 ${hud ? "opacity-100" : "pointer-events-none opacity-0"}`}>
         <div className="flex h-16 items-center justify-between px-5 sm:px-8">
-          <Link href="/" aria-label="ECONERA, kryefaqja"><Image src="/brand/logo-dark.svg" alt="" width={481} height={66} className="h-5 w-auto sm:h-6" priority /></Link>
+          <Link href="/" aria-label={t("ECONERA, kryefaqja", "ECONERA, home")}><Image src="/brand/logo-dark.svg" alt="" width={481} height={66} className="h-5 w-auto sm:h-6" priority /></Link>
           <div className="flex items-center gap-2">
+            <LangToggle />
             <SoundToggle on={sound} onChange={setSound} />
-            <Link href="/treg" className="btn-ghost hidden h-11 sm:inline-flex">Tregu</Link>
-            <button type="button" className="btn-ghost size-11 px-0" aria-expanded={menu} aria-controls="xp-menu" aria-label={menu ? "Mbyll menunë" : "Hap menunë"} onClick={() => setMenu((v) => !v)}>
+            <Link href="/treg" className="btn-ghost hidden h-11 bg-bg/60 backdrop-blur lg:inline-flex">{t("Tregu", "Market")}</Link>
+            <AccountMenu className="hidden md:block" />
+            <Link href="/regjistrohu" className="btn-primary hidden h-11 whitespace-nowrap sm:inline-flex">{t("Regjistrohu falas", "Sign up free")}</Link>
+            <button type="button" className="btn-ghost size-11 px-0" aria-expanded={menu} aria-controls="xp-menu" aria-label={menu ? t("Mbyll menunë", "Close menu") : t("Hap menunë", "Open menu")} onClick={() => setMenu((v) => !v)}>
               <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">{menu ? <path d="M4 4l10 10M14 4L4 14" /> : <path d="M2 6h14M2 12h14" />}</svg>
             </button>
           </div>
         </div>
       </header>
 
-      <nav id="xp-menu" aria-label="Menuja" hidden={!menu} className="absolute top-16 right-4 z-30 w-[min(20rem,calc(100vw-2rem))] rounded-card border border-line bg-bg/90 p-3 backdrop-blur-md xp-fade-in">
+      <nav id="xp-menu" aria-label={t("Menuja", "Menu")} hidden={!menu} className="absolute top-16 right-4 z-30 w-[min(20rem,calc(100vw-2rem))] rounded-card border border-line bg-bg/90 p-3 backdrop-blur-md xp-fade-in">
         <ul className="grid">
-          {siteNav.filter((item) => item.href !== "/").map((item) => (
-            <li key={item.href}><Link href={item.href} className="block rounded-xl px-4 py-3 text-ink-2 hover:bg-card hover:text-ink">{item.label}</Link></li>
+          {NAV.filter((item) => item.href !== "/").map((item) => (
+            <li key={item.href}><Link href={item.href} className="block rounded-xl px-4 py-3 text-ink-2 hover:bg-card hover:text-ink">{item[lang]}</Link></li>
           ))}
         </ul>
-        <Link href={ctaNav.href} className="btn-primary mt-2 w-full">{ctaNav.label}</Link>
+        <div className="mt-2 grid gap-2 border-t border-line pt-3">
+          {ACCOUNT_LINKS.map((g) => (
+            <div key={g.group.sq}>
+              <p className="px-4 pb-1 text-[11px] font-semibold tracking-[0.18em] text-lime uppercase">{g.group[lang]}</p>
+              {g.items.map((i) => <Link key={i.href} href={i.href} className="block rounded-xl px-4 py-2.5 text-sm text-ink hover:bg-card">{i[lang]}</Link>)}
+            </div>
+          ))}
+        </div>
       </nav>
 
       <div className={`absolute inset-x-0 bottom-0 z-20 flex justify-center px-5 pb-8 transition-opacity duration-700 ${hud ? "opacity-100" : "pointer-events-none opacity-0"}`}>
         {phase === "outside" && (
           <div className="xp-fade-in flex flex-col items-center gap-4 text-center">
-            <p className="text-sm text-ink-2"><span className="hidden sm:inline">Kliko derën për të hyrë</span><span className="sm:hidden">Prek butonin për të hyrë</span></p>
+            <p className="text-sm text-ink-2"><span className="hidden sm:inline">{t("Kliko derën për të hyrë", "Click the door to enter")}</span><span className="sm:hidden">{t("Prek butonin për të hyrë", "Tap the button to enter")}</span></p>
             <div className="flex flex-wrap justify-center gap-2">
-              <button type="button" className="btn-primary" onClick={onDoor}>Hyr në ndërtesë</button>
-              <Link href="/treg" className="btn-ghost bg-bg/60 backdrop-blur">Shiko tregun</Link>
+              <button type="button" className="btn-primary" onClick={onDoor}>{t("Hyr në ndërtesë", "Enter the building")}</button>
+              <Link href="/treg" className="btn-ghost bg-bg/60 backdrop-blur">{t("Shiko tregun", "Browse the market")}</Link>
             </div>
           </div>
         )}
         {phase === "inside" && !selected && (
           <div className="xp-fade-in flex w-full max-w-4xl flex-col items-center gap-3">
-            <p className="text-sm text-ink-2" aria-live="polite">{hovered ? hotspotById(hovered)?.label : "Kliko një element për të parë materialet"}</p>
-            <ul className="flex max-w-full gap-2 overflow-x-auto pb-1 [scrollbar-width:none]" aria-label="Elementet e dhomës">
+            <p className="text-sm text-ink-2" aria-live="polite">{hovered ? hotspotLabel(hotspotById(hovered), lang) : t("Kliko një element për të parë materialet", "Click an element to see its materials")}</p>
+            <ul className="flex max-w-full gap-2 overflow-x-auto pb-1 [scrollbar-width:none]" aria-label={t("Elementet e dhomës", "Room elements")}>
               {HOTSPOTS.map((h) => (
                 <li key={h.id} className="shrink-0">
                   <button type="button" onClick={() => setSelected(h.id)} onMouseEnter={() => setHovered(h.id)} onMouseLeave={() => setHovered(null)} onFocus={() => setHovered(h.id)} onBlur={() => setHovered(null)}
-                    className={`rounded-full border px-3.5 py-2 text-xs font-medium backdrop-blur transition ${hovered === h.id ? "border-lime bg-lime/10 text-lime" : "border-line bg-bg/70 text-ink hover:border-lime"}`}>{h.label}</button>
+                    className={`rounded-full border px-3.5 py-2 text-xs font-medium backdrop-blur transition ${hovered === h.id ? "border-lime bg-lime/10 text-lime" : "border-line bg-bg/70 text-ink hover:border-lime"}`}>{hotspotLabel(h, lang)}</button>
                 </li>
               ))}
             </ul>
@@ -174,7 +187,7 @@ export function Experience() {
 
       {phase === "inside" && (
         <div className="xp-fade-in absolute top-20 left-5 z-20 flex flex-col gap-2 sm:left-8">
-          <button type="button" className="btn-ghost bg-bg/70 backdrop-blur" onClick={exit}>← Kthehu jashtë</button>
+          <button type="button" className="btn-ghost bg-bg/70 backdrop-blur" onClick={exit}>{t("← Kthehu jashtë", "← Back outside")}</button>
           <button type="button" aria-pressed={xray} onClick={() => setXray((v) => !v)} className={`btn ${xray ? "bg-lime text-bg" : "border border-line bg-bg/70 text-ink backdrop-blur hover:border-lime hover:text-lime"}`}>
             <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.4"><rect x="2" y="2" width="12" height="12" rx="1.5" /><path d="M2 6h12M2 10h12M6 2v12M10 2v12" /></svg>
             Pamje X-Ray
@@ -196,36 +209,37 @@ export function Experience() {
         <div className="relative flex w-full max-w-xl flex-col items-center px-8 text-center">
           <LogoDraw className="w-full max-w-md" />
           <p className="mt-6 text-[11px] font-medium tracking-[0.4em] text-ink-2 uppercase">Construction intelligence</p>
-          <p className="display mt-8 text-2xl text-ink sm:text-3xl">Ndërtimi takon inteligjencën.</p>
+          <p className="display mt-8 text-2xl text-ink sm:text-3xl">{t("Ndërtimi takon inteligjencën.", "Construction meets intelligence.")}</p>
           <div className="mt-10 h-24">
             {phase === "loading" ? (
               <div className="flex flex-col items-center gap-3" role="status" aria-live="polite">
                 <span className="font-mono text-sm tabular-nums text-lime">{String(progress).padStart(3, "0")}%</span>
                 <span className="block h-px w-48 overflow-hidden bg-line"><span className="block h-full bg-lime transition-[width] duration-150" style={{ width: `${progress}%` }} /></span>
-                <span className="sr-only">Duke ngarkuar ndërtesën</span>
+                <span className="sr-only">{t("Duke ngarkuar ndërtesën", "Loading the building")}</span>
               </div>
             ) : (
               <div className="xp-fade-in flex flex-col items-center gap-4">
-                <button type="button" autoFocus className="btn-primary h-12 px-10 text-base" onClick={() => setPhase("intro")}>Hyr</button>
+                <button type="button" autoFocus className="btn-primary h-12 px-10 text-base" onClick={() => setPhase("intro")}>{t("Hyr", "Enter")}</button>
                 <SoundToggle on={sound} onChange={setSound} labelled />
               </div>
             )}
           </div>
         </div>
-        <Link href="/treg" className="absolute bottom-6 text-xs text-ink-2 underline-offset-4 hover:text-ink hover:underline">Vazhdo pa 3D</Link>
+        <Link href="/treg" className="absolute bottom-6 text-xs text-ink-2 underline-offset-4 hover:text-ink hover:underline">{t("Vazhdo pa 3D", "Continue without 3D")}</Link>
       </div>
     </div>
   );
 }
 
 function SoundToggle({ on, onChange, labelled = false }: { on: boolean; onChange: (on: boolean) => void; labelled?: boolean }) {
+  const { t } = useLang();
   return (
-    <button type="button" aria-pressed={on} onClick={() => onChange(!on)} className={labelled ? "inline-flex items-center gap-2 text-xs text-ink-2 hover:text-ink" : "btn-ghost size-11 px-0"} aria-label={labelled ? undefined : on ? "Fik tingullin" : "Ndiz tingullin"}>
+    <button type="button" aria-pressed={on} onClick={() => onChange(!on)} className={labelled ? "inline-flex items-center gap-2 text-xs text-ink-2 hover:text-ink" : "btn-ghost size-11 px-0"} aria-label={labelled ? undefined : on ? t("Fik tingullin", "Mute") : t("Ndiz tingullin", "Unmute")}>
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 7h3l4-3v10l-4-3H3z" />
         {on ? <path d="M12.5 6.5a3.5 3.5 0 0 1 0 5M14.5 4.5a6.5 6.5 0 0 1 0 9" /> : <path d="M13 7l4 4M17 7l-4 4" />}
       </svg>
-      {labelled && <span>{on ? "Tingulli: ndezur" : "Tingulli: fikur"}</span>}
+      {labelled && <span>{on ? t("Tingulli: ndezur", "Sound: on") : t("Tingulli: fikur", "Sound: off")}</span>}
     </button>
   );
 }

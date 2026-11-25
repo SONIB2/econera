@@ -128,3 +128,24 @@ export const HOTSPOTS: Hotspot[] = [
 
 export const INSIDE_VIEW = { position: [0, 1.6, 2.4] as Vec3, target: [0, 1.25, -3] as Vec3 };
 export const hotspotById = (id: string | null) => HOTSPOTS.find((h) => h.id === id) ?? null;
+
+const EN: Record<string, { label: string; summary: string }> = {
+  mur: { label: "Wall", summary: "Load-bearing and partition masonry." },
+  dritare: { label: "Window", summary: "Frame and insulated glazing." },
+  parket: { label: "Parquet", summary: "Wooden and laminate flooring." },
+  pllaka: { label: "Tiles", summary: "Floor and wall coverings." },
+  sanitari: { label: "Toilet / Sanitary", summary: "WC, washbasin and shower." },
+  dyer: { label: "Doors", summary: "Interior and exterior doors." },
+  elektrike: { label: "Electrical", summary: "Cables, sockets, switches and panel." },
+  hidraulike: { label: "Plumbing", summary: "Supply and drain pipes." },
+  cati: { label: "Roof / Insulation", summary: "Thermal insulation and roofing." },
+};
+
+export function hotspotLabel(h: Hotspot | null | undefined, lang: "sq" | "en") {
+  if (!h) return "";
+  return lang === "en" ? EN[h.id]?.label ?? h.label : h.label;
+}
+
+export function hotspotSummary(h: Hotspot, lang: "sq" | "en") {
+  return lang === "en" ? EN[h.id]?.summary ?? h.summary : h.summary;
+}

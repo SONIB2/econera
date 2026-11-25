@@ -4,7 +4,7 @@ import { Environment, Html, RoundedBox, useGLTF, useTexture } from "@react-three
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { HOTSPOTS, type Hotspot, type Vec3 } from "@/lib/interior";
+import { HOTSPOTS, hotspotLabel, type Hotspot, type Vec3 } from "@/lib/interior";
 
 /* Realistic, lit ground-floor room. Textures and props are CC0 (Poly Haven, see public/world/ASSET-CREDITS.txt). */
 
@@ -282,7 +282,7 @@ function HotspotObject({ hotspot, tex, interactive, active, xray, showLabel, sho
       <group ref={outline} visible={false}><OutlineCopy source={group} /></group>
       {showLabel && (
         <Html position={hotspot.anchor} center zIndexRange={[20, 10]} style={{ pointerEvents: "none" }}>
-          <span className="whitespace-nowrap rounded-full border border-lime/60 bg-bg/85 px-3 py-1 text-xs font-semibold text-lime shadow-[0_0_24px_rgba(200,241,105,0.25)] backdrop-blur">{hotspot.label}</span>
+          <span className="whitespace-nowrap rounded-full border border-lime/60 bg-bg/85 px-3 py-1 text-xs font-semibold text-lime shadow-[0_0_24px_rgba(200,241,105,0.25)] backdrop-blur">{hotspotLabel(hotspot, typeof document !== "undefined" && document.documentElement.lang === "en" ? "en" : "sq")}</span>
         </Html>
       )}
       {STACKS[hotspot.id] && hotspot.layers && <LayerStack stack={STACKS[hotspot.id]} hotspot={hotspot} xray={xray} labels={showLayerLabels} />}

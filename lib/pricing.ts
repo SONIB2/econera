@@ -52,3 +52,15 @@ export const BUYER_FEATURES = [
 ];
 
 export const PILOT_OFFER = "20 furnitorët e parë të pilotit në Tiranë marrin planin Rritje falas për 3 muaj.";
+
+/** English copy for the pricing page, keyed by plan id (same order as the Albanian features). */
+export const PLAN_EN: Record<Plan["id"], { tagline: string; features: string[] }> = {
+  falas: { tagline: "For any supplier who wants to try the market.", features: ["Up to 10 active listings", "Photo + AI listing, 5 scans a month", "Quote requests from buyers", "1 user"] },
+  start: { tagline: "For depots and small suppliers.", features: ["Up to 100 active listings", "Unlimited AI warehouse scans", "Green certificate for every order", "View and request statistics", "2 users", "Email support"] },
+  rritje: { tagline: "For suppliers who sell every week.", features: ["Up to 500 active listings", "Featured in the Market and in AI results", "First to receive Plan → quote requests", "Transport coordination at a clear price", "Invoices and orders in one place", "5 users", "Chat support"] },
+  pro: { tagline: "For construction companies with several sites.", features: ["Unlimited listings, for every site and depot", "Digital Material Passport", "Annual CO₂ report for tenders", "CSV export and API", "Unlimited users", "Dedicated manager and onboarding"] },
+};
+export const ENTERPRISE_EN = "For developers and large companies: ERP integration, annual contracts and volume pricing.";
+export const BUYER_FEATURES_EN = ["AI search across all stock", "Unlimited quote requests", "Compare price, distance and match", "Plan → quote from a floor plan", "Green certificate for every purchase"];
+export const PILOT_OFFER_EN = "The first 20 pilot suppliers in Tirana get the Growth plan free for 3 months.";
+export const PLAN_NAME_EN: Record<Plan["id"], string> = { falas: "ECONERA Free", start: "Start", rritje: "Growth", pro: "Pro" };

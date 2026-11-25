@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { LangProvider } from "@/components/lang-provider";
+import { LANG_COOKIE } from "@/lib/lang";
 import { applicationOrigin, isPreview } from "@/lib/deployment";
 
 export function generateMetadata(): Metadata {
@@ -21,10 +23,11 @@ export function generateMetadata(): Metadata {
 export const viewport: Viewport = { themeColor: "#0b110e", colorScheme: "dark" };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const locale = (await headers()).get("x-econera-locale") === "en" ? "en" : "sq";
+  const chosen = (await cookies()).get(LANG_COOKIE)?.value;
+  const locale = (chosen ?? (await headers()).get("x-econera-locale")) === "en" ? "en" : "sq";
   return (
     <html lang={locale}>
-      <body>{children}</body>
+      <body><LangProvider lang={locale}>{children}</LangProvider></body>
     </html>
   );
 }
