@@ -8,7 +8,7 @@ import { useLang } from "@/components/lang-provider";
 import { HOTSPOTS, hotspotById, hotspotLabel } from "@/lib/interior";
 import { createAmbient } from "./ambient";
 import { LogoDraw } from "./logo-draw";
-import type { ProductId } from "./model";
+import { PRODUCT_LEVEL, ProductSpots, type Level, type ProductId } from "./model";
 import { PRODUCTS, ProductPanel } from "./product-panel";
 import { MaterialPanel } from "./material-panel";
 import type { Phase } from "./scene";
@@ -46,9 +46,9 @@ const subscribeNever = () => () => {};
 
 const SEEN = "econera.intro.v2";
 const SPOT_TEXT: Record<ProductId, { sq: string; en: string }> = {
-  marketplace: { sq: "Hyrja · tregu", en: "Entrance · marketplace" }, verify: { sq: "Struktura · dokumentet", en: "Structure · documents" },
-  basket: { sq: "Materialet · blerja", en: "Materials · procurement" }, renovation: { sq: "Interieri · dizajni", en: "Interior · design" },
-  smartcut: { sq: "Druri · prerja", en: "Timber · cutting" }, voice: { sq: "Asistenti", en: "Assistant" }, sell: { sq: "Tepricat · shit", en: "Surplus · sell" },
+  marketplace: { sq: "Eksploro materialet", en: "Explore materials" }, verify: { sq: "Materiale të besueshme", en: "Trusted materials" },
+  basket: { sq: "Planifiko blerjet", en: "Plan your purchases" }, renovation: { sq: "Dizajno hapësirën", en: "Design your space" },
+  smartcut: { sq: "Optimizo materialet", en: "Optimize materials" }, voice: { sq: "Asistent AI i aksesueshëm", en: "Accessible AI assistant" }, sell: { sq: "Listo produktet e tua", en: "List your products" },
 };
 
 export function Experience() {
@@ -65,10 +65,20 @@ export function Experience() {
   const [selected, setSelected] = useState<string | null>(null);
   const [xray, setXray] = useState(false);
   const [product, setProduct] = useState<ProductId | null>(null);
-  const [exploded, setExploded] = useState(false);
+  const [exploded, setExploded] = useState(true);
   const [paused, setPaused] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [resetKey, setResetKey] = useState(0);
+  const [hotLevel, setHotLevel] = useState<Level | null>(null);
+  const [hotSpot, setHotSpot] = useState<ProductId | null>(null);
+  const spotRefs = useRef<Partial<Record<ProductId, HTMLElement | null>>>({});
+  const placeSpot = useCallback((id: ProductId, x: number, y: number, visible: boolean) => {
+    const el = spotRefs.current[id];
+    if (!el) return;
+    el.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0)`;
+    el.style.visibility = visible ? "" : "hidden";
+  }, []);
+  const highlight: Level | null = hotLevel ?? (hotSpot ? PRODUCT_LEVEL[hotSpot] : product ? PRODUCT_LEVEL[product] : null);
   const fadeRef = useRef<HTMLDivElement>(null);
   const ambient = useMemo(() => (typeof window === "undefined" ? null : createAmbient()), []);
 
@@ -80,7 +90,7 @@ export function Experience() {
     return () => clearTimeout(id);
   }, []);
   const remember = () => { try { localStorage.setItem(SEEN, "1"); } catch { /* ignore */ } };
-  const start = () => { remember(); setProduct(null); setExploded(false); setPhase("intro"); };
+  const start = () => { remember(); setProduct(null); setExploded(true); setPhase("intro"); };
 
   const exit = useCallback(() => { setSelected(null); setHovered(null); setXray(false); setPhase("exiting"); }, []);
   useEffect(() => { ambient?.set(sound); }, [ambient, sound]);
@@ -118,9 +128,10 @@ export function Experience() {
 
   return (
     <section aria-label={t("Hyrja", "Introduction")} className="theme-dark relative h-[100svh] min-h-[560px] overflow-hidden bg-bg text-ink">
-      <div className={`absolute inset-0 ${exterior ? "max-md:bottom-[50%] max-md:top-16 lg:left-[34%]" : ""}`}>
+      <div className={`absolute inset-0 ${exterior ? "max-md:bottom-[48%] max-md:top-28 lg:left-[34%]" : ""}`}>
         {phase !== "boot" && <Scene phase={phase} lowPower={lowPower} reducedMotion={reducedMotion} onReady={noop} onIntroDone={onIntroDone} onDoor={onDoor} onEntered={onEntered} onExited={onExited} onFade={onFade} hovered={hovered} selected={selected} xray={xray} onHover={setHovered} onSelect={setSelected}
-          exploded={exploded} paused={paused} zoom={zoom} resetKey={resetKey} product={product} productLabels={labels} onProduct={onProduct} />}
+          exploded={exploded} paused={paused} zoom={zoom} resetKey={resetKey} highlight={highlight} onHotLevel={setHotLevel} placeSpot={placeSpot} onProduct={onProduct} />}
+        {phase !== "boot" && <ProductSpots refs={spotRefs} visible={phase === "outside"} labels={labels} onSelect={onProduct} onHover={setHotSpot} active={product} hot={hotLevel} />}
       </div>
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_60%_45%,transparent_40%,rgba(3,24,21,0.72))]" />
       {exterior && <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(3,24,21,0.85)_0%,rgba(3,24,21,0.35)_42%,transparent_62%),linear-gradient(0deg,rgba(3,24,21,0.75),transparent_38%)]" />}
@@ -128,16 +139,16 @@ export function Experience() {
 
       {exterior && (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-5 pb-32 sm:px-8 sm:pb-14">
-          <div className="xp-fade-in pointer-events-auto mx-auto w-full max-w-7xl">
-            <div className="max-w-2xl">
-              <h1 className="display text-[clamp(2.3rem,7vw,5.6rem)] leading-[0.95] text-ink">{t("Mos i hidh materialet. Ndërto mundësi.", "Don't waste materials. Build possibilities.")}</h1>
-              <p className="mt-4 max-w-lg text-sm text-ink-2 sm:mt-5 sm:text-lg">{t("Zbulo, ripërdor dhe transformo materialet e ndërtimit me mjete inteligjente që kursejnë para dhe ulin mbetjet.", "Discover, reuse and transform construction materials with intelligent tools that save money and reduce waste.")}</p>
+          <div className="xp-fade-in mx-auto w-full max-w-7xl">
+            <div className="pointer-events-auto max-w-2xl">
+              <h1 className="display text-[clamp(2.3rem,7vw,5.6rem)] leading-[0.95] text-ink">{t("Çdo material ka një të ardhme.", "Every material has a future.")}</h1>
+              <p className="mt-4 max-w-lg text-sm text-ink-2 sm:mt-5 sm:text-lg">{t("Eksploro një mënyrë më të zgjuar për të ndërtuar.", "Explore a smarter way to build.")}</p>
               <div className="mt-7 flex flex-wrap gap-2">
                 <Link href="/treg" className="btn-primary h-12 px-6 text-base">{t("Eksploro tregun", "Explore Marketplace")}</Link>
                 <Link href="/shit" className="btn-ghost h-12 bg-bg/60 px-6 text-base backdrop-blur">{t("Shit materiale", "Sell Materials")}</Link>
-                <Link href="/ai" className="btn-ghost h-12 bg-bg/60 px-6 text-base backdrop-blur">{t("Zbulo mjetet AI", "Discover AI Tools")}</Link>
               </div>
               <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-ink-2">
+                <Link href="/ai" className="font-medium text-lime underline-offset-4 hover:underline">{t("Zbulo mjetet AI", "Discover AI Tools")} <span aria-hidden>→</span></Link>
                 {phase === "intro"
                   ? <button type="button" onClick={() => setPhase("outside")} className="underline-offset-4 hover:text-ink hover:underline">{t("Kalo animacionin", "Skip animation")}</button>
                   : <><button type="button" onClick={onDoor} className="underline-offset-4 hover:text-ink hover:underline">{t("Hyr në interier", "Step inside")}</button><button type="button" onClick={start} className="underline-offset-4 hover:text-ink hover:underline">{t("Rishiko hyrjen", "Replay intro")}</button></>}
@@ -149,11 +160,11 @@ export function Experience() {
       )}
 
       {phase === "outside" && (
-        <div className="xp-fade-in absolute top-20 right-3 z-30 flex flex-col items-end gap-2 sm:top-auto sm:right-6 sm:bottom-28">
+        <div className="xp-fade-in absolute top-20 right-3 z-30 flex flex-col items-end gap-2 sm:top-24 sm:right-6">
           <div role="toolbar" aria-label={t("Kontrollet 3D", "3D controls")} className="flex items-center gap-1.5 rounded-full border border-line bg-bg/60 p-1.5 backdrop-blur">
             <details className="relative">
               <summary className={`${tool} w-auto cursor-pointer list-none px-3.5 text-xs font-medium [&::-webkit-details-marker]:hidden`}>{t("Produktet", "Products")}</summary>
-              <ul className="absolute right-0 bottom-12 grid w-56 max-sm:top-12 max-sm:bottom-auto gap-1 rounded-2xl border border-line bg-bg/95 p-2 shadow-2xl backdrop-blur">
+              <ul className="absolute top-12 right-0 grid w-56 gap-1 rounded-2xl border border-line bg-bg/95 p-2 shadow-2xl backdrop-blur">
                 {(Object.keys(PRODUCTS) as ProductId[]).map((id) => <li key={id}><button type="button" onClick={() => onProduct(id)} className="w-full rounded-xl px-3 py-2 text-left text-sm hover:bg-card"><span className="block font-medium">{PRODUCTS[id].name}</span><span className="block text-xs text-ink-2">{SPOT_TEXT[id][lang]}</span></button></li>)}
               </ul>
             </details>
@@ -163,11 +174,11 @@ export function Experience() {
             </button>
             <button type="button" onClick={() => setZoom((z) => Math.max(0.7, +(z - 0.15).toFixed(2)))} className={`${tool} max-sm:hidden`} aria-label={t("Afro", "Zoom in")}>+</button>
             <button type="button" onClick={() => setZoom((z) => Math.min(1.45, +(z + 0.15).toFixed(2)))} className={`${tool} max-sm:hidden`} aria-label={t("Largo", "Zoom out")}>−</button>
-            <button type="button" onClick={() => { setZoom(1); setExploded(false); setResetKey((k) => k + 1); }} className={tool} aria-label={t("Rikthe kamerën", "Reset camera")}>
+            <button type="button" onClick={() => { setZoom(1); setExploded(true); setResetKey((k) => k + 1); }} className={tool} aria-label={t("Rikthe kamerën", "Reset camera")}>
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden><path d="M2.5 8a5.5 5.5 0 1 0 1.7-4M2.5 2.5v3h3" strokeLinecap="round" /></svg>
             </button>
           </div>
-          <p className="hidden text-[11px] text-ink-2 sm:block">{t("Tërhiq për ta rrotulluar · kliko pikat për produktet", "Drag to rotate · select a point to explore a product")}</p>
+          <p className="hidden text-[11px] text-ink-2 sm:block">{t("Çdo kat është një produkt · tërhiq për ta rrotulluar", "Each floor is a product · drag to rotate")}</p>
         </div>
       )}
 

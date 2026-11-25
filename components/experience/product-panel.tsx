@@ -26,7 +26,7 @@ export function ProductPanel({ id, onClose }: { id: ProductId; onClose: () => vo
   const close = useRef<HTMLButtonElement>(null);
   useEffect(() => { close.current?.focus(); }, [id]);
   return (
-    <aside role="dialog" aria-modal="false" aria-labelledby="xp-product-title" className="xp-panel absolute inset-x-3 bottom-24 z-30 max-h-[70svh] overflow-y-auto rounded-[1.5rem] border border-line bg-bg/92 p-5 text-ink shadow-2xl backdrop-blur-xl md:inset-x-auto md:top-28 md:right-6 md:bottom-auto md:w-[380px]">
+    <aside role="dialog" aria-modal="false" aria-labelledby="xp-product-title" className="xp-panel absolute inset-x-3 bottom-24 z-30 max-h-[70svh] overflow-y-auto rounded-[1.5rem] border border-line bg-bg/92 p-5 text-ink shadow-2xl backdrop-blur-xl md:inset-x-auto md:top-44 md:right-6 md:bottom-auto md:w-[380px]">
       <div className="flex items-start justify-between gap-3">
         <div><h2 id="xp-product-title" className="text-2xl">{p.name}</h2><p className="mt-1 text-sm text-ink-2">{p.tag[lang]}</p></div>
         <button ref={close} type="button" onClick={onClose} aria-label={t("Mbyll", "Close")} className="grid size-9 shrink-0 place-items-center rounded-full border border-line hover:border-lime">✕</button>

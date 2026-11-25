@@ -9,7 +9,7 @@ import * as THREE from "three";
 import { hotspotById, INSIDE_VIEW } from "@/lib/interior";
 import { BUILDING, buildingSegments, dataTree, volumes } from "./geometry";
 import { Interior } from "./interior";
-import { ArchitecturalModel, ProductSpots, type ProductId } from "./model";
+import { ArchitecturalModel, LEVEL_PRODUCT, PRODUCT_SPOTS, type Level, type ProductId } from "./model";
 
 export type Phase = "boot" | "welcome" | "intro" | "outside" | "entering" | "inside" | "exiting";
 
@@ -33,8 +33,9 @@ export type SceneProps = {
   paused: boolean;
   zoom: number;
   resetKey: number;
-  product: ProductId | null;
-  productLabels: Record<ProductId, { name: string; text: string }>;
+  highlight: Level | null;
+  onHotLevel: (level: Level | null) => void;
+  placeSpot: (id: ProductId, x: number, y: number, visible: boolean) => void;
   onProduct: (id: ProductId) => void;
 };
 
@@ -71,7 +72,7 @@ export default function Scene(props: SceneProps) {
   );
 }
 
-function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExited, onFade, hovered, selected, xray, onHover, onSelect, exploded, paused, zoom, resetKey, product, productLabels, onProduct }: SceneProps) {
+function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExited, onFade, hovered, selected, xray, onHover, onSelect, exploded, paused, zoom, resetKey, highlight, onHotLevel, placeSpot, onProduct }: SceneProps) {
   const rig = useRef<Rig>({ angle: 0.55, ...CRANE });
   const door = useRef({ open: 0 });
   const growth = useRef({ value: 0 });
@@ -80,6 +81,9 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
   const levels = useRef<(THREE.Group | null)[]>([]);
   const drag = useRef({ active: false, x: 0, y: 0, idleUntil: 0 });
   const zoomRef = useRef({ value: 1 });
+  const sway = useRef({ amount: 0 });
+  const stacked = exploded && phase === "outside";
+  const projected = useRef(new THREE.Vector3());
   const pointer = useRef(new THREE.Vector2());
   const target = useMemo(() => new THREE.Vector3(), []);
   const { camera, size } = useThree();
@@ -133,10 +137,10 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
   // Exploded view separates the floors; the camera rises and widens to keep all labels in frame.
   useEffect(() => {
     const fast = reducedMotion ? 0.001 : 1;
-    const a = gsap.to(explode.current, { value: exploded ? 1 : 0, duration: 1.1 * fast, ease: "power3.inOut" });
-    const b = phase === "outside" ? gsap.to(rig.current, { targetY: exploded ? 10.6 : ORBIT.targetY, radius: exploded ? 40 : ORBIT.radius, height: exploded ? 14 : ORBIT.height, duration: 1.1 * fast, ease: "power3.inOut" }) : null;
+    const a = gsap.to(explode.current, { value: stacked ? 1 : 0, duration: 1.6 * fast, ease: "power3.inOut" });
+    const b = phase === "outside" ? gsap.to(rig.current, { targetY: stacked ? 9.4 : ORBIT.targetY, radius: stacked ? 44 : ORBIT.radius, height: stacked ? 12 : ORBIT.height, duration: 1.6 * fast, ease: "power3.inOut" }) : null;
     return () => { a.kill(); b?.kill(); };
-  }, [exploded, phase, reducedMotion]);
+  }, [stacked, phase, reducedMotion]);
   useEffect(() => { const t = gsap.to(zoomRef.current, { value: zoom, duration: reducedMotion ? 0.001 : 0.6, ease: "power2.out" }); return () => { t.kill(); }; }, [zoom, reducedMotion]);
   useEffect(() => {
     if (!resetKey) return;
@@ -178,7 +182,11 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
     const dt = Math.min(delta, 0.05);
     const orbiting = phase === "outside" || phase === "welcome" || phase === "boot";
     const idle = !paused && !drag.current.active && performance.now() > drag.current.idleUntil;
-    if (orbiting && idle && !reducedMotion) r.angle += dt * (phase === "outside" ? 0.045 : 0.025);
+    // Welcome: slow full orbit. Exploring: a gentle sway, so labels stay readable instead of circling away.
+    if (phase !== "outside" && orbiting && idle && !reducedMotion) r.angle += dt * 0.025;
+    const s = sway.current;
+    s.amount += ((phase === "outside" && idle && !reducedMotion ? 1 : 0) - s.amount) * (1 - Math.exp(-dt * 1.5));
+    const angle = r.angle + Math.sin(state.clock.elapsedTime * 0.22) * 0.32 * s.amount;
 
     const parallax = phase === "inside" ? 0.35 : 0.6;
     const px = reducedMotion ? 0 : pointer.current.x * parallax;
@@ -196,10 +204,20 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
       const radius = r.radius * (1 + r.fit * (Math.min(1.9, Math.max(1, 1.2 / aspect)) - 1)) * (phase === "outside" ? zoomRef.current.value : 1);
       // Fog follows the camera distance so far orbits never swallow the building.
       if (fog instanceof THREE.Fog) { fog.near = radius * 1.05; fog.far = radius * 2.8; }
-      camera.position.set(Math.sin(r.angle) * radius + Math.cos(r.angle) * px, r.height - py, r.targetZ + Math.cos(r.angle) * radius - Math.sin(r.angle) * px);
+      camera.position.set(Math.sin(angle) * radius + Math.cos(angle) * px, r.height - py, r.targetZ + Math.cos(angle) * radius - Math.sin(angle) * px);
       target.set(0, r.targetY, r.targetZ);
     }
     camera.lookAt(target);
+
+    // Hotspot labels are DOM elements; place each one on its projected 3D point.
+    if (phase === "outside") {
+      camera.updateMatrixWorld();
+      const v = projected.current;
+      for (const spot of PRODUCT_SPOTS) {
+        v.set(spot.pos[0], spot.pos[1] + (levels.current[spot.level]?.position.y ?? 0), spot.pos[2]).project(camera);
+        placeSpot(spot.id, (v.x + 1) / 2 * size.width, (1 - v.y) / 2 * size.height, v.z < 1);
+      }
+    }
   });
 
   const exterior = phase !== "inside";
@@ -217,10 +235,9 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
         <Grid position={[0, -0.01, 0]} args={[120, 120]} infiniteGrid cellSize={1} cellThickness={0.5} cellColor="#16302a" sectionSize={6} sectionThickness={0.9} sectionColor="#284a3e" fadeDistance={60} fadeStrength={1.8} />
         {!lowPower && <ContactShadows position={[0, 0.005, 0]} scale={34} blur={2.4} opacity={0.55} far={14} resolution={512} color="#021512" />}
         <Building build={build} explode={explode} />
-        <ArchitecturalModel build={build} explode={explode} levels={levels} />
+        <ArchitecturalModel build={build} explode={explode} levels={levels} highlight={highlight} interactive={phase === "outside"} still={reducedMotion} onHover={onHotLevel} onPick={(level) => onProduct(LEVEL_PRODUCT[level])} />
         <LevelFollower levels={levels} index={3}><DataTree growth={growth} lowPower={lowPower} /></LevelFollower>
         <Door open={door} interactive={phase === "outside"} onEnter={() => onProduct("marketplace")} />
-        <ProductSpots levels={levels} visible={phase === "outside"} detail={exploded} labels={productLabels} onSelect={onProduct} active={product} />
       </group>
       <Interior
         visible={phase === "inside" || phase === "entering" || phase === "exiting"}
