@@ -50,8 +50,8 @@ export const sheetInput = z.object({
 }).refine((s) => !s.sheet_material || (s.length_mm && s.width_mm && s.thickness_mm), { path: ["length_mm"] });
 export type CatalogueEntry = MaterialInput & { id: string; created_at: string; updated_at: string; masonry_type: MasonryType | null };
 export type InventoryEntry = CatalogueEntry & {
-  publication: "draft" | "published" | "archived";
-  moderation: "unreviewed" | "pending" | "approved" | "rejected";
+  publication: "draft" | "published" | "archived" | "suspended" | "expired";
+  moderation: "unreviewed" | "pending" | "under_review" | "info_required" | "inspection_required" | "escalated" | "approved" | "rejected" | "suspended";
   revision: number;
 };
 
@@ -78,3 +78,13 @@ export function catalogueFilters(params: SearchParams) {
 }
 export const categoryName = (id: string) => categories.find((entry) => entry.id === id)?.name ?? id;
 export const priceLabel = (value: number, currency: string) => new Intl.NumberFormat("sq-AL", { style: "currency", currency }).format(value);
+
+/** ECONERA Verify product fields (migration 202611250008). */
+export const intendedUses = ["decorative", "non_structural", "finishing", "structural", "fire_safety", "electrical", "pressure"] as const;
+const optText = (max: number) => z.string().trim().max(max).optional().transform((v) => v || null);
+export const verifyInput = z.object({
+  manufacturer: optText(120), model_ref: optText(120), batch_no: optText(80), origin_country: optText(60),
+  age_years: z.string().trim().optional().transform((v) => (v ? Number(v.replace(",", ".")) : null)).pipe(z.number().min(0).max(200).nullable()),
+  storage_conditions: optText(300), known_defects: optText(1000), sourcing: optText(500),
+  intended_use: z.enum(intendedUses).optional(),
+});

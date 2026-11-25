@@ -1,0 +1,844 @@
+-- ECONERA Verify: human-controlled seller and product verification, documents, inspections,
+-- material passports, disputes, suspensions, notifications and an append-only audit log.
+-- Builds on 0001 (materials, public_catalogue, moderation) and 0007 (offcut columns).
+-- Every approval is a human decision recorded with reviewer, reason and listing revision.
+
+-------------------------------------------------------------------------------
+-- 1. Staff roles (least privilege). Privileged staff must use MFA (aal2).
+-------------------------------------------------------------------------------
+create table public.staff_roles (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  role text not null check (role in ('super_admin','seller_officer','product_officer','technical_reviewer','customer_protection','finance','support')),
+  granted_by uuid references auth.users(id),
+  granted_at timestamptz not null default now(),
+  primary key (user_id, role)
+);
+alter table public.staff_roles enable row level security;
+revoke all on public.staff_roles from public, anon, authenticated;
+
+-- Existing platform administrators become super admins.
+insert into public.staff_roles (user_id, role) select user_id, 'super_admin' from public.platform_admins on conflict do nothing;
+
+/** True when the caller holds one of the roles and signed in with a second factor. */
+create function public.has_staff_role(wanted text[]) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (
+    select 1 from public.staff_roles
+    where user_id = (select auth.uid()) and (role = any(wanted) or role = 'super_admin')
+  ) and coalesce((select auth.jwt()) ->> 'aal', 'aal1') = 'aal2'
+$$;
+/** Staff membership without the MFA check, so the portal can ask a staff member to enrol MFA. */
+create function public.staff_roles_of_me() returns text[]
+language sql stable security definer set search_path = ''
+as $$ select coalesce(array_agg(role order by role), '{}') from public.staff_roles where user_id = (select auth.uid()) $$;
+
+revoke all on function public.has_staff_role(text[]), public.staff_roles_of_me() from public, anon;
+grant execute on function public.has_staff_role(text[]), public.staff_roles_of_me() to authenticated;
+
+create policy staff_roles_read on public.staff_roles for select to authenticated
+  using (user_id = (select auth.uid()) or public.has_staff_role(array['super_admin']));
+grant select on public.staff_roles to authenticated;
+
+-- Legacy admin check now means "product officer with MFA".
+create or replace function public.is_platform_admin() returns boolean
+language sql stable security definer set search_path = ''
+as $$ select public.has_staff_role(array['product_officer','technical_reviewer']) $$;
+
+-------------------------------------------------------------------------------
+-- 2. Append-only audit log. No role may update or delete; writes come from triggers/RPCs.
+-------------------------------------------------------------------------------
+create table public.audit_log (
+  id bigint generated always as identity primary key,
+  at timestamptz not null default now(),
+  actor uuid,
+  action text not null,
+  subject_type text not null,
+  subject_id text not null,
+  details jsonb not null default '{}'
+);
+alter table public.audit_log enable row level security;
+revoke all on public.audit_log from public, anon, authenticated;
+grant select on public.audit_log to authenticated;
+create policy audit_read on public.audit_log for select to authenticated using (public.has_staff_role(array['super_admin']));
+
+create function public.audit_immutable() returns trigger language plpgsql as $$
+begin raise exception 'audit_log is append-only'; end; $$;
+create trigger audit_no_update before update or delete on public.audit_log for each row execute function public.audit_immutable();
+create trigger audit_no_truncate before truncate on public.audit_log for each statement execute function public.audit_immutable();
+
+create function public.audit(action text, subject_type text, subject_id text, details jsonb default '{}') returns void
+language sql security definer set search_path = ''
+as $$ insert into public.audit_log (actor, action, subject_type, subject_id, details) values ((select auth.uid()), action, subject_type, subject_id, coalesce(details, '{}')) $$;
+revoke all on function public.audit(text, text, text, jsonb) from public, anon, authenticated;
+
+-------------------------------------------------------------------------------
+-- 3. Notifications (in-app; email delivery is an integration, see docs/VERIFY.md).
+-------------------------------------------------------------------------------
+create table public.notifications (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  kind text not null,
+  subject_id text,
+  payload jsonb not null default '{}',
+  read_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index notifications_user_idx on public.notifications (user_id, created_at desc);
+alter table public.notifications enable row level security;
+revoke all on public.notifications from public, anon, authenticated;
+grant select, update (read_at) on public.notifications to authenticated;
+create policy notifications_own on public.notifications for select to authenticated using (user_id = (select auth.uid()));
+create policy notifications_mark on public.notifications for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+
+create function public.notify(target uuid, kind text, subject_id text, payload jsonb default '{}') returns void
+language sql security definer set search_path = ''
+as $$ insert into public.notifications (user_id, kind, subject_id, payload) select target, kind, subject_id, coalesce(payload, '{}') where target is not null $$;
+create function public.notify_staff(roles text[], kind text, subject_id text, payload jsonb default '{}') returns void
+language sql security definer set search_path = ''
+as $$ insert into public.notifications (user_id, kind, subject_id, payload)
+      select distinct user_id, kind, subject_id, coalesce(payload, '{}') from public.staff_roles where role = any(roles) or role = 'super_admin' $$;
+revoke all on function public.notify(uuid, text, text, jsonb), public.notify_staff(text[], text, text, jsonb) from public, anon, authenticated;
+
+-------------------------------------------------------------------------------
+-- 4. Seller verification (individual or business). Private to the seller and seller officers.
+-------------------------------------------------------------------------------
+create table public.seller_verifications (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  kind text not null check (kind in ('individual','business')),
+  legal_name text not null check (length(btrim(legal_name)) between 2 and 160),
+  country text not null default 'AL' check (country ~ '^[A-Z]{2}$'),
+  phone text check (phone is null or phone ~ '^\+?[0-9 ]{6,20}$'),
+  address text check (address is null or length(address) <= 300),
+  registration_number text check (registration_number is null or length(registration_number) between 4 and 40),
+  tax_number text check (tax_number is null or length(tax_number) between 4 and 40),
+  representative text check (representative is null or length(representative) <= 160),
+  public_name text check (public_name is null or length(public_name) <= 120),
+  status text not null default 'draft' check (status in ('draft','submitted','under_review','info_required','approved','rejected','revoked')),
+  reviewer_id uuid references auth.users(id),
+  decision_reason text,
+  decided_at timestamptz,
+  updated_at timestamptz not null default now(),
+  -- Albania: NIPT is one letter, eight digits, one letter (e.g. L12345678A). Kosovo: NUI/NRB, 9 digits.
+  check (kind = 'individual' or registration_number is not null),
+  check (country <> 'AL' or kind = 'individual' or registration_number ~ '^[A-Z][0-9]{8}[A-Z]$'),
+  check (country <> 'XK' or kind = 'individual' or registration_number ~ '^[0-9]{9}$')
+);
+alter table public.seller_verifications enable row level security;
+revoke all on public.seller_verifications from public, anon, authenticated;
+grant select on public.seller_verifications to authenticated;
+grant insert (kind, legal_name, country, phone, address, registration_number, tax_number, representative, public_name),
+      update (kind, legal_name, country, phone, address, registration_number, tax_number, representative, public_name)
+  on public.seller_verifications to authenticated;
+create policy seller_verification_own on public.seller_verifications for select to authenticated
+  using (user_id = (select auth.uid()) or public.has_staff_role(array['seller_officer','product_officer','technical_reviewer','customer_protection']));
+create policy seller_verification_create on public.seller_verifications for insert to authenticated
+  with check (user_id = (select auth.uid()) and status = 'draft');
+create policy seller_verification_edit on public.seller_verifications for update to authenticated
+  using (user_id = (select auth.uid()) and status in ('draft','info_required','rejected'))
+  with check (user_id = (select auth.uid()));
+
+alter table public.seller_verifications alter column user_id set default auth.uid();
+
+create function public.seller_verification_edited() returns trigger language plpgsql set search_path = '' as $$
+begin
+  new.updated_at := now();
+  -- Any change by the seller sends the case back to draft; status only moves through the RPCs.
+  if (select auth.uid()) = new.user_id and tg_op = 'UPDATE' and new.status = old.status then new.status := 'draft'; end if;
+  return new;
+end; $$;
+create trigger seller_verification_edited before update on public.seller_verifications for each row execute function public.seller_verification_edited();
+
+create function public.submit_seller_verification() returns boolean
+language plpgsql security definer set search_path = '' as $$
+begin
+  update public.seller_verifications set status = 'submitted', updated_at = now()
+    where user_id = (select auth.uid()) and status in ('draft','info_required','rejected');
+  if not found then return false; end if;
+  perform public.audit('seller.submitted', 'seller', (select auth.uid())::text);
+  perform public.notify((select auth.uid()), 'seller.pending', (select auth.uid())::text);
+  perform public.notify_staff(array['seller_officer'], 'staff.seller_case', (select auth.uid())::text);
+  return true;
+end; $$;
+
+create function public.decide_seller_verification(seller uuid, decision text, reason text) returns boolean
+language plpgsql security definer set search_path = '' as $$
+declare next_status text;
+begin
+  if not public.has_staff_role(array['seller_officer']) or seller = (select auth.uid()) then return false; end if;
+  if reason is null or length(btrim(reason)) < 5 then return false; end if;
+  next_status := case decision when 'approve' then 'approved' when 'reject' then 'rejected' when 'request_info' then 'info_required'
+                               when 'revoke' then 'revoked' when 'start' then 'under_review' end;
+  if next_status is null then return false; end if;
+  update public.seller_verifications
+    set status = next_status, reviewer_id = (select auth.uid()), decision_reason = btrim(reason), decided_at = now()
+    where user_id = seller and (
+      (decision in ('approve','reject','request_info') and status in ('submitted','under_review')) or
+      (decision = 'start' and status = 'submitted') or
+      (decision = 'revoke' and status = 'approved'));
+  if not found then return false; end if;
+  -- An approve needs identity documents reviewed and accepted.
+  if decision = 'approve' and not exists (
+      select 1 from public.verification_documents d where d.owner_id = seller and d.subject_type = 'seller'
+        and d.doc_type in ('identity','business_extract') and d.review_status = 'accepted') then
+    raise exception 'missing accepted identity or business document';
+  end if;
+  perform public.audit('seller.' || decision, 'seller', seller::text, jsonb_build_object('reason', btrim(reason)));
+  perform public.notify(seller, 'seller.' || next_status, seller::text, jsonb_build_object('reason', btrim(reason)));
+  return true;
+end; $$;
+
+-------------------------------------------------------------------------------
+-- 5. Listing verification fields, extended statuses, risk level, versions.
+-------------------------------------------------------------------------------
+alter table public.materials drop constraint if exists materials_moderation_check;
+alter table public.materials drop constraint if exists materials_publication_check;
+alter table public.materials
+  add constraint materials_moderation_check check (moderation in ('unreviewed','pending','under_review','info_required','inspection_required','escalated','approved','rejected','suspended')),
+  add constraint materials_publication_check check (publication in ('draft','published','archived','suspended','expired')),
+  add column manufacturer text check (manufacturer is null or length(manufacturer) <= 120),
+  add column model_ref text check (model_ref is null or length(model_ref) <= 120),
+  add column batch_no text check (batch_no is null or length(batch_no) <= 80),
+  add column origin_country text check (origin_country is null or length(origin_country) <= 60),
+  add column age_years numeric check (age_years is null or age_years between 0 and 200),
+  add column storage_conditions text check (storage_conditions is null or length(storage_conditions) <= 300),
+  add column intended_use text not null default 'non_structural' check (intended_use in ('decorative','non_structural','finishing','structural','fire_safety','electrical','pressure')),
+  add column known_defects text check (known_defects is null or length(known_defects) <= 1000),
+  add column sourcing text check (sourcing is null or length(sourcing) <= 500),
+  add column risk_level text check (risk_level is null or risk_level in ('low','medium','high','prohibited')),
+  add column assigned_to uuid references auth.users(id),
+  add column submitted_at timestamptz;
+
+grant insert (manufacturer, model_ref, batch_no, origin_country, age_years, storage_conditions, intended_use, known_defects, sourcing),
+      update (manufacturer, model_ref, batch_no, origin_country, age_years, storage_conditions, intended_use, known_defects, sourcing)
+  on public.materials to authenticated;
+
+-- Suspended or expired listings cannot be edited back into review by the seller.
+drop policy inventory_edit on public.materials;
+create policy inventory_edit on public.materials for update to authenticated
+  using (owner_id = (select auth.uid()) and publication not in ('archived','suspended'))
+  with check (owner_id = (select auth.uid()));
+-- Staff with a review role read every listing.
+drop policy inventory_read on public.materials;
+create policy inventory_read on public.materials for select to authenticated
+  using (owner_id = (select auth.uid()) or public.has_staff_role(array['product_officer','technical_reviewer','customer_protection','support']));
+
+/** Default risk from category and intended use. Staff may override; AI never sets it. */
+create function public.default_risk(category text, intended_use text) returns text
+language sql immutable as $$
+  select case
+    when intended_use in ('structural','fire_safety','electrical','pressure') then 'high'
+    when category in ('metal','guri') then 'medium'
+    when category in ('dyer','izolim') then 'medium'
+    else 'low' end
+$$;
+
+-- Any material change (description, condition, specs, origin, dimensions, price) returns the listing to draft.
+create or replace function public.track_material_edit() returns trigger
+language plpgsql set search_path = ''
+as $$
+begin
+  new.updated_at := now();
+  if row(new.title,new.description,new.category,new.region,new.condition,new.unit,new.quantity,new.unit_price,new.currency,new.fulfillment,
+         new.masonry_type,new.seller_label,new.manufacturer,new.model_ref,new.batch_no,new.origin_country,new.age_years,new.storage_conditions,
+         new.intended_use,new.known_defects,new.sourcing,new.length_mm,new.width_mm,new.thickness_mm,new.sheet_material,new.color)
+     is distinct from
+     row(old.title,old.description,old.category,old.region,old.condition,old.unit,old.quantity,old.unit_price,old.currency,old.fulfillment,
+         old.masonry_type,old.seller_label,old.manufacturer,old.model_ref,old.batch_no,old.origin_country,old.age_years,old.storage_conditions,
+         old.intended_use,old.known_defects,old.sourcing,old.length_mm,old.width_mm,old.thickness_mm,old.sheet_material,old.color) then
+    new.publication := 'draft';
+    new.moderation := 'unreviewed';
+    new.revision := old.revision + 1;
+    new.risk_level := null;
+  end if;
+  return new;
+end;
+$$;
+
+create table public.material_versions (
+  material_id uuid not null references public.materials(id) on delete cascade,
+  revision integer not null,
+  data jsonb not null,
+  submitted_by uuid,
+  submitted_at timestamptz not null default now(),
+  primary key (material_id, revision)
+);
+alter table public.material_versions enable row level security;
+revoke all on public.material_versions from public, anon, authenticated;
+grant select on public.material_versions to authenticated;
+create policy material_versions_read on public.material_versions for select to authenticated
+  using (exists (select 1 from public.materials m where m.id = material_id and m.owner_id = (select auth.uid()))
+         or public.has_staff_role(array['product_officer','technical_reviewer']));
+
+-------------------------------------------------------------------------------
+-- 6. Documents (private bucket `verify-docs`), requirements matrix.
+-------------------------------------------------------------------------------
+create table public.verification_documents (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  subject_type text not null check (subject_type in ('seller','material','dispute','inspection')),
+  subject_id text not null,
+  doc_type text not null check (doc_type in ('identity','business_extract','business_license','qualification','photo','technical_datasheet','invoice','ownership',
+    'ce_marking','dop','doc_conformity','certificate','eta','lab_report','safety_data_sheet','fire_performance','structural_performance','warranty',
+    'inspection_report','independent_certification','evidence','other')),
+  storage_path text not null unique check (storage_path ~ '^[0-9a-f-]{36}/'),
+  file_name text not null check (length(file_name) between 1 and 200),
+  mime_type text not null check (mime_type in ('application/pdf','image/jpeg','image/png','image/webp')),
+  size_bytes integer not null check (size_bytes between 1 and 15728640),
+  issuer text check (issuer is null or length(issuer) <= 160),
+  reference_no text check (reference_no is null or length(reference_no) <= 120),
+  issued_on date,
+  expires_on date,
+  review_status text not null default 'pending' check (review_status in ('pending','accepted','rejected')),
+  registry_checked boolean not null default false,
+  reviewer_id uuid references auth.users(id),
+  review_notes text,
+  reviewed_at timestamptz,
+  created_at timestamptz not null default now(),
+  check (expires_on is null or issued_on is null or expires_on >= issued_on)
+);
+create index verification_documents_subject_idx on public.verification_documents (subject_type, subject_id);
+alter table public.verification_documents enable row level security;
+revoke all on public.verification_documents from public, anon, authenticated;
+grant select on public.verification_documents to authenticated;
+grant insert (subject_type, subject_id, doc_type, storage_path, file_name, mime_type, size_bytes, issuer, reference_no, issued_on, expires_on)
+  on public.verification_documents to authenticated;
+create policy documents_read on public.verification_documents for select to authenticated using (
+  owner_id = (select auth.uid())
+  or (subject_type = 'seller' and public.has_staff_role(array['seller_officer']))
+  or (subject_type in ('material','inspection') and public.has_staff_role(array['product_officer','technical_reviewer']))
+  or (subject_type = 'dispute' and public.has_staff_role(array['customer_protection'])));
+
+create table public.inspections (
+  id uuid primary key default gen_random_uuid(),
+  material_id uuid not null references public.materials(id) on delete cascade,
+  revision integer not null,
+  requested_by uuid not null references auth.users(id),
+  requested_at timestamptz not null default now(),
+  scope text not null check (length(btrim(scope)) >= 5),
+  lot_ref text not null check (length(btrim(lot_ref)) >= 2),
+  inspector_name text,
+  inspector_qualifications text,
+  scheduled_for timestamptz,
+  location text,
+  result text check (result is null or result in ('pass','restricted','fail')),
+  findings text,
+  defects text,
+  recommendation text check (recommendation is null or recommendation in ('approve','restrict','reject')),
+  report_document uuid references public.verification_documents(id),
+  recorded_by uuid references auth.users(id),
+  completed_at timestamptz
+);
+alter table public.inspections enable row level security;
+revoke all on public.inspections from public, anon, authenticated;
+grant select on public.inspections to authenticated;
+create policy inspections_read on public.inspections for select to authenticated using (
+  public.has_staff_role(array['product_officer','technical_reviewer'])
+  or exists (select 1 from public.materials m where m.id = material_id and m.owner_id = (select auth.uid())));
+
+
+create function public.document_uploaded() returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  perform public.audit('document.uploaded', new.subject_type, new.subject_id, jsonb_build_object('document', new.id, 'type', new.doc_type, 'file', new.file_name));
+  return new;
+end; $$;
+create trigger document_uploaded after insert on public.verification_documents for each row execute function public.document_uploaded();
+
+create function public.review_document(document_id uuid, verdict text, notes text, registry_checked boolean default false) returns boolean
+language plpgsql security definer set search_path = '' as $$
+declare d public.verification_documents%rowtype;
+begin
+  select * into d from public.verification_documents where id = document_id;
+  if not found or verdict not in ('accepted','rejected') or d.owner_id = (select auth.uid()) then return false; end if;
+  if not ((d.subject_type = 'seller' and public.has_staff_role(array['seller_officer']))
+       or (d.subject_type in ('material','inspection') and public.has_staff_role(array['product_officer','technical_reviewer']))
+       or (d.subject_type = 'dispute' and public.has_staff_role(array['customer_protection']))) then return false; end if;
+  update public.verification_documents set review_status = verdict, review_notes = nullif(btrim(coalesce(notes,'')), ''),
+    registry_checked = coalesce(review_document.registry_checked, false), reviewer_id = (select auth.uid()), reviewed_at = now()
+    where id = document_id;
+  perform public.audit('document.' || verdict, d.subject_type, d.subject_id, jsonb_build_object('document', document_id, 'type', d.doc_type, 'notes', notes, 'registry_checked', registry_checked));
+  return true;
+end; $$;
+
+create table public.verification_requirements (
+  id bigint generated always as identity primary key,
+  country text not null default 'AL',
+  category text,
+  risk_level text check (risk_level is null or risk_level in ('low','medium','high')),
+  intended_use text,
+  doc_type text not null,
+  required boolean not null default true,
+  note_sq text,
+  note_en text,
+  active boolean not null default true
+);
+alter table public.verification_requirements enable row level security;
+revoke all on public.verification_requirements from public, anon, authenticated;
+grant select on public.verification_requirements to anon, authenticated;
+grant insert, update, delete on public.verification_requirements to authenticated;
+create policy requirements_read on public.verification_requirements for select to anon, authenticated using (true);
+create policy requirements_admin on public.verification_requirements for all to authenticated
+  using (public.has_staff_role(array['super_admin'])) with check (public.has_staff_role(array['super_admin']));
+
+-- Albania baseline. Every listing needs real photos; risk raises the bar. Kept small on purpose; super admins extend it.
+insert into public.verification_requirements (country, category, risk_level, intended_use, doc_type, required, note_sq, note_en) values
+  ('AL', null, null, null, 'photo', true, 'Foto reale të lotit të materialit.', 'Real photos of the material lot.'),
+  ('AL', null, 'medium', null, 'technical_datasheet', true, 'Fletë teknike ose specifikime të prodhuesit.', 'Technical data sheet or manufacturer specifications.'),
+  ('AL', null, 'medium', null, 'ownership', false, 'Faturë ose dëshmi pronësie, kur ka.', 'Invoice or proof of ownership, where available.'),
+  ('AL', null, 'high', null, 'technical_datasheet', true, 'Fletë teknike.', 'Technical data sheet.'),
+  ('AL', null, 'high', null, 'dop', true, 'Deklaratë performance (DoP) ose deklaratë konformiteti.', 'Declaration of Performance or conformity.'),
+  ('AL', null, 'high', null, 'ownership', true, 'Faturë ose dëshmi pronësie.', 'Invoice or proof of ownership.'),
+  ('AL', null, 'high', 'structural', 'inspection_report', true, 'Raport inspektimi fizik nga person i kualifikuar.', 'Physical inspection report by a qualified person.'),
+  ('AL', null, 'high', 'fire_safety', 'fire_performance', true, 'Dokumentim i performancës ndaj zjarrit.', 'Fire performance documentation.'),
+  ('AL', 'metal', 'high', 'structural', 'lab_report', false, 'Raport laboratori për çelikun, kur ka.', 'Laboratory report for steel, where available.');
+
+/** Mandatory document types still missing (not accepted or expired) for a listing. */
+create function public.missing_documents(material uuid) returns text[]
+language sql stable security definer set search_path = '' as $$
+  select coalesce(array_agg(distinct r.doc_type), '{}')
+  from public.materials m
+  join public.verification_requirements r on r.active and r.required and r.country = 'AL'
+    and (r.category is null or r.category = m.category)
+    and (r.risk_level is null or r.risk_level = coalesce(m.risk_level, public.default_risk(m.category, m.intended_use)))
+    and (r.intended_use is null or r.intended_use = m.intended_use)
+  where m.id = material
+    and not exists (select 1 from public.verification_documents d where d.subject_type = 'material' and d.subject_id = m.id::text
+                      and d.doc_type = r.doc_type and d.review_status = 'accepted' and (d.expires_on is null or d.expires_on >= current_date))
+    -- An inspection report counts only through a completed inspection of this lot with an accepted report.
+    and not (r.doc_type = 'inspection_report' and exists (
+      select 1 from public.inspections i join public.verification_documents d on d.id = i.report_document
+      where i.material_id = m.id and i.completed_at is not null and i.result in ('pass','restricted') and d.review_status = 'accepted'))
+$$;
+revoke all on function public.missing_documents(uuid) from public, anon;
+grant execute on function public.missing_documents(uuid) to authenticated;
+
+-------------------------------------------------------------------------------
+-- 7. Submission, review decisions (human only), dual approval, passports.
+-------------------------------------------------------------------------------
+create or replace function public.change_material_state(material_id uuid, expected_revision integer, intent text) returns boolean
+language plpgsql security definer set search_path = ''
+as $$
+#variable_conflict use_column
+declare m public.materials%rowtype;
+begin
+  if intent = 'submit' then
+    update public.materials set moderation = 'pending', submitted_at = now(),
+           risk_level = coalesce(risk_level, public.default_risk(category, intended_use))
+      where id = material_id and owner_id = (select auth.uid()) and revision = expected_revision
+        and publication = 'draft' and moderation in ('unreviewed','rejected','info_required') and quantity > 0
+      returning * into m;
+    if not found then return false; end if;
+    insert into public.material_versions (material_id, revision, data, submitted_by)
+      values (m.id, m.revision, to_jsonb(m) - 'assigned_to', (select auth.uid()))
+      on conflict (material_id, revision) do update set data = excluded.data, submitted_at = now();
+    perform public.audit('listing.submitted', 'material', m.id::text, jsonb_build_object('revision', m.revision, 'risk', m.risk_level));
+    perform public.notify(m.owner_id, 'listing.submitted', m.id::text, jsonb_build_object('title', m.title));
+    perform public.notify_staff(array['product_officer'], 'staff.listing_case', m.id::text, jsonb_build_object('title', m.title, 'risk', m.risk_level));
+    return true;
+  elsif intent = 'unpublish' then
+    update public.materials set publication = 'draft', moderation = 'unreviewed', revision = revision + 1
+      where id = material_id and owner_id = (select auth.uid()) and revision = expected_revision
+        and (publication in ('published','expired') or moderation in ('pending','under_review','info_required','inspection_required','escalated'));
+  elsif intent = 'archive' then
+    update public.materials set publication = 'archived', moderation = 'unreviewed', revision = revision + 1
+      where id = material_id and owner_id = (select auth.uid()) and revision = expected_revision
+        and publication not in ('archived','suspended');
+  else
+    return false;
+  end if;
+  if found then perform public.audit('listing.' || intent, 'material', material_id::text, jsonb_build_object('revision', expected_revision)); end if;
+  return found;
+end;
+$$;
+
+create table public.review_decisions (
+  id bigint generated always as identity primary key,
+  material_id uuid not null references public.materials(id) on delete cascade,
+  revision integer not null,
+  reviewer_id uuid not null references auth.users(id),
+  decision text not null check (decision in ('start','approve','reject','request_info','request_inspection','escalate','suspend','reinstate','set_risk')),
+  reason text not null check (length(btrim(reason)) >= 5),
+  checklist jsonb not null default '{}',
+  evidence text,
+  created_at timestamptz not null default now()
+);
+create index review_decisions_material_idx on public.review_decisions (material_id, created_at);
+alter table public.review_decisions enable row level security;
+revoke all on public.review_decisions from public, anon, authenticated;
+grant select on public.review_decisions to authenticated;
+create policy review_decisions_read on public.review_decisions for select to authenticated using (
+  public.has_staff_role(array['product_officer','technical_reviewer','customer_protection'])
+  or exists (select 1 from public.materials m where m.id = material_id and m.owner_id = (select auth.uid())));
+
+create table public.material_passports (
+  material_id uuid primary key references public.materials(id) on delete cascade,
+  code text not null unique,
+  issued_at timestamptz not null default now(),
+  revision integer not null
+);
+create sequence public.material_passport_seq;
+alter table public.material_passports enable row level security;
+revoke all on public.material_passports from public, anon, authenticated;
+
+create table public.suspensions (
+  id bigint generated always as identity primary key,
+  material_id uuid not null references public.materials(id) on delete cascade,
+  kind text not null check (kind in ('unsafe','fraud','recall','non_compliant','other')),
+  reason text not null,
+  corrective_action text,
+  created_by uuid not null references auth.users(id),
+  created_at timestamptz not null default now(),
+  lifted_by uuid references auth.users(id),
+  lifted_at timestamptz
+);
+alter table public.suspensions enable row level security;
+revoke all on public.suspensions from public, anon, authenticated;
+grant select on public.suspensions to authenticated;
+create policy suspensions_read on public.suspensions for select to authenticated using (
+  public.has_staff_role(array['product_officer','technical_reviewer','customer_protection'])
+  or exists (select 1 from public.materials m where m.id = material_id and m.owner_id = (select auth.uid())));
+
+/**
+ * The only way a listing becomes public. Human staff only, never the owner, with a reason.
+ * High-risk listings need two approvals from different reviewers on the same revision.
+ * Approval is blocked while mandatory documents are missing, expired or unreviewed, or when the risk is prohibited.
+ */
+create function public.verify_decide(material_id uuid, expected_revision integer, decision text, reason text,
+                                     checklist jsonb default '{}', evidence text default null, extra jsonb default '{}')
+returns text
+language plpgsql security definer set search_path = '' as $$
+#variable_conflict use_column
+declare
+  m public.materials%rowtype;
+  me uuid := (select auth.uid());
+  risk text;
+  missing text[];
+  approvals int;
+  code text;
+begin
+  if decision is null or reason is null or length(btrim(reason)) < 5 then return 'reason_required'; end if;
+  select * into m from public.materials where id = material_id for update;
+  if not found then return 'not_found'; end if;
+  if m.owner_id = me then return 'own_listing'; end if;
+  if m.revision <> expected_revision then return 'stale_revision'; end if;
+  risk := coalesce(m.risk_level, public.default_risk(m.category, m.intended_use));
+
+  if decision in ('suspend','reinstate') then
+    if not public.has_staff_role(array['product_officer','technical_reviewer','customer_protection']) then return 'forbidden'; end if;
+  elsif decision in ('set_risk','escalate','request_inspection') then
+    if not public.has_staff_role(array['product_officer','technical_reviewer']) then return 'forbidden'; end if;
+  elsif risk = 'high' and decision = 'approve' then
+    if not public.has_staff_role(array['technical_reviewer','product_officer']) then return 'forbidden'; end if;
+  elsif not public.has_staff_role(array['product_officer','technical_reviewer']) then return 'forbidden';
+  end if;
+
+  if decision = 'start' then
+    if m.moderation not in ('pending','escalated') then return 'invalid_state'; end if;
+    update public.materials set moderation = 'under_review', assigned_to = me where id = m.id;
+  elsif decision = 'set_risk' then
+    if (extra ->> 'risk') not in ('low','medium','high','prohibited') then return 'invalid_risk'; end if;
+    update public.materials set risk_level = extra ->> 'risk' where id = m.id;
+    if extra ->> 'risk' = 'prohibited' and m.publication = 'published' then
+      update public.materials set publication = 'suspended', moderation = 'suspended' where id = m.id;
+    end if;
+  elsif decision = 'approve' then
+    if m.publication <> 'draft' or m.moderation not in ('pending','under_review','escalated','inspection_required') then return 'invalid_state'; end if;
+    if risk = 'prohibited' then return 'prohibited'; end if;
+    missing := public.missing_documents(m.id);
+    if cardinality(missing) > 0 then return 'missing:' || array_to_string(missing, ','); end if;
+    if risk = 'high' then
+      if not exists (select 1 from public.seller_verifications s where s.user_id = m.owner_id and s.status = 'approved') then return 'seller_unverified'; end if;
+      select count(distinct reviewer_id) into approvals from public.review_decisions
+        where review_decisions.material_id = m.id and revision = m.revision and decision = 'approve' and reviewer_id <> me;
+      if approvals = 0 then
+        insert into public.review_decisions (material_id, revision, reviewer_id, decision, reason, checklist, evidence)
+          values (m.id, m.revision, me, 'approve', btrim(reason), coalesce(checklist, '{}'), evidence);
+        update public.materials set moderation = 'under_review' where id = m.id;
+        perform public.audit('listing.approve_first', 'material', m.id::text, jsonb_build_object('revision', m.revision, 'reason', btrim(reason)));
+        perform public.notify_staff(array['technical_reviewer'], 'staff.second_approval', m.id::text, jsonb_build_object('title', m.title));
+        return 'awaiting_second_approval';
+      end if;
+    end if;
+    update public.materials set moderation = 'approved', publication = 'published', revision = revision + 1, assigned_to = null where id = m.id;
+    insert into public.material_passports (material_id, code, revision)
+      values (m.id, 'EC-AL-' || lpad(nextval('public.material_passport_seq')::text, 6, '0'), m.revision)
+      on conflict (material_id) do update set revision = excluded.revision;
+    perform public.notify(m.owner_id, 'listing.approved', m.id::text, jsonb_build_object('title', m.title));
+  elsif decision = 'reject' then
+    if m.moderation not in ('pending','under_review','escalated','inspection_required','info_required') then return 'invalid_state'; end if;
+    update public.materials set moderation = 'rejected', publication = 'draft', assigned_to = null where id = m.id;
+    perform public.notify(m.owner_id, 'listing.rejected', m.id::text, jsonb_build_object('title', m.title, 'reason', btrim(reason)));
+  elsif decision = 'request_info' then
+    if m.moderation not in ('pending','under_review','escalated','inspection_required') then return 'invalid_state'; end if;
+    update public.materials set moderation = 'info_required' where id = m.id;
+    perform public.notify(m.owner_id, 'listing.info_required', m.id::text, jsonb_build_object('title', m.title, 'reason', btrim(reason)));
+  elsif decision = 'request_inspection' then
+    if m.moderation not in ('pending','under_review','escalated') then return 'invalid_state'; end if;
+    update public.materials set moderation = 'inspection_required' where id = m.id;
+    insert into public.inspections (material_id, revision, requested_by, scope, lot_ref)
+      values (m.id, m.revision, me, coalesce(nullif(extra ->> 'scope', ''), btrim(reason)), coalesce(nullif(extra ->> 'lot', ''), m.batch_no, 'Loti i listimit'));
+    perform public.notify(m.owner_id, 'listing.inspection_required', m.id::text, jsonb_build_object('title', m.title, 'reason', btrim(reason)));
+  elsif decision = 'escalate' then
+    if m.moderation not in ('pending','under_review') then return 'invalid_state'; end if;
+    update public.materials set moderation = 'escalated', assigned_to = null where id = m.id;
+    perform public.notify_staff(array['technical_reviewer'], 'staff.escalated', m.id::text, jsonb_build_object('title', m.title));
+  elsif decision = 'suspend' then
+    if m.publication <> 'published' then return 'invalid_state'; end if;
+    update public.materials set publication = 'suspended', moderation = 'suspended' where id = m.id;
+    insert into public.suspensions (material_id, kind, reason, corrective_action, created_by)
+      values (m.id, coalesce(nullif(extra ->> 'kind', ''), 'other'), btrim(reason), extra ->> 'corrective_action', me);
+    perform public.notify(m.owner_id, 'listing.suspended', m.id::text, jsonb_build_object('title', m.title, 'reason', btrim(reason)));
+    -- Buyers who asked for a quote on this lot are told when it is a safety matter or a recall.
+    if coalesce(extra ->> 'kind', '') in ('unsafe','recall') then
+      insert into public.notifications (user_id, kind, subject_id, payload)
+        select distinct q.buyer_id, 'buyer.safety_notice', m.id::text, jsonb_build_object('title', m.title, 'reason', btrim(reason))
+        from public.quotation_requests q where q.material_id = m.id;
+    end if;
+  elsif decision = 'reinstate' then
+    if m.publication <> 'suspended' then return 'invalid_state'; end if;
+    update public.materials set publication = 'draft', moderation = 'pending' where id = m.id;
+    update public.suspensions set lifted_by = me, lifted_at = now() where suspensions.material_id = m.id and lifted_at is null;
+  else
+    return 'invalid_decision';
+  end if;
+
+  insert into public.review_decisions (material_id, revision, reviewer_id, decision, reason, checklist, evidence)
+    values (m.id, m.revision, me, decision, btrim(reason), coalesce(checklist, '{}'), evidence);
+  perform public.audit('listing.' || decision, 'material', m.id::text,
+    jsonb_build_object('revision', m.revision, 'reason', btrim(reason), 'checklist', coalesce(checklist, '{}'), 'evidence', evidence, 'extra', coalesce(extra, '{}')));
+  return 'ok';
+end; $$;
+
+-- Legacy single-click review goes through the same rules.
+create or replace function public.review_material(material_id uuid, expected_revision integer, verdict text) returns boolean
+language plpgsql security definer set search_path = '' as $$
+begin
+  return public.verify_decide(material_id, expected_revision, case verdict when 'approved' then 'approve' when 'rejected' then 'reject' end,
+                              'Vendim nga paneli i administrimit') = 'ok';
+end; $$;
+
+-------------------------------------------------------------------------------
+-- 8. Physical inspections.
+-------------------------------------------------------------------------------
+create function public.record_inspection(inspection_id uuid, inspector text, qualifications text, place text, outcome text,
+                                         findings_text text, defects_text text, recommend text, report uuid) returns boolean
+language plpgsql security definer set search_path = '' as $$
+declare i public.inspections%rowtype;
+begin
+  if not public.has_staff_role(array['technical_reviewer']) then return false; end if;
+  if outcome not in ('pass','restricted','fail') or recommend not in ('approve','restrict','reject')
+     or length(btrim(coalesce(inspector,''))) < 2 or length(btrim(coalesce(qualifications,''))) < 2 then return false; end if;
+  -- The report must be an accepted inspection_report document for this lot; photos alone never count.
+  if report is null or not exists (select 1 from public.verification_documents d where d.id = report and d.doc_type = 'inspection_report'
+                                    and d.subject_type = 'inspection' and d.subject_id = inspection_id::text) then return false; end if;
+  update public.inspections set inspector_name = btrim(inspector), inspector_qualifications = btrim(qualifications), location = place,
+    result = outcome, findings = findings_text, defects = defects_text, recommendation = recommend, report_document = report,
+    recorded_by = (select auth.uid()), completed_at = now()
+    where id = inspection_id and completed_at is null returning * into i;
+  if not found then return false; end if;
+  update public.materials set moderation = 'under_review' where id = i.material_id and moderation = 'inspection_required';
+  perform public.audit('inspection.recorded', 'material', i.material_id::text, jsonb_build_object('inspection', i.id, 'result', outcome, 'recommendation', recommend, 'scope', i.scope, 'lot', i.lot_ref));
+  return true;
+end; $$;
+
+-------------------------------------------------------------------------------
+-- 9. Customer protection: disputes and reports.
+-------------------------------------------------------------------------------
+create table public.disputes (
+  id uuid primary key default gen_random_uuid(),
+  reporter_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  material_id uuid references public.materials(id) on delete set null,
+  kind text not null check (kind in ('wrong_description','damaged','missing_quantity','counterfeit','suspicious_seller','missing_documents','not_as_pictured','safety','delivery','non_delivery','other')),
+  description text not null check (length(btrim(description)) between 20 and 3000),
+  status text not null default 'open' check (status in ('open','assigned','investigating','waiting_customer','resolved','rejected')),
+  assigned_to uuid references auth.users(id),
+  resolution text,
+  refund_status text check (refund_status is null or refund_status in ('requested','approved','declined','not_applicable')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+alter table public.disputes enable row level security;
+revoke all on public.disputes from public, anon, authenticated;
+grant select on public.disputes to authenticated;
+grant insert (material_id, kind, description) on public.disputes to authenticated;
+create policy disputes_read on public.disputes for select to authenticated using (reporter_id = (select auth.uid()) or public.has_staff_role(array['customer_protection','support']));
+create policy disputes_create on public.disputes for insert to authenticated with check (reporter_id = (select auth.uid()) and status = 'open');
+
+create table public.dispute_messages (
+  id bigint generated always as identity primary key,
+  dispute_id uuid not null references public.disputes(id) on delete cascade,
+  author_id uuid not null default auth.uid() references auth.users(id),
+  body text not null check (length(btrim(body)) between 1 and 3000),
+  internal boolean not null default false,
+  created_at timestamptz not null default now()
+);
+alter table public.dispute_messages enable row level security;
+revoke all on public.dispute_messages from public, anon, authenticated;
+grant select, insert (dispute_id, body, internal) on public.dispute_messages to authenticated;
+create policy dispute_messages_read on public.dispute_messages for select to authenticated using (
+  public.has_staff_role(array['customer_protection','support'])
+  or (not internal and exists (select 1 from public.disputes d where d.id = dispute_id and d.reporter_id = (select auth.uid()))));
+create policy dispute_messages_write on public.dispute_messages for insert to authenticated with check (
+  author_id = (select auth.uid()) and (
+    public.has_staff_role(array['customer_protection','support'])
+    or (not internal and exists (select 1 from public.disputes d where d.id = dispute_id and d.reporter_id = (select auth.uid())))));
+
+create function public.dispute_opened() returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  perform public.audit('dispute.opened', 'dispute', new.id::text, jsonb_build_object('kind', new.kind, 'material', new.material_id));
+  perform public.notify_staff(array['customer_protection'], 'staff.dispute', new.id::text, jsonb_build_object('kind', new.kind));
+  return new;
+end; $$;
+create trigger dispute_opened after insert on public.disputes for each row execute function public.dispute_opened();
+
+create function public.update_dispute(dispute uuid, next_status text, assignee uuid, resolution_text text, refund text) returns boolean
+language plpgsql security definer set search_path = '' as $$
+declare d public.disputes%rowtype;
+begin
+  if not public.has_staff_role(array['customer_protection']) then return false; end if;
+  if next_status not in ('open','assigned','investigating','waiting_customer','resolved','rejected') then return false; end if;
+  if next_status in ('resolved','rejected') and length(btrim(coalesce(resolution_text,''))) < 5 then return false; end if;
+  update public.disputes set status = next_status, assigned_to = coalesce(assignee, assigned_to),
+    resolution = coalesce(nullif(btrim(coalesce(resolution_text,'')), ''), resolution), refund_status = coalesce(refund, refund_status), updated_at = now()
+    where id = dispute returning * into d;
+  if not found then return false; end if;
+  perform public.audit('dispute.' || next_status, 'dispute', dispute::text, jsonb_build_object('resolution', resolution_text, 'refund', refund, 'assignee', assignee));
+  perform public.notify(d.reporter_id, 'dispute.' || next_status, dispute::text, jsonb_build_object('resolution', resolution_text));
+  return true;
+end; $$;
+
+-------------------------------------------------------------------------------
+-- 10. Certificate expiry: listings whose mandatory evidence expired leave the catalogue.
+-------------------------------------------------------------------------------
+create function public.expire_listings() returns integer
+language plpgsql security definer set search_path = '' as $$
+declare n integer := 0; r record;
+begin
+  -- Runs from a scheduled job (no user) or by review staff.
+  if (select auth.uid()) is not null and not public.has_staff_role(array['product_officer','technical_reviewer']) then return 0; end if;
+  for r in select m.id, m.owner_id, m.title from public.materials m
+           where m.publication = 'published' and cardinality(public.missing_documents(m.id)) > 0 loop
+    update public.materials set publication = 'expired' where id = r.id;
+    perform public.audit('listing.expired', 'material', r.id::text, jsonb_build_object('missing', public.missing_documents(r.id)));
+    perform public.notify(r.owner_id, 'listing.expired', r.id::text, jsonb_build_object('title', r.title));
+    n := n + 1;
+  end loop;
+  -- Warn 30 days before a mandatory certificate expires (once per document).
+  insert into public.notifications (user_id, kind, subject_id, payload)
+    select d.owner_id, 'document.expiring', d.subject_id, jsonb_build_object('document', d.id, 'type', d.doc_type, 'expires_on', d.expires_on)
+    from public.verification_documents d
+    where d.review_status = 'accepted' and d.expires_on between current_date and current_date + 30
+      and not exists (select 1 from public.notifications x where x.kind = 'document.expiring' and x.payload ->> 'document' = d.id::text);
+  return n;
+end; $$;
+
+-------------------------------------------------------------------------------
+-- 11. Public verification record: evidence-based badges, never private documents.
+-------------------------------------------------------------------------------
+create view public.public_verification with (security_barrier = true, security_invoker = false) as
+  select c.id as material_id,
+         p.code as passport_code,
+         p.issued_at as passport_issued_at,
+         m.revision,
+         coalesce(m.risk_level, public.default_risk(m.category, m.intended_use)) as risk_level,
+         m.manufacturer, m.model_ref, m.batch_no, m.origin_country, m.age_years, m.storage_conditions, m.intended_use, m.known_defects,
+         (select max(r.created_at) from public.review_decisions r where r.material_id = c.id and r.decision = 'approve') as reviewed_at,
+         (select count(distinct r.reviewer_id) from public.review_decisions r where r.material_id = c.id and r.decision = 'approve' and r.revision >= m.revision - 1) as approvals,
+         (s.status = 'approved' and s.kind = 'individual') as identity_verified,
+         (s.status = 'approved' and s.kind = 'business') as business_verified,
+         case when s.status = 'approved' and s.kind = 'business' then coalesce(s.public_name, s.legal_name) end as business_name,
+         (select coalesce(jsonb_agg(jsonb_build_object('type', d.doc_type, 'issuer', d.issuer, 'reference', d.reference_no, 'expires_on', d.expires_on, 'registry_checked', d.registry_checked) order by d.doc_type), '[]')
+            from public.verification_documents d
+            where d.subject_type = 'material' and d.subject_id = c.id::text and d.review_status = 'accepted'
+              and d.doc_type not in ('identity','business_extract','ownership','invoice','photo')) as documents,
+         (select jsonb_build_object('result', i.result, 'scope', i.scope, 'lot', i.lot_ref, 'date', i.completed_at, 'qualifications', i.inspector_qualifications)
+            from public.inspections i where i.material_id = c.id and i.completed_at is not null order by i.completed_at desc limit 1) as inspection,
+         exists (select 1 from public.verification_documents d where d.subject_type = 'material' and d.subject_id = c.id::text
+                   and d.doc_type = 'independent_certification' and d.review_status = 'accepted' and d.registry_checked
+                   and (d.expires_on is null or d.expires_on >= current_date)) as independent_certified
+  from public.public_catalogue c
+  join public.materials m on m.id = c.id
+  left join public.material_passports p on p.material_id = c.id
+  left join public.seller_verifications s on s.user_id = m.owner_id;
+revoke all on public.public_verification from public, anon, authenticated;
+grant select on public.public_verification to anon, authenticated;
+
+-------------------------------------------------------------------------------
+-- 12. Storage: private bucket for verification documents (Supabase Storage).
+-------------------------------------------------------------------------------
+do $$
+begin
+  if exists (select 1 from information_schema.tables where table_schema = 'storage' and table_name = 'buckets') then
+    insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+      values ('verify-docs', 'verify-docs', false, 15728640, array['application/pdf','image/jpeg','image/png','image/webp'])
+      on conflict (id) do nothing;
+    execute $p$create policy verify_docs_upload on storage.objects for insert to authenticated
+      with check (bucket_id = 'verify-docs' and (storage.foldername(name))[1] = (select auth.uid())::text)$p$;
+    execute $p$create policy verify_docs_read on storage.objects for select to authenticated
+      using (bucket_id = 'verify-docs' and ((storage.foldername(name))[1] = (select auth.uid())::text
+             or public.has_staff_role(array['seller_officer','product_officer','technical_reviewer','customer_protection'])))$p$;
+  end if;
+end $$;
+
+-------------------------------------------------------------------------------
+-- 13. Grants for the RPCs.
+-------------------------------------------------------------------------------
+revoke all on function public.submit_seller_verification(), public.decide_seller_verification(uuid, text, text),
+  public.review_document(uuid, text, text, boolean), public.verify_decide(uuid, integer, text, text, jsonb, text, jsonb),
+  public.record_inspection(uuid, text, text, text, text, text, text, text, uuid), public.update_dispute(uuid, text, uuid, text, text),
+  public.expire_listings(), public.default_risk(text, text) from public, anon;
+grant execute on function public.submit_seller_verification(), public.decide_seller_verification(uuid, text, text),
+  public.review_document(uuid, text, text, boolean), public.verify_decide(uuid, integer, text, text, jsonb, text, jsonb),
+  public.record_inspection(uuid, text, text, text, text, text, text, text, uuid), public.update_dispute(uuid, text, uuid, text, text),
+  public.expire_listings(), public.default_risk(text, text) to authenticated;
+
+-- Staff role changes are audited.
+create function public.staff_role_changed() returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  perform public.audit('staff.' || lower(tg_op), 'staff', coalesce(new.user_id, old.user_id)::text, jsonb_build_object('role', coalesce(new.role, old.role)));
+  return coalesce(new, old);
+end; $$;
+create trigger staff_role_changed after insert or delete on public.staff_roles for each row execute function public.staff_role_changed();
+
+create function public.grant_staff_role(target uuid, wanted text) returns boolean
+language plpgsql security definer set search_path = '' as $$
+begin
+  if not public.has_staff_role(array['super_admin']) or target = (select auth.uid()) then return false; end if;
+  insert into public.staff_roles (user_id, role, granted_by) values (target, wanted, (select auth.uid())) on conflict do nothing;
+  return true;
+end; $$;
+create function public.revoke_staff_role(target uuid, wanted text) returns boolean
+language plpgsql security definer set search_path = '' as $$
+begin
+  if not public.has_staff_role(array['super_admin']) or target = (select auth.uid()) then return false; end if;
+  delete from public.staff_roles where user_id = target and role = wanted;
+  return found;
+end; $$;
+revoke all on function public.grant_staff_role(uuid, text), public.revoke_staff_role(uuid, text) from public, anon;
+grant execute on function public.grant_staff_role(uuid, text), public.revoke_staff_role(uuid, text) to authenticated;
+
+-- Document upload rule (placed last: it refers to disputes).
+create policy documents_create on public.verification_documents for insert to authenticated with check (
+  owner_id = (select auth.uid()) and review_status = 'pending'
+  and storage_path like ((select auth.uid())::text || '/%')
+  and (subject_type <> 'seller' or subject_id = (select auth.uid())::text)
+  and (subject_type <> 'material' or exists (select 1 from public.materials m where m.id::text = subject_id and m.owner_id = (select auth.uid())))
+  and (subject_type <> 'dispute' or exists (select 1 from public.disputes d where d.id::text = subject_id and d.reporter_id = (select auth.uid())))
+  and (subject_type <> 'inspection' or public.has_staff_role(array['technical_reviewer'])));
+
+-- Document access by staff is logged (who opened which private file, when).
+create function public.log_document_access(document_id uuid) returns boolean
+language plpgsql security definer set search_path = '' as $$
+declare d public.verification_documents%rowtype;
+begin
+  select * into d from public.verification_documents where id = document_id;
+  if not found then return false; end if;
+  if not (d.owner_id = (select auth.uid())
+          or (d.subject_type = 'seller' and public.has_staff_role(array['seller_officer']))
+          or (d.subject_type in ('material','inspection') and public.has_staff_role(array['product_officer','technical_reviewer']))
+          or (d.subject_type = 'dispute' and public.has_staff_role(array['customer_protection']))) then return false; end if;
+  perform public.audit('document.opened', d.subject_type, d.subject_id, jsonb_build_object('document', d.id, 'type', d.doc_type));
+  return true;
+end; $$;
+revoke all on function public.log_document_access(uuid) from public, anon;
+grant execute on function public.log_document_access(uuid) to authenticated;

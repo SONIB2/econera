@@ -41,10 +41,10 @@ export async function adminLogin(_: LoginState, form: FormData): Promise<LoginSt
   if (rateLimited(`admin:${await clientKey()}`, 8, 15 * 60 * 1000)) return { error: "Shumë përpjekje. Prit 15 minuta." };
   if (!passwordMatches(String(form.get("password") ?? ""))) return { error: "Fjalëkalimi nuk është i saktë." };
   await setAdminSession(true);
-  redirect("/admin");
+  redirect("/admin/pilot");
 }
 
 export async function adminLogout() {
   await setAdminSession(false);
-  redirect("/admin");
+  redirect("/admin/pilot");
 }

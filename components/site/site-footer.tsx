@@ -27,6 +27,9 @@ export function SiteFooter() {
             <li><Link className="text-ink-2 hover:text-ink" href="/regjistrohu">{t("Regjistrohu falas", "Sign up free")}</Link></li>
             <li><Link className="text-ink-2 hover:text-ink" href="/hyr">{t("Hyr", "Log in")}</Link></li>
             <li><Link className="text-ink-2 hover:text-ink" href="/kontakt">{t("Kontakt", "Contact")}</Link></li>
+            <li><Link className="text-ink-2 hover:text-ink" href="/verifikimi">{t("Verifiko llogarinë", "Verify your account")}</Link></li>
+            <li><Link className="text-ink-2 hover:text-ink" href="/mbrojtja">{t("Mbrojtja e klientit", "Customer protection")}</Link></li>
+            <li><Link className="text-ink-2 hover:text-ink" href="/njoftimet">{t("Njoftimet", "Notifications")}</Link></li>
             <li><Link className="text-ink-2 hover:text-ink" href="/privatesia">{t("Privatësia", "Privacy")}</Link></li>
             <li><Link className="text-ink-2 hover:text-ink" href="/aksesueshmeria">{t("Aksesueshmëria", "Accessibility")}</Link></li>
           </ul>

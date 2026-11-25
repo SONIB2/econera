@@ -6,13 +6,10 @@ import { Empty, Field, Notice, PageIntro } from "@/components/ui";
 import { inventoryColumns } from "@/lib/catalogue";
 import { categoryName, priceLabel, type InventoryEntry } from "@/lib/data";
 import { requireAccount } from "@/lib/supabase";
+import { listingStatus } from "@/lib/verify/labels";
 
 function label(item: InventoryEntry) {
-  if (item.publication === "archived") return "Arkivuar";
-  if (item.publication === "published") return "Publikuar";
-  if (item.moderation === "pending") return "Në shqyrtim";
-  if (item.moderation === "rejected") return "Kërkon ndryshime";
-  return "Skicë";
+  return listingStatus(item.publication, item.moderation, Number(item.quantity)).sq;
 }
 
 export default async function Inventory({ searchParams }: { searchParams: Promise<{ status?: string; q?: string; page?: string; publication?: string }> }) {
@@ -68,10 +65,11 @@ export default async function Inventory({ searchParams }: { searchParams: Promis
         <div className="actions">
           {item.publication !== "archived" && <>
             <Link className="button secondary" href={`/inventari/${item.id}`} aria-label={`Ndrysho: ${item.title}`}>Ndrysho</Link>
+            <Link className="button secondary" href={`/verifikimi/listimi/${item.id}`} aria-label={`Dokumentet dhe verifikimi: ${item.title}`}>Dokumentet</Link>
             <form action={changeMaterialState} className="actions">
               <input type="hidden" name="id" value={item.id} /><input type="hidden" name="revision" value={item.revision} />
-              {item.publication === "draft" && item.moderation !== "pending" && item.quantity > 0 && <button className="button" name="intent" value="submit">Dërgo për shqyrtim</button>}
-              {(item.publication === "published" || item.moderation === "pending") && <button className="button secondary" name="intent" value="unpublish">Tërhiq</button>}
+              {item.publication === "draft" && ["unreviewed", "rejected", "info_required"].includes(item.moderation) && item.quantity > 0 && <button className="button" name="intent" value="submit">Dërgo për shqyrtim</button>}
+              {(item.publication === "published" || ["pending", "under_review", "info_required", "inspection_required", "escalated"].includes(item.moderation)) && item.publication !== "suspended" && <button className="button secondary" name="intent" value="unpublish">Tërhiq</button>}
               <button className="button secondary" name="intent" value="archive">Arkivo</button>
             </form>
           </>}

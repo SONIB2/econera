@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { materialInput, revision, sheetInput, uuid } from "@/lib/data";
+import { materialInput, revision, sheetInput, uuid, verifyInput } from "@/lib/data";
 import { requireAccount } from "@/lib/supabase";
 
 const versioned = z.object({ id: uuid, revision });
@@ -13,10 +13,12 @@ export async function createMaterial(form: FormData) {
   if (!parsed.success) redirect("/inventari/i-ri?status=invalid");
   const sheet = sheetInput.safeParse(Object.fromEntries(form));
   if (!sheet.success) redirect("/inventari/i-ri?status=invalid");
-  const extra = withSheet(sheet.data);
+  const verify = verifyInput.safeParse(Object.fromEntries(form));
+  if (!verify.success) redirect("/inventari/i-ri?status=invalid");
+  const extra = { ...withSheet(sheet.data), ...withVerify(verify.data) };
   let { error } = await db.from("materials").insert({ ...parsed.data, ...extra });
   // Offcut columns exist only after migration 202611250007; save the listing without them until then.
-  if (error && extra && missingColumn(error.code)) ({ error } = await db.from("materials").insert(parsed.data));
+  if (error && Object.keys(extra).length && missingColumn(error.code)) ({ error } = await db.from("materials").insert(parsed.data));
   if (error) redirect("/inventari/i-ri?status=failed");
   redirect("/inventari?status=saved");
 }
@@ -33,10 +35,12 @@ export async function editMaterial(form: FormData) {
   const sheet = sheetInput.safeParse(fields);
   if (!sheet.success) redirect(`${path}?status=invalid`);
   // Only write offcut fields when given, so editing an older listing never clears them.
-  const extra = withSheet(sheet.data);
+  const verify = verifyInput.safeParse(fields);
+  if (!verify.success) redirect(`${path}?status=invalid`);
+  const extra = { ...withSheet(sheet.data), ...withVerify(verify.data) };
   const update = (values: object) => db.from("materials").update(values).eq("id", id).eq("owner_id", user.id).eq("revision", expected).select("id").maybeSingle();
   let { data, error } = await update({ ...parsed.data, ...extra });
-  if (error && extra && missingColumn(error.code)) ({ data, error } = await update(parsed.data));
+  if (error && Object.keys(extra).length && missingColumn(error.code)) ({ data, error } = await update(parsed.data));
   if (error) redirect(`${path}?status=failed`);
   if (!data) redirect("/inventari?status=conflict");
   redirect("/inventari?status=saved");
@@ -51,8 +55,11 @@ export async function changeMaterialState(form: FormData) {
   redirect(`/inventari?status=${error ? "failed" : data ? "saved" : "conflict"}`);
 }
 
+function withVerify(v: Record<string, unknown>) {
+  return Object.fromEntries(Object.entries(v).filter(([, x]) => x !== null && x !== undefined));
+}
 function withSheet(sheet: { sheet_material: string | null; color: string | null; length_mm: number | null; width_mm: number | null; thickness_mm: number | null }) {
-  return sheet.sheet_material || sheet.color ? sheet : null;
+  return sheet.sheet_material || sheet.color ? sheet : {};
 }
 function missingColumn(code?: string) {
   return code === "42703" || code === "PGRST204";
