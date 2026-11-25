@@ -31,7 +31,7 @@ export type SceneProps = {
 
 const LIME = new THREE.Color("#c8f169");
 const INK = new THREE.Color("#eef3ee");
-const BG = "#0b110e";
+const BG = "#062723";
 
 /** Orbit parameters are tweened by GSAP; the frame loop turns them into a camera pose. */
 /** Outside, radius/height orbit the target. Inside (inside = 1), camX/height/radius are the absolute camera position. */
@@ -202,7 +202,7 @@ function Building() {
       {volumes.map((v, i) => (
         <mesh key={i} position={v.position} renderOrder={1}>
           <boxGeometry args={v.size} />
-          <meshBasicMaterial color="#0f1a15" transparent opacity={0.72} depthWrite={false} side={THREE.DoubleSide} />
+          <meshBasicMaterial color="#08302b" transparent opacity={0.72} depthWrite={false} side={THREE.DoubleSide} />
         </mesh>
       ))}
       <Lines positions={segments} color={INK} opacity={0.62} />
@@ -255,7 +255,7 @@ function Door({ open, interactive, onEnter }: { open: React.RefObject<{ open: nu
   const [hover, setHover] = useState(false);
   const panelEdges = useMemo(() => new THREE.EdgesGeometry(new THREE.PlaneGeometry(width, height)), [width, height]);
   const glow = useMemo(() => LIME.clone().multiplyScalar(1.4), []);
-  const dark = useMemo(() => new THREE.Color("#1a2a21"), []);
+  const dark = useMemo(() => new THREE.Color("#12403a"), []);
   const idle = useMemo(() => LIME.clone().multiplyScalar(0.75), []);
   const frame = useMemo(() => {
     const x = width / 2 + 0.08, y = height + 0.08;

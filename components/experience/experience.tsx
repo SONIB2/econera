@@ -124,7 +124,7 @@ export function Experience() {
       <div className="absolute inset-0">
         <Scene phase={phase} lowPower={lowPower} reducedMotion={reducedMotion} onReady={onReady} onIntroDone={onIntroDone} onDoor={onDoor} onEntered={onEntered} onExited={onExited} onFade={onFade} hovered={hovered} selected={selected} xray={xray} onHover={setHovered} onSelect={setSelected} />
       </div>
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(5,9,7,0.75))]" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(3,24,21,0.7))]" />
       <div ref={fadeRef} aria-hidden="true" className="pointer-events-none absolute inset-0 bg-bg opacity-0" />
 
       {/* HUD */}
@@ -200,7 +200,7 @@ export function Experience() {
       )}
 
       {/* Loader */}
-      <div className={`absolute inset-0 z-40 grid place-items-center bg-[#050806] transition-opacity duration-1000 ${loaderVisible ? "opacity-100" : "pointer-events-none opacity-0"}`} aria-hidden={!loaderVisible}>
+      <div className={`absolute inset-0 z-40 grid place-items-center bg-[#041e1b] transition-opacity duration-1000 ${loaderVisible ? "opacity-100" : "pointer-events-none opacity-0"}`} aria-hidden={!loaderVisible}>
         <div className="pointer-events-none absolute inset-0" aria-hidden="true">
           {PARTICLES.map((p, i) => (
             <span key={i} className="ld-particle" style={{ "--x": p.x, "--y": p.y, "--tx": p.tx, "--ty": p.ty, "--delay": p.delay, "--d": p.d } as React.CSSProperties} />

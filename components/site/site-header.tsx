@@ -37,7 +37,7 @@ export function SiteHeader() {
     <header className={`sticky top-0 z-40 border-b transition-colors duration-300 ${scrolled || open ? "border-line bg-bg/85 backdrop-blur-md" : "border-transparent bg-transparent"}`}>
       <div className="container-x flex h-16 items-center justify-between gap-6">
         <Link href="/" aria-label={t("ECONERA, kryefaqja", "ECONERA, home")} className="flex shrink-0 items-center">
-          <Image src="/brand/logo-dark.svg" alt="" width={481} height={66} priority className="h-6 w-auto" />
+          <Image src="/brand/logo-light.svg" alt="" width={481} height={66} priority className="h-6 w-auto" />
         </Link>
 
         <nav aria-label={t("Navigimi kryesor", "Main navigation")} className="hidden items-center gap-0.5 xl:flex">

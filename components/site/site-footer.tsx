@@ -8,7 +8,7 @@ import { NAV } from "@/lib/lang";
 export function SiteFooter() {
   const { lang, t } = useLang();
   return (
-    <footer className="border-t border-line bg-bg-2">
+    <footer className="theme-dark border-t border-line">
       <div className="container-x grid gap-10 py-14 md:grid-cols-[1.4fr_1fr_1fr]">
         <div className="max-w-sm space-y-4">
           <Image src="/brand/logo-dark.svg" alt="ECONERA" width={481} height={66} className="h-6 w-auto" />

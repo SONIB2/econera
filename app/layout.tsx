@@ -20,7 +20,7 @@ export function generateMetadata(): Metadata {
   };
 }
 
-export const viewport: Viewport = { themeColor: "#0b110e", colorScheme: "dark" };
+export const viewport: Viewport = { themeColor: "#f4f8f5", colorScheme: "light" };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const chosen = (await cookies()).get(LANG_COOKIE)?.value;

@@ -82,7 +82,7 @@ export function Market({ initialQuery = "", initialCategory = "", initialCity = 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-medium">{offer.title}</p>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${offer.condition === "riperdorur" ? "bg-lime/15 text-lime" : offer.condition === "teprice" ? "bg-cream/10 text-cream" : "bg-line text-ink-2"}`}>{CONDITIONS[offer.condition]}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${offer.condition === "riperdorur" ? "bg-accent text-lime" : offer.condition === "teprice" ? "bg-[#f3ead6] text-[#6b5a2e]" : "bg-line text-ink-2"}`}>{CONDITIONS[offer.condition]}</span>
                 </div>
                 <p className="mt-1 text-sm text-ink-2">{offer.supplier.name} · {offer.supplier.area}, {offer.supplier.city} · {formatQty(offer.distanceKm)} km</p>
               </div>

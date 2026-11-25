@@ -1,16 +1,18 @@
 @import "tailwindcss";
 @import "@fontsource-variable/inter/opsz.css";
 
-/* ECONERA design system v1. Same palette as the grant deck: green, black, cream and white only. */
+/* ECONERA design system v2. Light mint pages with deep teal ink; "lime" is the brand action colour
+   (deep teal on light pages, bright lime inside the dark 3D experience). Green family only. */
 @theme {
-  --color-bg: #0b110e;
-  --color-bg-2: #0f1a15;
-  --color-card: #15241d;
-  --color-line: #2a3b32;
-  --color-lime: #c8f169;
-  --color-lime-dim: #9fbf4f;
-  --color-ink: #eef3ee;
-  --color-ink-2: #9fb0a6;
+  --color-bg: #f4f8f5;
+  --color-bg-2: #e9f1ec;
+  --color-card: #ffffff;
+  --color-line: #d5e2da;
+  --color-lime: #0f4a43;
+  --color-lime-dim: #1d6b5f;
+  --color-accent: #dcf3b8;
+  --color-ink: #0c2f2b;
+  --color-ink-2: #4f6b64;
   --color-cream: #f1ece2;
   --color-forest: #3d6b2a;
 
@@ -22,9 +24,9 @@
 }
 
 @layer base {
-  html { background: var(--color-bg); color-scheme: dark; -webkit-text-size-adjust: 100%; }
+  html { background: var(--color-bg); color-scheme: light; -webkit-text-size-adjust: 100%; }
   body { @apply bg-bg font-sans text-ink antialiased; font-optical-sizing: auto; }
-  ::selection { background: var(--color-lime); color: var(--color-bg); }
+  ::selection { background: var(--color-accent); color: var(--color-ink); }
   :focus-visible { outline: 2px solid var(--color-lime); outline-offset: 3px; border-radius: 4px; }
   main:focus { outline: none; }
 }
@@ -36,10 +38,10 @@
 @layer components {
   /* Display headings: large, tight tracking, optical size for display cuts. */
   .display { font-family: var(--font-display); font-variation-settings: "opsz" 32; font-weight: 650; letter-spacing: -0.035em; line-height: 1.02; text-wrap: balance; }
-  .eyebrow { @apply text-xs font-semibold tracking-[0.18em] text-lime uppercase; }
+  .eyebrow { @apply text-xs font-semibold tracking-[0.18em] text-lime-dim uppercase; }
   .lead { @apply text-lg leading-relaxed text-ink-2 md:text-xl; text-wrap: pretty; }
-  .card { @apply rounded-card border border-line bg-card; }
-  .btn-primary { @apply btn bg-lime text-bg hover:bg-[#d6f68a]; }
+  .card { @apply rounded-card border border-line bg-card shadow-[0_1px_2px_rgba(12,47,43,0.04),0_8px_24px_-12px_rgba(12,47,43,0.10)]; }
+  .btn-primary { @apply btn bg-lime text-bg shadow-[0_6px_18px_-8px_rgba(15,74,67,0.55)] hover:bg-lime-dim; }
   .btn-ghost { @apply btn border border-line text-ink hover:border-lime hover:text-lime; }
   .demo-badge { @apply inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-[11px] font-medium tracking-wide text-ink-2; }
   .container-x { @apply mx-auto w-full max-w-7xl px-5 sm:px-8; }
@@ -51,3 +53,24 @@
 
 /* Registration: the plan picker only applies to supplier accounts. */
 form:has(input[name="role"][value="bleres"]:checked) [data-supplier-only] { display: none; }
+
+/* Dark scope for the 3D experience: deep teal night instead of black, bright lime actions. */
+.theme-dark {
+  --color-bg: #062723;
+  --color-bg-2: #08302b;
+  --color-card: #0c3a34;
+  --color-line: #1d5048;
+  --color-lime: #c8f169;
+  --color-lime-dim: #a9d65a;
+  --color-ink: #eef6f2;
+  --color-ink-2: #a3c2b9;
+  color: var(--color-ink);
+  background: var(--color-bg);
+  color-scheme: dark;
+}
+.theme-dark .card { box-shadow: none; }
+.theme-dark .btn-primary { box-shadow: none; }
+.theme-dark .btn-primary:hover { background: #d6f68a; }
+
+/* Eyebrow on light pages reads as a soft lime pill, like the hero badge. */
+.eyebrow-pill { @apply inline-flex rounded-full bg-accent px-3 py-1 text-[11px] font-semibold tracking-[0.18em] text-lime uppercase; }
