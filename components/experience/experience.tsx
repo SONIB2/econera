@@ -95,7 +95,7 @@ export function Experience() {
     return () => clearTimeout(id);
   }, []);
   const remember = () => { try { localStorage.setItem(SEEN, "1"); } catch { /* ignore */ } };
-  const start = () => { remember(); setProduct(null); setExploded(true); setPhase("intro"); };
+  const start = () => { remember(); setProduct(null); setExploded(true); setPhase("outside"); };
 
   const exit = useCallback(() => { setSelected(null); setHovered(null); setXray(false); setPhase("exiting"); }, []);
 
@@ -232,12 +232,12 @@ export function Experience() {
         <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_65%_45%,transparent_25%,rgba(3,22,19,0.85)_75%)] max-lg:bg-[linear-gradient(0deg,rgba(3,22,19,0.95)_35%,transparent_70%)] lg:bg-[linear-gradient(90deg,rgba(3,22,19,0.95)_0%,rgba(3,22,19,0.6)_40%,transparent_65%)]" />
         <div aria-hidden className="xp-grid absolute inset-0 opacity-[0.05]" />
         {phase === "welcome" && (
-          <div className="pointer-events-auto absolute inset-x-0 bottom-0 px-5 pb-28 sm:px-8 lg:top-0 lg:flex lg:items-center lg:pb-0">
+          <div className="pointer-events-auto absolute inset-x-0 bottom-0 px-5 pb-28 sm:px-8 lg:top-0 lg:flex lg:items-center lg:pb-0" style={{ animation: reducedMotion ? undefined : "xp-fade 1s cubic-bezier(.16,1,.3,1) 2.4s both" }}>
             <div className="mx-auto w-full max-w-7xl">
               <div className="max-w-xl">
                 <LogoDraw className="w-full max-w-[15rem] max-sm:hidden" />
                 <p className="mt-4 text-[11px] font-medium tracking-[0.42em] text-ink-2 max-sm:hidden">CONSTRUCTION INTELLIGENCE</p>
-                <h1 className="display mt-6 text-[clamp(2.3rem,5.6vw,4.6rem)] leading-[0.98] text-ink sm:mt-8">{(lang === "en" ? ["The future is", "built differently."] : ["E ardhmja", "ndërtohet ndryshe."]).map((line, i) => <span key={line} className="block overflow-hidden pb-[0.08em]"><span className="xp-line block" style={{ animationDelay: `${0.35 + i * 0.14}s` }}>{line}</span></span>)}</h1>
+                <h1 className="display mt-6 text-[clamp(2.3rem,5.6vw,4.6rem)] leading-[0.98] text-ink sm:mt-8">{(lang === "en" ? ["The future is", "built differently."] : ["E ardhmja", "ndërtohet ndryshe."]).map((line, i) => <span key={line} className="block overflow-hidden pb-[0.08em]"><span className="xp-line block" style={{ animationDelay: `${2.5 + i * 0.14}s` }}>{line}</span></span>)}</h1>
                 <p className="xp-rise-soft mt-4 max-w-md text-base text-ink-2 sm:text-lg">{t("Një platformë inteligjente. Mundësi pa fund për ndërtimin qarkullues.", "One intelligent platform. Endless possibilities for circular construction.")}</p>
                 <div className="xp-rise-soft mt-7 flex flex-wrap items-center gap-x-5 gap-y-3 [animation-delay:.7s]">
                   <button type="button" autoFocus onClick={start} className="btn-primary h-13 px-8 text-base">{t("Eksploro ECONERA", "Explore ECONERA")} <span aria-hidden>→</span></button>

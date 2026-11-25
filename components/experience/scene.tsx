@@ -104,8 +104,26 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
     const r = rig.current;
     const fast = reducedMotion ? 0.001 : 1;
     let tl: gsap.core.Timeline | undefined;
-    if (phase === "welcome") { build.current.value = 0; growth.current.value = 0; gsap.to(r, { ...CRANE, duration: reducedMotion ? 0.001 : 1.2, ease: "power2.inOut" }); Object.assign(robot.current, { mode: 0, scale: 1, fx: wide ? 2.3 : 0, fy: wide ? -0.6 : 2.6, fz: wide ? 9 : 15 }); gsap.fromTo(robot.current, { wave: 1 }, { wave: 0, delay: 2.6 * (reducedMotion ? 0.001 : 1), duration: 0.5 }); }
-    if (phase === "outside") Object.assign(robot.current, { mode: 2, scale: 0.65, wave: 0 });
+    if (phase === "welcome") {
+      // First impression: the building assembles itself in front of the viewer, then the robot pops up to greet.
+      build.current.value = 0; growth.current.value = 0;
+      const rb = robot.current;
+      Object.assign(rb, { mode: 0, scale: 0, wave: 0, fx: wide ? 2.6 : 0, fy: wide ? -0.6 : 2.6, fz: wide ? 9 : 15 });
+      tl = gsap.timeline();
+      tl.to(r, { ...ORBIT, radius: 34, angle: r.angle + 0.7, duration: 3.4 * fast, ease: "power3.inOut" }, 0)
+        .to(build.current, { value: 1, duration: 3.2 * fast, ease: "power1.inOut" }, 0.2 * fast)
+        .to(growth.current, { value: 1, duration: 1.4 * fast, ease: "power2.out" }, 2.6 * fast)
+        .to(rb, { scale: 1, duration: 0.8 * fast, ease: "back.out(1.8)" }, 2.6 * fast)
+        .to(rb, { wave: 1, duration: 0.3 * fast }, 3.0 * fast)
+        .to(rb, { wave: 0, duration: 0.4 * fast }, 5.2 * fast);
+    }
+    if (phase === "outside") {
+      build.current.value = 1; growth.current.value = 1;
+      const rb = robot.current;
+      // Coming from the welcome screen the robot flies up to the roof; otherwise it is already there.
+      if (rb.mode < 1.9 && !reducedMotion) { tl = gsap.timeline(); tl.to(rb, { mode: 2, scale: 0.65, wave: 0, duration: 1.4, ease: "power2.inOut" }, 0); }
+      else Object.assign(rb, { mode: 2, scale: 0.65, wave: 0 });
+    }
 
     if (phase === "intro") {
       tl = gsap.timeline({ onComplete: onIntroDone });
@@ -161,7 +179,7 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
     const target = { targetY: stacked ? 9.4 : ORBIT.targetY, radius: stacked ? 44 : ORBIT.radius, height: stacked ? 12 : ORBIT.height };
     // Arrival for visitors who skip the intro: the building flies in from the distance towards the viewer,
     // the floors burst apart with a slight overshoot, then a lime scan sweeps up through every floor.
-    if (phase === "outside" && stacked && (from === "boot" || from === "welcome") && !reducedMotion) {
+    if (phase === "outside" && stacked && from === "boot" && !reducedMotion) {
       const r = rig.current;
       arriving.current = true;
       Object.assign(r, { radius: 170, height: 52, targetY: 3, angle: r.angle - 2.2 });
@@ -283,7 +301,7 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
         <LevelFollower levels={levels} index={3}><DataTree growth={growth} lowPower={lowPower} /></LevelFollower>
         <Robot state={robot} pointer={pointer} visible={phase !== "entering" && phase !== "exiting"} levelY={() => levels.current[3]?.position.y ?? 0}
           onClick={phase === "outside" ? () => onProduct("voice") : undefined}
-          onHead={(x, y, front) => placeBubble((x + 1) / 2 * size.width, (1 - y) / 2 * size.height, front && (phase === "welcome" || phase === "intro"))} />
+          onHead={(x, y, front) => placeBubble((x + 1) / 2 * size.width, (1 - y) / 2 * size.height, front && robot.current.scale > 0.8 && (phase === "welcome" || phase === "intro"))} />
         <Door open={door} interactive={phase === "outside"} onEnter={() => onProduct("marketplace")} />
       </group>
       <Interior
