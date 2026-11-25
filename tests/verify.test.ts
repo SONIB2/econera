@@ -35,3 +35,15 @@ test("listing status follows the workflow", () => {
   assert.equal(listingStatus("suspended", "suspended").en, "Suspended");
   assert.equal(listingStatus("expired", "approved").en, "Expired");
 });
+
+import { interpret } from "../lib/market/interpret";
+test("marketplace natural-language query becomes filters", () => {
+  const i = interpret("Find 40 m² of light oak flooring under €600 within 30 km of Tirana");
+  assert.equal(i.category, "wood");
+  assert.equal(i.minQty, 40);
+  assert.equal(i.unit, "m²");
+  assert.equal(i.maxUnitLek, 1500);
+  assert.equal(i.near, "Tiranë");
+  assert.equal(i.radius, 30);
+  assert.match(i.words, /light oak flooring/);
+});

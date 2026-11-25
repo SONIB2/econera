@@ -1,12 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { AccountMenu } from "@/components/account-menu";
-import { LangToggle, useLang } from "@/components/lang-provider";
-import { ACCOUNT_LINKS, NAV } from "@/lib/lang";
+import { useLang } from "@/components/lang-provider";
 import { HOTSPOTS, hotspotById, hotspotLabel } from "@/lib/interior";
 import { createAmbient } from "./ambient";
 import { LogoDraw } from "./logo-draw";
@@ -66,7 +63,6 @@ export function Experience() {
   const [sceneReady, setSceneReady] = useState(false);
   const [progress, setProgress] = useState(0);
   const [sound, setSound] = useState(false);
-  const [menu, setMenu] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [xray, setXray] = useState(false);
@@ -79,11 +75,11 @@ export function Experience() {
     let frame = 0;
     const started = performance.now();
     const tick = (now: number) => {
-      const t = Math.min(1, (now - started) / (reducedMotion ? 300 : 2200));
+      const t = Math.min(1, (now - started) / (reducedMotion ? 200 : 900));
       const eased = 1 - Math.pow(1 - t, 3);
       const value = Math.round(sceneReady ? eased * 100 : Math.min(85, eased * 100));
       setProgress(value);
-      if (value >= 100) { setPhase("ready"); return; }
+      if (value >= 100) { setPhase("intro"); return; }
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
@@ -97,13 +93,12 @@ export function Experience() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
-      if (menu) setMenu(false);
-      else if (selected) setSelected(null);
+      if (selected) setSelected(null);
       else if (phase === "inside") exit();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [menu, phase, selected, exit]);
+  }, [phase, selected, exit]);
 
   const onReady = useCallback(() => setSceneReady(true), []);
   const onIntroDone = useCallback(() => setPhase("outside"), []);
@@ -114,59 +109,34 @@ export function Experience() {
 
   if (!webgl) return <StaticFallback />;
 
-  const loaderVisible = phase === "loading" || phase === "ready";
+  const loaderVisible = phase === "loading";
   const hud = !loaderVisible;
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-bg text-ink">
-      <h1 className="sr-only">{t("ECONERA: Ndërtimi takon inteligjencën. Tregu online ku materialet e tepërta të ndërtimit gjejnë projektin e radhës, me AI.", "ECONERA: Construction meets intelligence. The online market where surplus construction materials find their next project, with AI.")}</h1>
+    <section aria-label={t("Hyrja", "Introduction")} className="theme-dark relative h-[100svh] min-h-[560px] overflow-hidden bg-bg text-ink">
 
-      <div className="absolute inset-0">
+      <div className={`absolute inset-0 ${phase === "inside" || phase === "entering" || phase === "exiting" ? "" : "lg:left-[34%]"}`}>
         <Scene phase={phase} lowPower={lowPower} reducedMotion={reducedMotion} onReady={onReady} onIntroDone={onIntroDone} onDoor={onDoor} onEntered={onEntered} onExited={onExited} onFade={onFade} hovered={hovered} selected={selected} xray={xray} onHover={setHovered} onSelect={setSelected} />
       </div>
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(3,24,21,0.7))]" />
+      {phase !== "inside" && <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(3,24,21,0.82)_0%,rgba(3,24,21,0.35)_45%,transparent_70%),linear-gradient(0deg,rgba(3,24,21,0.7),transparent_40%)]" />}
       <div ref={fadeRef} aria-hidden="true" className="pointer-events-none absolute inset-0 bg-bg opacity-0" />
 
-      {/* HUD */}
-      <header className={`absolute inset-x-0 top-0 z-20 transition-opacity duration-700 ${hud ? "opacity-100" : "pointer-events-none opacity-0"}`}>
-        <div className="flex h-16 items-center justify-between px-5 sm:px-8">
-          <Link href="/" aria-label={t("ECONERA, kryefaqja", "ECONERA, home")}><Image src="/brand/logo-dark.svg" alt="" width={481} height={66} className="h-5 w-auto sm:h-6" priority /></Link>
-          <div className="flex items-center gap-2">
-            <LangToggle />
-            <SoundToggle on={sound} onChange={setSound} />
-            <Link href="/treg" className="btn-ghost hidden h-11 bg-bg/60 backdrop-blur lg:inline-flex">{t("Tregu", "Market")}</Link>
-            <AccountMenu className="hidden md:block" />
-            <Link href="/regjistrohu" className="btn-primary hidden h-11 whitespace-nowrap sm:inline-flex">{t("Regjistrohu falas", "Sign up free")}</Link>
-            <button type="button" className="btn-ghost size-11 px-0" aria-expanded={menu} aria-controls="xp-menu" aria-label={menu ? t("Mbyll menunë", "Close menu") : t("Hap menunë", "Open menu")} onClick={() => setMenu((v) => !v)}>
-              <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">{menu ? <path d="M4 4l10 10M14 4L4 14" /> : <path d="M2 6h14M2 12h14" />}</svg>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <nav id="xp-menu" aria-label={t("Menuja", "Menu")} hidden={!menu} className="absolute top-16 right-4 z-30 w-[min(20rem,calc(100vw-2rem))] rounded-card border border-line bg-bg/90 p-3 backdrop-blur-md xp-fade-in">
-        <ul className="grid">
-          {NAV.filter((item) => item.href !== "/").map((item) => (
-            <li key={item.href}><Link href={item.href} className="block rounded-xl px-4 py-3 text-ink-2 hover:bg-card hover:text-ink">{item[lang]}</Link></li>
-          ))}
-        </ul>
-        <div className="mt-2 grid gap-2 border-t border-line pt-3">
-          {ACCOUNT_LINKS.map((g) => (
-            <div key={g.group.sq}>
-              <p className="px-4 pb-1 text-xs font-medium text-ink-2">{g.group[lang]}</p>
-              {g.items.map((i) => <Link key={i.href} href={i.href} className="block rounded-xl px-4 py-2.5 text-sm text-ink hover:bg-card">{i[lang]}</Link>)}
-            </div>
-          ))}
-        </div>
-      </nav>
-
-      <div className={`absolute inset-x-0 bottom-0 z-20 flex justify-center px-5 pb-8 transition-opacity duration-700 ${hud ? "opacity-100" : "pointer-events-none opacity-0"}`}>
-        {phase === "outside" && (
-          <div className="xp-fade-in flex flex-col items-center gap-4 text-center">
-            <p className="text-sm text-ink-2"><span className="hidden sm:inline">{t("Kliko derën për të hyrë", "Click the door to enter")}</span><span className="sm:hidden">{t("Prek butonin për të hyrë", "Tap the button to enter")}</span></p>
-            <div className="flex flex-wrap justify-center gap-2">
-              <button type="button" className="btn-primary" onClick={onDoor}>{t("Hyr në ndërtesë", "Enter the building")}</button>
-              <Link href="/treg" className="btn-ghost bg-bg/60 backdrop-blur">{t("Shiko tregun", "Browse the market")}</Link>
+      <div className={`absolute inset-x-0 bottom-0 z-20 flex justify-center px-5 pb-40 sm:px-8 sm:pb-14 transition-opacity duration-700 ${hud ? "opacity-100" : "pointer-events-none opacity-0"}`}>
+        {(phase === "intro" || phase === "outside") && (
+          <div className="xp-fade-in mx-auto w-full max-w-7xl">
+            <div className="max-w-2xl">
+              <h1 className="display text-[clamp(2.6rem,7vw,5.6rem)] leading-[0.95] text-ink">{t("Mos i hidh materialet. Ndërto mundësi.", "Don't waste materials. Build possibilities.")}</h1>
+              <p className="mt-5 max-w-lg text-base text-ink-2 sm:text-lg">{t("Zbulo, ripërdor dhe transformo materialet e ndërtimit me mjete inteligjente që kursejnë para dhe ulin mbetjet.", "Discover, reuse and transform construction materials with intelligent tools that save money and reduce waste.")}</p>
+              <div className="mt-7 flex flex-wrap gap-2">
+                <Link href="/treg" className="btn-primary h-12 px-6 text-base">{t("Eksploro tregun", "Explore Marketplace")}</Link>
+                <Link href="/shit" className="btn-ghost h-12 bg-bg/60 px-6 text-base backdrop-blur">{t("Shit materiale", "Sell Materials")}</Link>
+                <Link href="/ai" className="btn-ghost h-12 bg-bg/60 px-6 text-base backdrop-blur">{t("Zbulo mjetet AI", "Discover AI Tools")}</Link>
+              </div>
+              <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-ink-2">
+                <button type="button" onClick={onDoor} disabled={phase !== "outside"} className="underline-offset-4 hover:text-ink hover:underline disabled:opacity-50">{t("Hyr në ndërtesën 3D", "Step inside the 3D building")}</button>
+                <SoundToggle on={sound} onChange={setSound} labelled />
+              </div>
             </div>
           </div>
         )}
@@ -186,7 +156,7 @@ export function Experience() {
       </div>
 
       {phase === "inside" && (
-        <div className="xp-fade-in absolute top-20 left-5 z-20 flex flex-col gap-2 sm:left-8">
+        <div className="xp-fade-in absolute top-24 left-5 z-20 flex flex-col gap-2 sm:left-8">
           <button type="button" className="btn-ghost bg-bg/70 backdrop-blur" onClick={exit}>{t("← Kthehu jashtë", "← Back outside")}</button>
           <button type="button" aria-pressed={xray} onClick={() => setXray((v) => !v)} className={`btn ${xray ? "bg-lime text-bg" : "border border-line bg-bg/70 text-ink backdrop-blur hover:border-lime hover:text-lime"}`}>
             <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.4"><rect x="2" y="2" width="12" height="12" rx="1.5" /><path d="M2 6h12M2 10h12M6 2v12M10 2v12" /></svg>
@@ -210,24 +180,13 @@ export function Experience() {
           <LogoDraw className="w-full max-w-md" />
           <p className="mt-6 text-[11px] font-medium tracking-[0.4em] text-ink-2 uppercase">Construction intelligence</p>
           <p className="display mt-8 text-2xl text-ink sm:text-3xl">{t("Ndërtimi takon inteligjencën.", "Construction meets intelligence.")}</p>
-          <div className="mt-10 h-24">
-            {phase === "loading" ? (
-              <div className="flex flex-col items-center gap-3" role="status" aria-live="polite">
-                <span className="font-mono text-sm tabular-nums text-lime">{String(progress).padStart(3, "0")}%</span>
-                <span className="block h-px w-48 overflow-hidden bg-line"><span className="block h-full bg-lime transition-[width] duration-150" style={{ width: `${progress}%` }} /></span>
-                <span className="sr-only">{t("Duke ngarkuar ndërtesën", "Loading the building")}</span>
-              </div>
-            ) : (
-              <div className="xp-fade-in flex flex-col items-center gap-4">
-                <button type="button" autoFocus className="btn-primary h-12 px-10 text-base" onClick={() => setPhase("intro")}>{t("Hyr", "Enter")}</button>
-                <SoundToggle on={sound} onChange={setSound} labelled />
-              </div>
-            )}
+          <div className="mt-10 flex flex-col items-center gap-3" role="status" aria-live="polite">
+            <span className="block h-px w-48 overflow-hidden bg-line"><span className="block h-full bg-lime transition-[width] duration-150" style={{ width: `${progress}%` }} /></span>
+            <span className="sr-only">{t("Duke ngarkuar", "Loading")}</span>
           </div>
         </div>
-        <Link href="/treg" className="absolute bottom-6 text-xs text-ink-2 underline-offset-4 hover:text-ink hover:underline">{t("Vazhdo pa 3D", "Continue without 3D")}</Link>
       </div>
-    </div>
+    </section>
   );
 }
 

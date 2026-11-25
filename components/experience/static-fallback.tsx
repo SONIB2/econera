@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useLang } from "@/components/lang-provider";
 
@@ -8,16 +7,16 @@ import { useLang } from "@/components/lang-provider";
 export function StaticFallback() {
   const { t } = useLang();
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-bg text-ink">
+    <section className="theme-dark relative min-h-[100svh] overflow-hidden bg-bg text-ink">
       <div aria-hidden="true" className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(var(--color-ink)_1px,transparent_1px),linear-gradient(90deg,var(--color-ink)_1px,transparent_1px)] [background-size:48px_48px]" />
-      <div className="container-x relative grid min-h-dvh items-center gap-12 py-20 lg:grid-cols-2">
+      <div className="container-x relative grid min-h-[100svh] items-center gap-12 pt-28 pb-16 lg:grid-cols-2">
         <div>
-          <Image src="/brand/logo-dark.svg" alt="ECONERA" width={481} height={66} className="h-7 w-auto" priority />
-          <h1 className="display mt-10 text-5xl md:text-7xl">{t("Ndërtimi takon inteligjencën.", "Construction meets intelligence.")}</h1>
+          <h1 className="display text-5xl md:text-7xl">{t("Mos i hidh materialet. Ndërto mundësi.", "Don't waste materials. Build possibilities.")}</h1>
           <p className="lead mt-6 max-w-lg">{t("Tregu online ku materialet e tepërta të ndërtimit gjejnë projektin e radhës, me AI.", "The online market where surplus construction materials find their next project, with AI.")}</p>
           <div className="mt-10 flex flex-wrap gap-3">
-            <Link href="/treg" className="btn-primary">{t("Shiko tregun", "Browse the market")}</Link>
-            <Link href="/ai" className="btn-ghost">{t("Provo AI-n", "Try the AI")}</Link>
+            <Link href="/treg" className="btn-primary">{t("Eksploro tregun", "Explore Marketplace")}</Link>
+            <Link href="/shit" className="btn-ghost">{t("Shit materiale", "Sell Materials")}</Link>
+            <Link href="/ai" className="btn-ghost">{t("Zbulo mjetet AI", "Discover AI Tools")}</Link>
           </div>
           <p className="mt-6 text-xs text-ink-2">{t("Shfletuesi juaj nuk mbështet 3D. Ky është versioni statik.", "Your browser does not support 3D. This is the static version.")}</p>
         </div>
@@ -34,6 +33,6 @@ export function StaticFallback() {
           </g>
         </svg>
       </div>
-    </div>
+    </section>
   );
 }

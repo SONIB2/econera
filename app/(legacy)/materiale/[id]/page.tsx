@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { Empty, PageIntro } from "@/components/ui";
 import { readMaterial } from "@/lib/catalogue";
@@ -29,6 +29,8 @@ export default async function MaterialDetail({ params }: Props) {
     return <div className="container section"><h1>Materiali</h1><Empty title="Materiali nuk u ngarkua" href="/materiale" label="Kthehu te katalogu">Të dhënat nuk janë të disponueshme për momentin.</Empty></div>;
   }
   const material = result.material;
+  // The redesigned product page lives at /treg/[id]; this legacy route forwards there.
+  if (process.env.LEGACY_PRODUCT_PAGE !== "1") redirect(`/treg/${id}`);
   const verification = (await readVerification(id).catch(() => null))?.v;
   const masonry = findMasonryType(material.masonry_type);
   const facts = [

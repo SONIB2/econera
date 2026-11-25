@@ -37,7 +37,7 @@ export function SiteFooter() {
       </div>
       <div className="container-x flex flex-col gap-2 border-t border-line py-6 text-xs text-ink-2 sm:flex-row sm:justify-between">
         <p>© {new Date().getFullYear()} ECONERA · Sonila Balla & Rey Sylaj</p>
-        <p>{t("Stoku, çmimet dhe furnitorët në këtë version janë të dhëna demonstruese.", "Stock, prices and suppliers in this version are demo data.")}</p>
+        <p>{t("Listimet publikohen vetëm pas shqyrtimit nga ECONERA. Shembujt demonstrues shënohen qartë.", "Listings go live only after ECONERA review. Demo examples are clearly labelled.")}</p>
       </div>
     </footer>
   );

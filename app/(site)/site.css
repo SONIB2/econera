@@ -2,6 +2,8 @@
 @import "@fontsource-variable/inter/opsz.css";
 @import "@fontsource-variable/bricolage-grotesque/standard.css";
 
+@custom-variant dark (&:where(.dark, .dark *, .theme-dark, .theme-dark *));
+
 /* ECONERA design system v2. Light mint pages with deep teal ink; "lime" is the brand action colour
    (deep teal on light pages, bright lime inside the dark 3D experience). Green family only. */
 @theme {
@@ -87,3 +89,27 @@ form:has(input[name="role"][value="bleres"]:checked) [data-supplier-only] { disp
 html.hc { --color-ink: #000; --color-ink-2: #1c2e2a; --color-line: #5d7069; --color-lime: #00332d; --color-bg-2: #e4ece7; }
 html.hc .theme-dark { --color-ink: #fff; --color-ink-2: #e2efe9; --color-line: #8fb3a8; --color-lime: #d9ff7a; }
 html.hc a:not([class*="btn"]) { text-decoration-line: underline; }
+
+/* Dark mode (header toggle; follows the system until chosen). Designed, not inverted: deep teal surfaces, lime actions. */
+html.dark {
+  --color-bg: #061e1b;
+  --color-bg-2: #082622;
+  --color-card: #0c2e29;
+  --color-line: #1c463f;
+  --color-lime: #c8f169;
+  --color-lime-dim: #b3df61;
+  --color-accent: #1e3f25;
+  --color-ink: #eaf4ef;
+  --color-ink-2: #a6c3ba;
+  color-scheme: dark;
+}
+html.dark .card { box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 12px 28px -18px rgba(0,0,0,0.6); }
+html.dark .btn-primary { box-shadow: none; }
+html.dark .btn-primary:hover { background: #d6f68a; }
+/* Status colours keep their meaning in the dark theme. */
+html.dark [class*="bg-[#fdf6e3]"], html.dark [class*="bg-[#fdf3dc]"] { background-color: #3a3214; border-color: #6b5a24; }
+html.dark [class*="bg-[#fdf0ec]"], html.dark [class*="bg-[#fde8e4]"] { background-color: #3d1d17; border-color: #7a3a2c; }
+html.dark [class*="text-[#7a5a12]"], html.dark [class*="text-[#8a4b12]"] { color: #f0d58a; }
+html.dark [class*="text-[#8a2f1d]"] { color: #f3b2a2; }
+html.dark [class*="bg-[#f3ead6]"] { background-color: #3a3214; color: #f0d58a; }
+html.dark img { filter: none; }

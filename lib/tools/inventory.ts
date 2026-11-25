@@ -40,7 +40,12 @@ export const REGIONS: Record<string, Point> = {
 };
 
 /** Live categories (legacy inventory) mapped to the tool categories. */
-const LIVE_CATEGORY: Record<string, string> = { dru: "parket", qeramike: "pllaka", guri: "tulla", metal: "hekur", dyer: "dyer", izolim: "izolim" };
+const LIVE_CATEGORY: Record<string, string> = {
+  dru: "parket", qeramike: "pllaka", guri: "tulla", metal: "hekur", dyer: "dyer", izolim: "izolim", beton: "cimento", xham: "dritare", cati: "cati",
+  struktura: "hekur", hidraulike: "hidraulike", elektrike: "elektrike", suva: "suva", boje: "boje", sanitari: "sanitari", jashte: "agregat",
+};
+
+export const toolCategoryOf = (db: string) => LIVE_CATEGORY[db] ?? db;
 
 /** Conversion used only to compare EUR listings with lekë; configurable, shown as an estimate in the UI. */
 export const EUR_TO_LEK = Number(process.env.NEXT_PUBLIC_EUR_TO_LEK ?? 100);

@@ -9,7 +9,7 @@ function rememberLang(next: Lang) {
   document.documentElement.lang = next;
 }
 
-const LangContext = createContext<Lang>("sq");
+const LangContext = createContext<Lang>("en");
 
 export function LangProvider({ lang, children }: { lang: Lang; children: ReactNode }) {
   return <LangContext.Provider value={lang}>{children}</LangContext.Provider>;

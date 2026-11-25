@@ -11,6 +11,17 @@ export const categories = [
   { id: "beton", name: "Beton" },
   { id: "xham", name: "Dritare dhe xham" },
   { id: "cati", name: "Çati dhe mbulim" },
+  { id: "struktura", name: "Materiale strukturore" },
+  { id: "fasade", name: "Fasadë" },
+  { id: "hidraulike", name: "Hidraulikë" },
+  { id: "elektrike", name: "Instalime elektrike" },
+  { id: "hvac", name: "Ngrohje, ventilim, kondicionim" },
+  { id: "suva", name: "Suva dhe gipskarton" },
+  { id: "boje", name: "Bojë dhe përfundime" },
+  { id: "jashte", name: "Punime të jashtme" },
+  { id: "vegla", name: "Vegla dhe pajisje" },
+  { id: "mobilje", name: "Mobilie dhe interier" },
+  { id: "sanitari", name: "Sanitari" },
 ] as const;
 export const regions = ["Berat", "Dibër", "Durrës", "Elbasan", "Fier", "Gjirokastër", "Korçë", "Kukës", "Lezhë", "Shkodër", "Tiranë", "Vlorë"] as const;
 export const units = ["copë", "m", "m²", "m³", "kg", "ton", "paletë"] as const;

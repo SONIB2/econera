@@ -5,7 +5,8 @@ import { applicationOrigin, supabaseSettings } from "@/lib/deployment";
 export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname === "/" || request.nextUrl.pathname === "/bota") {
     const headers = new Headers(request.headers);
-    headers.set("x-econera-locale", request.nextUrl.searchParams.get("lang") === "en" ? "en" : "sq");
+    const lang = request.nextUrl.searchParams.get("lang");
+    headers.set("x-econera-locale", lang === "en" || lang === "sq" ? lang : "");
     return NextResponse.next({ request: { headers } });
   }
   if (request.nextUrl.pathname.startsWith("/en/") || request.nextUrl.pathname.startsWith("/sq/")) {
