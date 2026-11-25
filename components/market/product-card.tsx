@@ -4,6 +4,7 @@ import type { MarketItem } from "@/lib/market/live";
 import { formatNumber } from "@/lib/format";
 import type { Lang, Region } from "@/lib/lang";
 import { CategoryArt } from "./category-art";
+import { QuickAdd } from "./quick-add";
 import { SaveButton } from "./save-button";
 
 export function priceText(item: Pick<MarketItem, "unitPrice" | "currency" | "unit">, lang: Lang) {
@@ -49,6 +50,7 @@ export function ProductCard({ item, lang, region, rate, layout = "grid" }: { ite
           <span>{item.region}{item.km !== undefined ? ` · ${formatNumber(item.km, 0)} km` : ""}</span>
           {(item.verifiedBusiness || item.verifiedIdentity) && <span className="w-full font-medium text-lime-dim">✓ {item.verifiedBusiness ? t("Biznes i verifikuar", "Verified business") : t("Shitës i verifikuar", "Verified seller")}</span>}
         </div>
+        {item.source === "live" && item.quantity > 0 && <QuickAdd item={{ id: item.id, title: item.title, unit: item.unit, priceLek: item.priceLek, max: item.quantity, seller: item.seller, city: item.region }} />}
       </div>
     </article>
   );

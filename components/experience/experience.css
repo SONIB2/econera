@@ -32,3 +32,10 @@
 .xp-panel { animation: xp-panel-in .55s var(--ease-out-soft) both }
 @keyframes xp-panel-in { from { opacity: 0; transform: translateY(24px) } to { opacity: 1; transform: none } }
 @media (min-width: 768px) { @keyframes xp-panel-in { from { opacity: 0; transform: translateX(32px) } to { opacity: 1; transform: none } } }
+
+/* Welcome screen: architectural grid, slow light, staggered rise */
+.xp-grid { background-image: linear-gradient(var(--color-ink) 1px, transparent 1px), linear-gradient(90deg, var(--color-ink) 1px, transparent 1px); background-size: 56px 56px; mask-image: radial-gradient(ellipse at 50% 40%, #000 20%, transparent 70%); }
+.xp-glow { animation: xp-breathe 7s ease-in-out infinite alternate }
+@keyframes xp-breathe { from { opacity: .55; transform: translateX(-50%) scale(.96) } to { opacity: 1; transform: translateX(-50%) scale(1.04) } }
+.xp-rise { animation: xp-fade .9s var(--ease-out-soft) .9s both }
+@media (prefers-reduced-motion: reduce) { .xp-glow, .xp-rise { animation: none } }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Grid } from "@react-three/drei";
+import { ContactShadows, Environment, Grid, Lightformer } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import gsap from "gsap";
@@ -9,8 +9,9 @@ import * as THREE from "three";
 import { hotspotById, INSIDE_VIEW } from "@/lib/interior";
 import { BUILDING, buildingSegments, dataTree, volumes } from "./geometry";
 import { Interior } from "./interior";
+import { ArchitecturalModel, ProductSpots, type ProductId } from "./model";
 
-export type Phase = "loading" | "ready" | "intro" | "outside" | "entering" | "inside" | "exiting";
+export type Phase = "boot" | "welcome" | "intro" | "outside" | "entering" | "inside" | "exiting";
 
 export type SceneProps = {
   phase: Phase;
@@ -27,6 +28,14 @@ export type SceneProps = {
   xray: boolean;
   onHover: (id: string | null) => void;
   onSelect: (id: string) => void;
+  /** Exterior exploration controls. */
+  exploded: boolean;
+  paused: boolean;
+  zoom: number;
+  resetKey: number;
+  product: ProductId | null;
+  productLabels: Record<ProductId, { name: string; text: string }>;
+  onProduct: (id: ProductId) => void;
 };
 
 const LIME = new THREE.Color("#c8f169");
@@ -36,7 +45,7 @@ const BG = "#062723";
 /** Orbit parameters are tweened by GSAP; the frame loop turns them into a camera pose. */
 /** Outside, radius/height orbit the target. Inside (inside = 1), camX/height/radius are the absolute camera position. */
 type Rig = { angle: number; radius: number; height: number; targetY: number; targetZ: number; inside: number; fit: number; camX: number; targetX: number; fov: number };
-const ORBIT: Omit<Rig, "angle"> = { radius: 27, height: 9.5, targetY: 7.2, targetZ: 0, inside: 0, fit: 1, camX: 0, targetX: 0, fov: 42 };
+const ORBIT: Omit<Rig, "angle"> = { radius: 31, height: 10, targetY: 7.4, targetZ: 0, inside: 0, fit: 1, camX: 0, targetX: 0, fov: 42 };
 const CRANE: Omit<Rig, "angle"> = { radius: 40, height: 30, targetY: 7, targetZ: 0, inside: 0, fit: 1, camX: 0, targetX: 0, fov: 42 };
 const FRONT_DOOR: Omit<Rig, "angle"> = { radius: 9, height: 1.75, targetY: 1.35, targetZ: BUILDING.depth / 2, inside: 0, fit: 0.35, camX: 0, targetX: 0, fov: 42 };
 const pose = (position: readonly number[], target: readonly number[]) => ({ camX: position[0], height: position[1], radius: position[2], targetX: target[0], targetY: target[1], targetZ: target[2] });
@@ -48,24 +57,29 @@ export default function Scene(props: SceneProps) {
       gl={{ antialias: !props.lowPower, powerPreference: "high-performance", alpha: false }}
       camera={{ fov: 42, near: 0.1, far: 200, position: [20, 26, 34] }}
       onCreated={({ gl }) => { gl.setClearColor(BG); props.onReady(); }}
-      aria-hidden="true"
+      style={{ touchAction: "pan-y" }}
     >
       <fog attach="fog" args={[BG, 28, 75]} />
       <World {...props} />
       {/* Bloom is for the blueprint exterior only; the lit interior stays natural and never blows out. */}
       {!props.lowPower && props.phase !== "inside" && (
         <EffectComposer multisampling={0}>
-          <Bloom mipmapBlur intensity={0.85} luminanceThreshold={0.62} luminanceSmoothing={0.2} />
+          <Bloom mipmapBlur intensity={0.55} luminanceThreshold={0.78} luminanceSmoothing={0.2} />
         </EffectComposer>
       )}
     </Canvas>
   );
 }
 
-function World({ phase, lowPower, reducedMotion, onIntroDone, onDoor, onEntered, onExited, onFade, hovered, selected, xray, onHover, onSelect }: SceneProps) {
+function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExited, onFade, hovered, selected, xray, onHover, onSelect, exploded, paused, zoom, resetKey, product, productLabels, onProduct }: SceneProps) {
   const rig = useRef<Rig>({ angle: 0.55, ...CRANE });
   const door = useRef({ open: 0 });
   const growth = useRef({ value: 0 });
+  const build = useRef({ value: 0 });
+  const explode = useRef({ value: 0 });
+  const levels = useRef<(THREE.Group | null)[]>([]);
+  const drag = useRef({ active: false, x: 0, y: 0, idleUntil: 0 });
+  const zoomRef = useRef({ value: 1 });
   const pointer = useRef(new THREE.Vector2());
   const target = useMemo(() => new THREE.Vector3(), []);
   const { camera, size } = useThree();
@@ -78,8 +92,10 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onDoor, onEntered,
 
     if (phase === "intro") {
       tl = gsap.timeline({ onComplete: onIntroDone });
-      tl.to(r, { ...ORBIT, angle: r.angle + 0.9, duration: 3.2 * fast, ease: "power3.inOut" }, 0);
-      tl.to(growth.current, { value: 1, duration: 3.6 * fast, ease: "power2.out" }, 0.6 * fast);
+      // Blueprint → material assembly → finished building, about four seconds and skippable.
+      tl.to(r, { ...ORBIT, angle: r.angle + 0.9, duration: 3.4 * fast, ease: "power3.inOut" }, 0);
+      tl.to(build.current, { value: 1, duration: 3.6 * fast, ease: "power1.inOut" }, 0.3 * fast);
+      tl.to(growth.current, { value: 1, duration: 1.6 * fast, ease: "power2.out" }, 2.6 * fast);
     }
     if (phase === "entering") {
       const front = Math.round(r.angle / (Math.PI * 2)) * Math.PI * 2;
@@ -100,7 +116,8 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onDoor, onEntered,
         .to(door.current, { open: 0, duration: 0.8 * fast, ease: "power2.inOut" }, "<")
         .to(r, { ...ORBIT, duration: 2.4 * fast, ease: "power3.inOut" }, "<0.2");
     }
-    if (phase === "outside" && growth.current.value < 1) growth.current.value = 1;
+    if (phase === "outside" || phase === "inside") { build.current.value = 1; growth.current.value = 1; }
+    if (phase === "outside" && r.inside === 0 && r.radius > 35) gsap.to(r, { ...ORBIT, duration: 1.2 * fast, ease: "power3.out" });
     return () => { tl?.kill(); };
   }, [phase, reducedMotion, onIntroDone, onEntered, onExited, onFade]);
 
@@ -113,6 +130,42 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onDoor, onEntered,
     return () => { tween.kill(); };
   }, [phase, selected, reducedMotion]);
 
+  // Exploded view separates the floors; the camera rises and widens to keep all labels in frame.
+  useEffect(() => {
+    const fast = reducedMotion ? 0.001 : 1;
+    const a = gsap.to(explode.current, { value: exploded ? 1 : 0, duration: 1.1 * fast, ease: "power3.inOut" });
+    const b = phase === "outside" ? gsap.to(rig.current, { targetY: exploded ? 10.6 : ORBIT.targetY, radius: exploded ? 40 : ORBIT.radius, height: exploded ? 14 : ORBIT.height, duration: 1.1 * fast, ease: "power3.inOut" }) : null;
+    return () => { a.kill(); b?.kill(); };
+  }, [exploded, phase, reducedMotion]);
+  useEffect(() => { const t = gsap.to(zoomRef.current, { value: zoom, duration: reducedMotion ? 0.001 : 0.6, ease: "power2.out" }); return () => { t.kill(); }; }, [zoom, reducedMotion]);
+  useEffect(() => {
+    if (!resetKey) return;
+    const t = gsap.to(rig.current, { ...ORBIT, angle: 0.55, duration: reducedMotion ? 0.001 : 1.2, ease: "power3.inOut" });
+    return () => { t.kill(); };
+  }, [resetKey, reducedMotion]);
+
+  // Drag to rotate (horizontal) and tilt (vertical). touch-action: pan-y keeps vertical page scrolling on phones.
+  const { gl } = useThree();
+  useEffect(() => {
+    if (phase !== "outside") return;
+    const el = gl.domElement;
+    const d = drag.current;
+    const down = (e: PointerEvent) => { d.active = true; d.x = e.clientX; d.y = e.clientY; el.style.cursor = "grabbing"; };
+    const move = (e: PointerEvent) => {
+      if (!d.active) return;
+      const r = rig.current;
+      r.angle -= (e.clientX - d.x) * 0.006;
+      if (e.pointerType === "mouse") r.height = Math.min(24, Math.max(2.5, r.height + (e.clientY - d.y) * 0.04));
+      d.x = e.clientX; d.y = e.clientY; d.idleUntil = performance.now() + 4000;
+    };
+    const up = () => { d.active = false; el.style.cursor = ""; };
+    el.addEventListener("pointerdown", down);
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => { el.removeEventListener("pointerdown", down); window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", up); };
+  }, [phase, gl]);
+
   useEffect(() => {
     const move = (event: PointerEvent) => pointer.current.set((event.clientX / window.innerWidth) * 2 - 1, (event.clientY / window.innerHeight) * 2 - 1);
     window.addEventListener("pointermove", move, { passive: true });
@@ -123,8 +176,9 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onDoor, onEntered,
     const r = rig.current;
     const fog = state.scene.fog;
     const dt = Math.min(delta, 0.05);
-    const orbiting = phase === "outside" || phase === "loading" || phase === "ready";
-    if (orbiting && !reducedMotion) r.angle += dt * (phase === "outside" ? 0.045 : 0.02);
+    const orbiting = phase === "outside" || phase === "welcome" || phase === "boot";
+    const idle = !paused && !drag.current.active && performance.now() > drag.current.idleUntil;
+    if (orbiting && idle && !reducedMotion) r.angle += dt * (phase === "outside" ? 0.045 : 0.025);
 
     const parallax = phase === "inside" ? 0.35 : 0.6;
     const px = reducedMotion ? 0 : pointer.current.x * parallax;
@@ -139,7 +193,7 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onDoor, onEntered,
     } else {
       // Portrait screens need a wider orbit so the whole tower and the tree stay in frame.
       const aspect = size.width / Math.max(1, size.height);
-      const radius = r.radius * (1 + r.fit * (Math.min(1.9, Math.max(1, 1.2 / aspect)) - 1));
+      const radius = r.radius * (1 + r.fit * (Math.min(1.9, Math.max(1, 1.2 / aspect)) - 1)) * (phase === "outside" ? zoomRef.current.value : 1);
       // Fog follows the camera distance so far orbits never swallow the building.
       if (fog instanceof THREE.Fog) { fog.near = radius * 1.05; fog.far = radius * 2.8; }
       camera.position.set(Math.sin(r.angle) * radius + Math.cos(r.angle) * px, r.height - py, r.targetZ + Math.cos(r.angle) * radius - Math.sin(r.angle) * px);
@@ -148,25 +202,25 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onDoor, onEntered,
     camera.lookAt(target);
   });
 
+  const exterior = phase !== "inside";
   return (
     <>
-      <group visible={phase !== "inside"}>
-      <Grid
-        position={[0, -0.01, 0]}
-        args={[120, 120]}
-        infiniteGrid
-        cellSize={1}
-        cellThickness={0.6}
-        cellColor="#1d2b24"
-        sectionSize={6}
-        sectionThickness={1}
-        sectionColor="#2f4a38"
-        fadeDistance={70}
-        fadeStrength={1.6}
-      />
-      <Building />
-      <DataTree growth={growth} lowPower={lowPower} />
-      <Door open={door} interactive={phase === "outside"} onEnter={onDoor} />
+      <hemisphereLight args={["#e3efe9", "#0b2a25", 0.55]} />
+      <directionalLight position={[12, 18, 10]} intensity={2.1} color="#ffe6c4" castShadow={!lowPower} shadow-mapSize={[1024, 1024]} shadow-camera-left={-14} shadow-camera-right={14} shadow-camera-top={18} shadow-camera-bottom={-6} />
+      <directionalLight position={[-10, 8, -12]} intensity={0.55} color="#9fd8d0" />
+      <Environment resolution={lowPower ? 32 : 128} frames={1}>
+        <Lightformer intensity={2.2} color="#fff1dc" position={[0, 6, -9]} scale={[14, 6, 1]} />
+        <Lightformer intensity={0.9} color="#c8f169" position={[-8, 2, 4]} rotation-y={Math.PI / 2} scale={[8, 1.2, 1]} />
+        <Lightformer intensity={1.2} color="#d8efe8" position={[8, 4, 6]} rotation-y={-Math.PI / 2} scale={[10, 4, 1]} />
+      </Environment>
+      <group visible={exterior}>
+        <Grid position={[0, -0.01, 0]} args={[120, 120]} infiniteGrid cellSize={1} cellThickness={0.5} cellColor="#16302a" sectionSize={6} sectionThickness={0.9} sectionColor="#284a3e" fadeDistance={60} fadeStrength={1.8} />
+        {!lowPower && <ContactShadows position={[0, 0.005, 0]} scale={34} blur={2.4} opacity={0.55} far={14} resolution={512} color="#021512" />}
+        <Building build={build} explode={explode} />
+        <ArchitecturalModel build={build} explode={explode} levels={levels} />
+        <LevelFollower levels={levels} index={3}><DataTree growth={growth} lowPower={lowPower} /></LevelFollower>
+        <Door open={door} interactive={phase === "outside"} onEnter={() => onProduct("marketplace")} />
+        <ProductSpots levels={levels} visible={phase === "outside"} detail={exploded} labels={productLabels} onSelect={onProduct} active={product} />
       </group>
       <Interior
         visible={phase === "inside" || phase === "entering" || phase === "exiting"}
@@ -179,6 +233,13 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onDoor, onEntered,
       />
     </>
   );
+}
+
+/** Keeps decorations attached to a floor while the exploded view moves it. */
+function LevelFollower({ levels, index, children }: { levels: React.RefObject<(THREE.Group | null)[]>; index: number; children: React.ReactNode }) {
+  const g = useRef<THREE.Group>(null);
+  useFrame(() => { const l = levels.current?.[index]; if (g.current && l) g.current.position.y = l.position.y; });
+  return <group ref={g}>{children}</group>;
 }
 
 function Lines({ positions, color, opacity, toneMapped = true }: { positions: Float32Array; color: THREE.Color; opacity: number; toneMapped?: boolean }) {
@@ -195,17 +256,31 @@ function Lines({ positions, color, opacity, toneMapped = true }: { positions: Fl
   );
 }
 
-function Building() {
+/** The blueprint: precise wireframe first, then a faint drawing under the finished materials. Hidden in exploded view. */
+function Building({ build, explode }: { build: React.RefObject<{ value: number }>; explode: React.RefObject<{ value: number }> }) {
   const segments = useMemo(() => buildingSegments(), []);
+  const geometry = useMemo(() => { const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(segments, 3)); return g; }, [segments]);
+  const line = useRef<THREE.LineBasicMaterial>(null);
+  const fill = useRef<(THREE.MeshBasicMaterial | null)[]>([]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
+  useFrame(() => {
+    const b = build.current?.value ?? 1;
+    const e = explode.current?.value ?? 0;
+    const k = Math.min(1, Math.max(0, (b - 0.45) / 0.5));
+    if (line.current) line.current.opacity = (0.7 - 0.6 * k) * (1 - e);
+    fill.current.forEach((m) => { if (m) m.opacity = 0.6 * (1 - Math.min(1, b * 2.5)); });
+  });
   return (
     <group>
       {volumes.map((v, i) => (
         <mesh key={i} position={v.position} renderOrder={1}>
           <boxGeometry args={v.size} />
-          <meshBasicMaterial color="#08302b" transparent opacity={0.72} depthWrite={false} side={THREE.DoubleSide} />
+          <meshBasicMaterial ref={(m) => { fill.current[i] = m; }} color="#08302b" transparent opacity={0.6} depthWrite={false} side={THREE.DoubleSide} />
         </mesh>
       ))}
-      <Lines positions={segments} color={INK} opacity={0.62} />
+      <lineSegments geometry={geometry} renderOrder={4}>
+        <lineBasicMaterial ref={line} color={LIME.clone().lerp(INK, 0.55)} transparent opacity={0.7} depthWrite={false} />
+      </lineSegments>
     </group>
   );
 }
