@@ -4,27 +4,33 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { applicationOrigin, requireAccount, sessionDatabase } from "@/lib/supabase";
 import { materialCategory, uuid } from "@/lib/data";
+import { homeFor } from "@/lib/account-role";
 
 const email = z.string().trim().max(254).pipe(z.email());
 const password = z.string().min(12).max(72).refine((value) => new TextEncoder().encode(value).length <= 72);
+const role = z.enum(["furnitor", "bleres"]);
+const plan = z.enum(["falas", "start", "rritje", "pro"]);
 
 export async function signUp(form: FormData) {
-  const parsed = z.object({ email, password }).safeParse(Object.fromEntries(form));
-  if (!parsed.success) redirect("/regjistrohu?status=invalid");
+  const parsed = z.object({ email, password, role: role.default("bleres"), plan: plan.optional() }).safeParse(Object.fromEntries(form));
+  const kind = role.safeParse(form.get("role")).data ?? "bleres";
+  if (!parsed.success) redirect(`/regjistrohu?lloji=${kind}&status=invalid`);
   const db = await sessionDatabase();
   const origin = applicationOrigin();
-  if (!db || !origin) redirect("/regjistrohu?status=unavailable");
-  const { data, error } = await db.auth.signUp({ ...parsed.data, options: { emailRedirectTo: `${origin}/autentikim` } });
-  if (error && error.status !== 422 && error.code !== "user_already_exists") redirect("/regjistrohu?status=failed");
-  if (data.session && data.user?.email_confirmed_at) redirect("/paneli");
-  redirect("/regjistrohu?status=email");
+  if (!db || !origin) redirect(`/regjistrohu?lloji=${kind}&status=unavailable`);
+  const { email: address, password: secret, role: chosen, plan: chosenPlan } = parsed.data;
+  const metadata = chosen === "furnitor" ? { role: chosen, plan: chosenPlan ?? "falas" } : { role: chosen };
+  const { data, error } = await db.auth.signUp({ email: address, password: secret, options: { data: metadata, emailRedirectTo: `${origin}/autentikim` } });
+  if (error && error.status !== 422 && error.code !== "user_already_exists") redirect(`/regjistrohu?lloji=${kind}&status=failed`);
+  if (data.session && data.user?.email_confirmed_at) redirect(homeFor(data.user.user_metadata));
+  redirect(`/regjistrohu?lloji=${kind}&status=email`);
 }
 
 export async function signIn(form: FormData) {
   const availability = form.get("availability");
   const quote = uuid.safeParse(form.get("quotation")).data;
   const category = materialCategory.safeParse(availability).data;
-  const destination = quote ? `/materiale/${quote}/oferte` : category ? `/disponueshmeria?category=${category}` : availability === "all" ? "/disponueshmeria" : "/paneli";
+  const destination = quote ? `/materiale/${quote}/oferte` : category ? `/disponueshmeria?category=${category}` : availability === "all" ? "/disponueshmeria" : null;
   const context = quote ? `&quotation=${quote}` : category || availability === "all" ? `&availability=${category ?? "all"}` : "";
   const parsed = z.object({ email, password }).safeParse(Object.fromEntries(form));
   if (!parsed.success) redirect(`/hyr?status=invalid${context}`);
@@ -32,7 +38,7 @@ export async function signIn(form: FormData) {
   if (!db) redirect(`/hyr?status=unavailable${context}`);
   const { data, error } = await db.auth.signInWithPassword(parsed.data);
   if (error || !data.user?.email_confirmed_at) redirect(`/hyr?status=credentials${context}`);
-  redirect(destination);
+  redirect(destination ?? (homeFor(data.user.user_metadata)));
 }
 
 export async function signOut() {

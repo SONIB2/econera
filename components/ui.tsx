@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-const messages: Record<string, string> = {
+export const messages: Record<string, string> = {
   unavailable: "Shërbimi nuk është konfiguruar ende.",
   invalid: "Kontrollo të dhënat e formularit dhe provo përsëri.",
   credentials: "Nuk mundëm të të identifikonim. Kontrollo emailin, fjalëkalimin dhe konfirmimin e llogarisë.",

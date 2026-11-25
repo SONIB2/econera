@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ctaNav, siteNav } from "./nav";
+import { ctaNav, loginNav, siteNav } from "./nav";
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -51,6 +51,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <Link href={loginNav.href} className="hidden rounded-full px-3.5 py-2 text-sm font-medium text-ink hover:text-lime sm:inline-flex">{loginNav.label}</Link>
           <Link href={ctaNav.href} className="btn-primary hidden sm:inline-flex">{ctaNav.label}</Link>
           <button
             type="button"
@@ -77,7 +78,10 @@ export function SiteHeader() {
             </li>
           ))}
         </ul>
-        <Link href={ctaNav.href} className="btn-primary mt-4 w-full">{ctaNav.label}</Link>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <Link href={loginNav.href} className="btn-ghost w-full">{loginNav.label}</Link>
+          <Link href={ctaNav.href} className="btn-primary w-full">{ctaNav.label}</Link>
+        </div>
       </nav>
     </header>
   );

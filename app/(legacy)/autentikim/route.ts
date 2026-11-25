@@ -1,10 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { applicationOrigin, sessionDatabase } from "@/lib/supabase";
+import { homeFor } from "@/lib/account-role";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const origin = applicationOrigin() ?? request.nextUrl.origin;
-  const destination = request.nextUrl.searchParams.get("flow") === "recovery" ? "/fjalekalimi/ndrysho" : "/paneli";
+  const recovery = request.nextUrl.searchParams.get("flow") === "recovery";
   function finish(path: string) {
     const response = NextResponse.redirect(new URL(path, origin));
     response.headers.set("Cache-Control", "no-store");
@@ -13,8 +14,8 @@ export async function GET(request: NextRequest) {
   }
   const settings = await sessionDatabase();
   if (code && settings) {
-    const { error } = await settings.auth.exchangeCodeForSession(code);
-    if (!error) return finish(destination);
+    const { data, error } = await settings.auth.exchangeCodeForSession(code);
+    if (!error) return finish(recovery ? "/fjalekalimi/ndrysho" : homeFor(data.user?.user_metadata));
   }
   return finish("/hyr?status=link");
 }

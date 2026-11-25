@@ -21,6 +21,8 @@ export function SiteFooter() {
           <p className="eyebrow mb-4">ECONERA</p>
           <ul className="space-y-2.5 text-sm">
             <li><Link className="text-ink-2 hover:text-ink" href={ctaNav.href}>{ctaNav.label}</Link></li>
+            <li><Link className="text-ink-2 hover:text-ink" href="/hyr">Hyr</Link></li>
+            <li><Link className="text-ink-2 hover:text-ink" href="/kontakt">Kontakt</Link></li>
             <li><Link className="text-ink-2 hover:text-ink" href="/privatesia">Privatësia</Link></li>
             <li><Link className="text-ink-2 hover:text-ink" href="/aksesueshmeria">Aksesueshmëria</Link></li>
           </ul>
