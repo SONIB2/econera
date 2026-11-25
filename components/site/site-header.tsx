@@ -34,8 +34,8 @@ export function SiteHeader() {
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 
   return (
-    <header className={`sticky top-0 z-40 border-b transition-colors duration-300 ${scrolled || open ? "border-line bg-bg/85 backdrop-blur-md" : "border-transparent bg-transparent"}`}>
-      <div className="container-x flex h-16 items-center justify-between gap-6">
+    <header className="sticky top-0 z-40 px-3 pt-3 sm:px-5">
+      <div className={`mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 rounded-full border pr-2 pl-5 transition-[background,box-shadow,border-color] duration-300 sm:pl-6 ${scrolled || open ? "border-line bg-white/85 shadow-[0_10px_30px_-18px_rgba(12,47,43,0.35)] backdrop-blur-xl" : "border-line/70 bg-white/60 backdrop-blur-md"}`}>
         <Link href="/" aria-label={t("ECONERA, kryefaqja", "ECONERA, home")} className="flex shrink-0 items-center">
           <Image src="/brand/logo-light.svg" alt="" width={481} height={66} priority className="h-6 w-auto" />
         </Link>
@@ -46,7 +46,7 @@ export function SiteHeader() {
               key={item.href}
               href={item.href}
               aria-current={isActive(item.href) ? "page" : undefined}
-              className={`whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActive(item.href) ? "text-lime" : "text-ink-2 hover:text-ink"}`}
+              className={`whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActive(item.href) ? "bg-bg-2 text-ink" : "text-ink-2 hover:text-ink"}`}
             >
               {item[lang]}
             </Link>
@@ -72,7 +72,7 @@ export function SiteHeader() {
         </div>
       </div>
 
-      <nav id="menu-celular" aria-label={t("Menuja", "Menu")} hidden={!open} className="container-x border-t border-line pb-6 xl:hidden">
+      <nav id="menu-celular" aria-label={t("Menuja", "Menu")} hidden={!open} className="mx-auto mt-2 max-w-7xl rounded-card border border-line bg-white/95 px-4 pb-5 shadow-xl backdrop-blur-xl xl:hidden">
         <ul className="grid gap-1 pt-3">
           {NAV.map((item) => (
             <li key={item.href}>
@@ -85,7 +85,7 @@ export function SiteHeader() {
         <div className="mt-3 grid grid-cols-2 gap-3 border-t border-line pt-4">
           {ACCOUNT_LINKS.map((g) => (
             <div key={g.group.sq}>
-              <p className="px-3 pb-1 text-[11px] font-semibold tracking-[0.18em] text-lime uppercase">{g.group[lang]}</p>
+              <p className="px-3 pb-1 text-xs font-medium text-ink-2">{g.group[lang]}</p>
               {g.items.map((i) => <Link key={i.href} href={i.href} className="block rounded-xl px-3 py-2.5 text-sm text-ink hover:bg-card">{i[lang]}</Link>)}
             </div>
           ))}

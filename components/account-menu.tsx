@@ -31,7 +31,7 @@ export function AccountMenu({ className = "", short = false }: { className?: str
         <div role="menu" className="xp-fade-in absolute right-0 top-[calc(100%+0.5rem)] z-50 w-72 rounded-card border border-line bg-bg/95 p-2 shadow-2xl backdrop-blur-md">
           {ACCOUNT_LINKS.map((g) => (
             <div key={g.group.sq} className="p-1">
-              <p className="px-3 pt-2 pb-1 text-[11px] font-semibold tracking-[0.18em] text-lime uppercase">{g.group[lang]}</p>
+              <p className="px-3 pt-2 pb-1 text-xs font-medium text-ink-2">{g.group[lang]}</p>
               {g.items.map((i) => (
                 <Link key={i.href} role="menuitem" href={i.href} onClick={() => setOpen(false)} className="block rounded-xl px-3 py-2.5 text-sm text-ink hover:bg-card">{i[lang]}</Link>
               ))}

@@ -28,8 +28,8 @@ export default function FurnitorePage() {
         <p className="eyebrow">Problemi</p>
         <h2 className="display mt-4 max-w-2xl text-4xl md:text-5xl">Materialet ekzistojnë. Askush nuk i gjen.</h2>
         <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {problems.map(([t, d], i) => (
-            <article key={t} className="card p-6"><p className="font-mono text-sm text-lime">0{i + 1}</p><h3 className="mt-3 text-lg font-semibold">{t}</h3><p className="mt-2 text-sm text-ink-2">{d}</p></article>
+          {problems.map(([t, d]) => (
+            <article key={t} className="card p-6"><h3 className="text-lg font-semibold">{t}</h3><p className="mt-2 text-sm text-ink-2">{d}</p></article>
           ))}
         </div>
       </section>
@@ -40,7 +40,7 @@ export default function FurnitorePage() {
           <h2 className="display mt-4 text-4xl md:text-5xl">Në 3 hapa.</h2>
           <ol className="mt-10 grid gap-6 md:grid-cols-3">
             {steps.map(([n, t, d]) => (
-              <li key={n} className="border-t border-lime/50 pt-6"><p className="font-mono text-sm text-lime">{n}</p><h3 className="mt-3 text-xl font-semibold">{t}</h3><p className="mt-2 text-ink-2">{d}</p></li>
+              <li key={n} className="border-t border-lime/50 pt-6"><p className="grid size-8 place-items-center rounded-full bg-accent text-sm font-semibold text-lime">{Number(n)}</p><h3 className="mt-4 text-xl font-semibold">{t}</h3><p className="mt-2 text-ink-2">{d}</p></li>
             ))}
           </ol>
           <p className="mt-10 text-sm text-ink-2">AI propozon, njeriu konfirmon. Asnjë ofertë nuk publikohet pa miratimin tuaj.</p>

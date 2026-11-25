@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "@fontsource-variable/inter/opsz.css";
+@import "@fontsource-variable/bricolage-grotesque/standard.css";
 
 /* ECONERA design system v2. Light mint pages with deep teal ink; "lime" is the brand action colour
    (deep teal on light pages, bright lime inside the dark 3D experience). Green family only. */
@@ -17,7 +18,7 @@
   --color-forest: #3d6b2a;
 
   --font-sans: "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 
   --radius-card: 1.25rem;
   --ease-out-soft: cubic-bezier(.22, 1, .36, 1);
@@ -25,7 +26,8 @@
 
 @layer base {
   html { background: var(--color-bg); color-scheme: light; -webkit-text-size-adjust: 100%; }
-  body { @apply bg-bg font-sans text-ink antialiased; font-optical-sizing: auto; }
+  body { @apply bg-bg font-sans text-ink antialiased; font-optical-sizing: auto; font-feature-settings: "cv11", "ss01", "ss03"; }
+  h2, h3 { font-family: var(--font-display); font-variation-settings: "opsz" 36, "wdth" 98; font-weight: 560; letter-spacing: -0.012em; }
   ::selection { background: var(--color-accent); color: var(--color-ink); }
   :focus-visible { outline: 2px solid var(--color-lime); outline-offset: 3px; border-radius: 4px; }
   main:focus { outline: none; }
@@ -37,9 +39,11 @@
 
 @layer components {
   /* Display headings: large, tight tracking, optical size for display cuts. */
-  .display { font-family: var(--font-display); font-variation-settings: "opsz" 32; font-weight: 650; letter-spacing: -0.035em; line-height: 1.02; text-wrap: balance; }
-  .eyebrow { @apply text-xs font-semibold tracking-[0.18em] text-lime-dim uppercase; }
-  .lead { @apply text-lg leading-relaxed text-ink-2 md:text-xl; text-wrap: pretty; }
+  /* Headlines: Bricolage Grotesque at large optical size, slightly narrowed, the one expressive voice of the site. */
+  .display { font-family: var(--font-display); font-variation-settings: "opsz" 72, "wdth" 96; font-weight: 520; letter-spacing: -0.022em; line-height: 1.04; text-wrap: balance; }
+  .eyebrow { @apply inline-flex items-center gap-2 text-sm font-medium text-lime-dim; }
+  .eyebrow::before { content: ""; @apply size-1.5 rounded-full bg-[#9bd13f]; }
+  .lead { @apply text-lg leading-relaxed text-ink-2 md:text-[1.3rem] md:leading-[1.6]; text-wrap: pretty; }
   .card { @apply rounded-card border border-line bg-card shadow-[0_1px_2px_rgba(12,47,43,0.04),0_8px_24px_-12px_rgba(12,47,43,0.10)]; }
   .btn-primary { @apply btn bg-lime text-bg shadow-[0_6px_18px_-8px_rgba(15,74,67,0.55)] hover:bg-lime-dim; }
   .btn-ghost { @apply btn border border-line text-ink hover:border-lime hover:text-lime; }
@@ -73,4 +77,5 @@ form:has(input[name="role"][value="bleres"]:checked) [data-supplier-only] { disp
 .theme-dark .btn-primary:hover { background: #d6f68a; }
 
 /* Eyebrow on light pages reads as a soft lime pill, like the hero badge. */
-.eyebrow-pill { @apply inline-flex rounded-full bg-accent px-3 py-1 text-[11px] font-semibold tracking-[0.18em] text-lime uppercase; }
+.eyebrow-pill { @apply inline-flex items-center gap-2 rounded-full border border-[#cfe9a4] bg-accent/70 py-1 pr-3.5 pl-2.5 text-sm font-medium text-lime; }
+.eyebrow-pill::before { content: ""; @apply size-1.5 rounded-full bg-[#7fb52a]; }

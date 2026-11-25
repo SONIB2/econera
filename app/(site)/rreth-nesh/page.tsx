@@ -36,7 +36,7 @@ export default function RrethNeshPage() {
 
       <section className="theme-dark border-y border-line">
         <div className="container-x py-16 md:py-20">
-          <p className="text-xs font-semibold tracking-[0.18em] text-lime uppercase">Objektivat e OKB-së</p>
+          <p className="eyebrow">Objektivat e OKB-së</p>
           <div className="mt-8 grid gap-6 md:grid-cols-3">
             {sdgs.map(([n, t]) => (
               <div key={n} className="border-t-2 border-lime pt-5"><p className="display text-6xl text-lime">{n}</p><p className="mt-2 font-medium">{t}</p></div>

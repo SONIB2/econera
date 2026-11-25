@@ -153,7 +153,7 @@ export function Experience() {
         <div className="mt-2 grid gap-2 border-t border-line pt-3">
           {ACCOUNT_LINKS.map((g) => (
             <div key={g.group.sq}>
-              <p className="px-4 pb-1 text-[11px] font-semibold tracking-[0.18em] text-lime uppercase">{g.group[lang]}</p>
+              <p className="px-4 pb-1 text-xs font-medium text-ink-2">{g.group[lang]}</p>
               {g.items.map((i) => <Link key={i.href} href={i.href} className="block rounded-xl px-4 py-2.5 text-sm text-ink hover:bg-card">{i[lang]}</Link>)}
             </div>
           ))}
