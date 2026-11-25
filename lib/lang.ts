@@ -9,7 +9,7 @@ export const tr = (lang: Lang, sq: string, en: string) => (lang === "en" ? en : 
 export const NAV: { href: string; sq: string; en: string }[] = [
   { href: "/", sq: "Eksploro", en: "Explore" },
   { href: "/treg", sq: "Tregu", en: "Market" },
-  { href: "/ai", sq: "AI", en: "AI" },
+  { href: "/ai", sq: "AI Tools", en: "AI Tools" },
   { href: "/certifikata", sq: "Certifikata", en: "Certificate" },
   { href: "/furnitore", sq: "Për furnitorët", en: "For suppliers" },
   { href: "/cmimet", sq: "Çmimet", en: "Pricing" },

@@ -1,4 +1,6 @@
+import { BottomNav } from "@/components/site/bottom-nav";
 import { SiteFooter } from "@/components/site/site-footer";
+import { Assistant } from "@/components/tools/assistant";
 import { SiteHeader } from "@/components/site/site-header";
 import "./site.css";
 
@@ -9,6 +11,8 @@ export default function SiteLayout({ children }: Readonly<{ children: React.Reac
       <SiteHeader />
       <main id="permbajtja" tabIndex={-1}>{children}</main>
       <SiteFooter />
+      <Assistant />
+      <BottomNav />
     </>
   );
 }

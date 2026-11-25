@@ -79,3 +79,11 @@ form:has(input[name="role"][value="bleres"]:checked) [data-supplier-only] { disp
 /* Eyebrow on light pages reads as a soft lime pill, like the hero badge. */
 .eyebrow-pill { @apply inline-flex items-center gap-2 rounded-full border border-[#cfe9a4] bg-accent/70 py-1 pr-3.5 pl-2.5 text-sm font-medium text-lime; }
 .eyebrow-pill::before { content: ""; @apply size-1.5 rounded-full bg-[#7fb52a]; }
+
+/* Phones: room for the bottom navigation. */
+@media (max-width: 767px) { body:has([data-bottom-nav]) { padding-bottom: calc(4rem + env(safe-area-inset-bottom)); } }
+
+/* High-contrast mode (Assistant → ◐): darker ink and borders on light pages. */
+html.hc { --color-ink: #000; --color-ink-2: #1c2e2a; --color-line: #5d7069; --color-lime: #00332d; --color-bg-2: #e4ece7; }
+html.hc .theme-dark { --color-ink: #fff; --color-ink-2: #e2efe9; --color-line: #8fb3a8; --color-lime: #d9ff7a; }
+html.hc a:not([class*="btn"]) { text-decoration-line: underline; }

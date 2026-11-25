@@ -7,7 +7,7 @@ import supplierData from "@/data/demo/suppliers.json";
 export type Supplier = { id: string; name: string; type: "depo" | "furnitor" | "kantier"; city: string; area: string; lat: number; lng: number };
 export type StockItem = {
   id: string; title: string; category: string; subtype: string; quantity: number; unit: string;
-  priceLek: number; marketPriceLek: number; condition: string; supplierId: string;
+  priceLek: number; marketPriceLek: number; condition: string; supplierId: string; color?: string;
 };
 export type StockView = StockItem & { supplier: Supplier; distanceKm: number; savingPct: number };
 

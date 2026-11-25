@@ -1,0 +1,14 @@
+[
+ {"id":"off-mdf18-a","title":"Copëz MDF 18 mm, 1200×800","material":"MDF","lengthMm":1200,"widthMm":800,"thicknessMm":18,"color":"natyrale","quantity":1,"priceLek":900,"newPriceLek":2100,"supplierId":"s04"},
+ {"id":"off-mdf18-b","title":"Copëz MDF 18 mm, 1650×620","material":"MDF","lengthMm":1650,"widthMm":620,"thicknessMm":18,"color":"natyrale","quantity":1,"priceLek":1000,"newPriceLek":2200,"supplierId":"s02"},
+ {"id":"off-mdf18-c","title":"Copëz MDF 18 mm, 900×450","material":"MDF","lengthMm":900,"widthMm":450,"thicknessMm":18,"color":"natyrale","quantity":2,"priceLek":380,"newPriceLek":880,"supplierId":"s01"},
+ {"id":"off-mdf18-full","title":"Fletë MDF 18 mm e plotë 2800×2070 (stok i tepërt)","material":"MDF","lengthMm":2800,"widthMm":2070,"thicknessMm":18,"color":"natyrale","quantity":3,"priceLek":4600,"newPriceLek":6400,"supplierId":"s02"},
+ {"id":"off-ply15-a","title":"Copëz kompensatë 15 mm, 1500×1000","material":"Kompensatë","lengthMm":1500,"widthMm":1000,"thicknessMm":15,"color":"thupër","quantity":1,"priceLek":1700,"newPriceLek":3600,"supplierId":"s03","reused":true,"defects":[{"x":1300,"y":0,"w":200,"h":180}]},
+ {"id":"off-ply15-b","title":"Copëz kompensatë 15 mm, 1000×700","material":"Kompensatë","lengthMm":1000,"widthMm":700,"thicknessMm":15,"color":"thupër","quantity":2,"priceLek":750,"newPriceLek":1700,"supplierId":"s04"},
+ {"id":"off-osb12-a","title":"Copëz OSB 12 mm, 2000×900","material":"OSB","lengthMm":2000,"widthMm":900,"thicknessMm":12,"quantity":3,"priceLek":700,"newPriceLek":1500,"supplierId":"s01"},
+ {"id":"off-granit20-a","title":"Copëz graniti 20 mm, 1400×600","material":"Granit","lengthMm":1400,"widthMm":600,"thicknessMm":20,"color":"gri","quantity":1,"priceLek":5200,"newPriceLek":11800,"supplierId":"s05"},
+ {"id":"off-mermer20-a","title":"Copëz mermeri 20 mm, 1100×650","material":"Mermer","lengthMm":1100,"widthMm":650,"thicknessMm":20,"color":"e bardhë","quantity":1,"priceLek":6100,"newPriceLek":12500,"supplierId":"s06"},
+ {"id":"off-xham8-a","title":"Copëz xhami 8 mm, 1200×700","material":"Xham","lengthMm":1200,"widthMm":700,"thicknessMm":8,"quantity":2,"priceLek":1900,"newPriceLek":4300,"supplierId":"s02"},
+ {"id":"off-lam18-a","title":"Copëz laminat mobilie 18 mm, 1800×600, dru arre","material":"Laminat","lengthMm":1800,"widthMm":600,"thicknessMm":18,"color":"arre","quantity":2,"priceLek":1300,"newPriceLek":2900,"supplierId":"s04"},
+ {"id":"off-alu3-a","title":"Copëz llamarine alumini 3 mm, 1000×500","material":"Metal","lengthMm":1000,"widthMm":500,"thicknessMm":3,"quantity":2,"priceLek":2200,"newPriceLek":4100,"supplierId":"s01"}
+]

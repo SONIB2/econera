@@ -33,6 +33,7 @@
     "postprocessing": "^6.39.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "read-excel-file": "^9.3.20",
     "three": "^0.187.0",
     "zod": "^4.6.7"
   },

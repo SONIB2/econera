@@ -9,15 +9,16 @@ export const CITIES = {
 export type City = keyof typeof CITIES;
 
 export const CATEGORIES: { id: string; label: string; words: string[] }[] = [
-  { id: "tulla", label: "Tulla dhe blloqe", words: ["tull", "bllok"] },
+  { id: "tulla", label: "Tulla dhe blloqe", words: ["tull", "bllok", "brick"] },
   { id: "cimento", label: "Çimento", words: ["çimento", "cimento", "cement"] },
   { id: "hekur", label: "Hekur", words: ["hekur", "armatur"] },
   { id: "agregat", label: "Rërë dhe agregat", words: ["rërë", "rere", "zhavorr", "agregat"] },
   { id: "suva", label: "Suva", words: ["suva", "suvatim", "gips"] },
-  { id: "pllaka", label: "Pllaka", words: ["pllak", "granit", "porcelan", "qeramik"] },
-  { id: "parket", label: "Parket", words: ["parket", "laminat"] },
-  { id: "dritare", label: "Dritare", words: ["dritar", "xham"] },
-  { id: "dyer", label: "Dyer", words: ["derë", "dere", "dyer"] },
+  { id: "pllaka", label: "Pllaka", words: ["pllak", "granit", "porcelan", "qeramik", "tile", "ceramic"] },
+  { id: "parket", label: "Parket", words: ["parket", "parquet", "laminat", "dysheme druri", "flooring", "oak", "lisi"] },
+  { id: "dritare", label: "Dritare", words: ["dritar", "xham", "window"] },
+  { id: "dyer", label: "Dyer", words: ["derë", "dere", "dyer", "door"] },
+  { id: "boje", label: "Bojë", words: ["bojë", "boje", "lyerje", "paint"] },
   { id: "sanitari", label: "Sanitari", words: ["wc", "tualet", "lavaman", "sanitar", "dush"] },
   { id: "elektrike", label: "Elektrike", words: ["kabllo", "kabell", "prizë", "priza", "elektrik", "çelës"] },
   { id: "hidraulike", label: "Hidraulike", words: ["tub", "hidraul", "rubinet", "ppr", "pvc"] },

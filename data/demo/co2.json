@@ -1,19 +1,99 @@
 {
   "_burimi": "Vlerësime nga ICE Database v3.0 (Inventory of Carbon and Energy, Circular Ecology / Univ. of Bath), të rrumbullakosura. Pesha për njësi është vlerësim. Shifra demonstruese, jo matje.",
   "factors": {
-    "tulla": { "kgCO2PerKg": 0.21, "kgPerUnit": { "copë": 3.2 } },
-    "suva": { "kgCO2PerKg": 0.13, "kgPerUnit": { "thes": 25 } },
-    "cimento": { "kgCO2PerKg": 0.83, "kgPerUnit": { "thes": 50 } },
-    "hekur": { "kgCO2PerKg": 1.99, "kgPerUnit": { "ton": 1000 } },
-    "agregat": { "kgCO2PerKg": 0.005, "kgPerUnit": { "m³": 1600 } },
-    "pllaka": { "kgCO2PerKg": 0.78, "kgPerUnit": { "m²": 20 } },
-    "parket": { "kgCO2PerKg": 0.49, "kgPerUnit": { "m²": 9 } },
-    "dritare": { "kgCO2PerKg": 2.6, "kgPerUnit": { "copë": 45 } },
-    "dyer": { "kgCO2PerKg": 0.72, "kgPerUnit": { "copë": 28 } },
-    "sanitari": { "kgCO2PerKg": 1.6, "kgPerUnit": { "copë": 22 } },
-    "elektrike": { "kgCO2PerKg": 3.8, "kgPerUnit": { "m": 0.12, "kuti": 1.5, "copë": 4 } },
-    "hidraulike": { "kgCO2PerKg": 3.1, "kgPerUnit": { "m": 0.35, "copë": 1.2 } },
-    "izolim": { "kgCO2PerKg": 1.86, "kgPerUnit": { "m²": 1.6 } },
-    "cati": { "kgCO2PerKg": 0.48, "kgPerUnit": { "copë": 2.6, "m²": 4.5 } }
+    "tulla": {
+      "kgCO2PerKg": 0.21,
+      "kgPerUnit": {
+        "copë": 3.2
+      }
+    },
+    "suva": {
+      "kgCO2PerKg": 0.13,
+      "kgPerUnit": {
+        "thes": 25
+      }
+    },
+    "cimento": {
+      "kgCO2PerKg": 0.83,
+      "kgPerUnit": {
+        "thes": 50
+      }
+    },
+    "hekur": {
+      "kgCO2PerKg": 1.99,
+      "kgPerUnit": {
+        "ton": 1000
+      }
+    },
+    "agregat": {
+      "kgCO2PerKg": 0.005,
+      "kgPerUnit": {
+        "m³": 1600
+      }
+    },
+    "pllaka": {
+      "kgCO2PerKg": 0.78,
+      "kgPerUnit": {
+        "m²": 20
+      }
+    },
+    "parket": {
+      "kgCO2PerKg": 0.49,
+      "kgPerUnit": {
+        "m²": 9
+      }
+    },
+    "dritare": {
+      "kgCO2PerKg": 2.6,
+      "kgPerUnit": {
+        "copë": 45
+      }
+    },
+    "dyer": {
+      "kgCO2PerKg": 0.72,
+      "kgPerUnit": {
+        "copë": 28
+      }
+    },
+    "sanitari": {
+      "kgCO2PerKg": 1.6,
+      "kgPerUnit": {
+        "copë": 22
+      }
+    },
+    "elektrike": {
+      "kgCO2PerKg": 3.8,
+      "kgPerUnit": {
+        "m": 0.12,
+        "kuti": 1.5,
+        "copë": 4
+      }
+    },
+    "hidraulike": {
+      "kgCO2PerKg": 3.1,
+      "kgPerUnit": {
+        "m": 0.35,
+        "copë": 1.2
+      }
+    },
+    "izolim": {
+      "kgCO2PerKg": 1.86,
+      "kgPerUnit": {
+        "m²": 1.6
+      }
+    },
+    "cati": {
+      "kgCO2PerKg": 0.48,
+      "kgPerUnit": {
+        "copë": 2.6,
+        "m²": 4.5
+      }
+    },
+    "boje": {
+      "kgCO2PerKg": 2.5,
+      "kgPerUnit": {
+        "kovë": 20
+      }
+    }
   }
 }

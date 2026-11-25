@@ -478,5 +478,57 @@
   "marketPriceLek": 690,
   "condition": "e re",
   "supplierId": "s10"
+ },
+ {
+  "id": "boje-bardhe-15l",
+  "title": "Bojë e bardhë akrilike 15 L (stok i tepërt)",
+  "category": "boje",
+  "subtype": "e bardhë",
+  "quantity": 24,
+  "unit": "kovë",
+  "priceLek": 2900,
+  "marketPriceLek": 4200,
+  "condition": "e re, e tepërt",
+  "supplierId": "s04",
+  "color": "e bardhë"
+ },
+ {
+  "id": "boje-bezhe-15l",
+  "title": "Bojë bezhë mat 15 L",
+  "category": "boje",
+  "subtype": "bezhë",
+  "quantity": 9,
+  "unit": "kovë",
+  "priceLek": 3100,
+  "marketPriceLek": 4400,
+  "condition": "e re, e tepërt",
+  "supplierId": "s02",
+  "color": "bezhë"
+ },
+ {
+  "id": "pllaka-bezhe-30x30",
+  "title": "Pllaka banjoje 30×30, bezhë",
+  "category": "pllaka",
+  "subtype": "banjo",
+  "quantity": 26,
+  "unit": "m²",
+  "priceLek": 820,
+  "marketPriceLek": 1200,
+  "condition": "e re, e tepërt",
+  "supplierId": "s01",
+  "color": "bezhë"
+ },
+ {
+  "id": "parket-lisi-rikuperuar",
+  "title": "Parket lisi i rikuperuar 15 mm",
+  "category": "parket",
+  "subtype": "lis",
+  "quantity": 32,
+  "unit": "m²",
+  "priceLek": 1500,
+  "marketPriceLek": 3100,
+  "condition": "e ripërdorur",
+  "supplierId": "s03",
+  "color": "lis"
  }
 ]

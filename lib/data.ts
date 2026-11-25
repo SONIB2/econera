@@ -39,6 +39,15 @@ export const materialInput = z.object({
   seller_label: z.string().trim().max(80).refine((value) => value.length === 0 || value.length >= 2).optional().transform((value) => value || null),
 }).refine((item) => item.category === "guri" || item.masonry_type === null, { path: ["masonry_type"] });
 export type MaterialInput = z.output<typeof materialInput>;
+
+/** Optional offcut/sheet dimensions (migration 202611250007). Empty form fields mean "not an offcut". */
+export const sheetMaterials = ["MDF", "Kompensatë", "OSB", "Laminat", "Granit", "Mermer", "Xham", "Metal", "Dru"] as const;
+const optionalNumber = (max: number) => z.string().trim().optional().transform((v) => (v ? Number(v.replace(",", ".")) : null)).pipe(z.number().positive().max(max).nullable());
+export const sheetInput = z.object({
+  sheet_material: z.union([z.enum(sheetMaterials), z.literal("")]).optional().transform((v) => v || null),
+  color: z.string().trim().max(40).optional().transform((v) => v || null),
+  length_mm: optionalNumber(20000), width_mm: optionalNumber(20000), thickness_mm: optionalNumber(500),
+}).refine((s) => !s.sheet_material || (s.length_mm && s.width_mm && s.thickness_mm), { path: ["length_mm"] });
 export type CatalogueEntry = MaterialInput & { id: string; created_at: string; updated_at: string; masonry_type: MasonryType | null };
 export type InventoryEntry = CatalogueEntry & {
   publication: "draft" | "published" | "archived";
