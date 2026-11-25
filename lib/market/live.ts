@@ -1,4 +1,5 @@
 import "server-only";
+import { DEMO_TITLE_EN } from "./i18n";
 import { createClient } from "@supabase/supabase-js";
 import { publicDatabase } from "@/lib/supabase";
 import { demoListings, distanceKm, EUR_TO_LEK, REGIONS } from "@/lib/tools/inventory";
@@ -12,6 +13,8 @@ export type MarketItem = {
   id: string;
   source: "live" | "demo";
   title: string;
+  /** English name, only for ECONERA's own demo text (seller text is never machine-translated). */
+  titleEn?: string;
   description: string;
   dbCategory: string;
   category: string;
@@ -106,7 +109,7 @@ export async function liveMarket(): Promise<{ items: MarketItem[]; connected: bo
 export function demoMarket(): MarketItem[] {
   const toUi: Record<string, string> = { tulla: "bricks", cimento: "structural", hekur: "structural", agregat: "outdoor", suva: "drywall", pllaka: "tiles", parket: "wood", dritare: "windows", dyer: "windows", boje: "paint", sanitari: "plumbing", elektrike: "electrical", hidraulike: "plumbing", izolim: "insulation", cati: "roofing", copeza: "offcuts" };
   return demoListings().map((l) => ({
-    id: l.id, source: "demo", title: l.title, description: "", dbCategory: l.category, category: toUi[l.category] ?? "structural", region: l.city,
+    id: l.id, source: "demo", title: l.title, titleEn: DEMO_TITLE_EN[l.id.replace("demo:", "")], description: "", dbCategory: l.category, category: toUi[l.category] ?? "structural", region: l.city,
     condition: l.sheet ? "offcut" : l.condition === "riperdorur" ? "reclaimed" : "surplus", unit: l.unit, quantity: l.quantity, unitPrice: l.priceLek, currency: "ALL",
     priceLek: l.priceLek, referenceLek: l.marketPriceLek, fulfillment: l.fulfillment, seller: l.sellerName, verifiedBusiness: false, verifiedIdentity: false,
     sheet: l.sheet ? { length: l.sheet.lengthMm, width: l.sheet.widthMm, thickness: l.sheet.thicknessMm, material: l.sheet.material } : null, createdAt: "2026-11-01T00:00:00Z",
@@ -128,7 +131,7 @@ export function applyFilters(items: MarketItem[], f: Filters) {
   let out = items.map((i) => ({ ...i, km: from ? distanceKm(from, REGIONS[i.region] ?? REGIONS["Tiranë"]) : undefined, score: 0 }));
   if (words.length) {
     out = out.map((i) => {
-      const hay = `${i.title} ${i.description} ${i.seller} ${i.region} ${i.dbCategory} ${MARKET_CATEGORIES.find((c) => c.id === i.category)?.en ?? ""} ${MARKET_CATEGORIES.find((c) => c.id === i.category)?.sq ?? ""}`.toLowerCase();
+      const hay = `${i.title} ${i.titleEn ?? ""} ${i.description} ${i.seller} ${i.region} ${i.dbCategory} ${MARKET_CATEGORIES.find((c) => c.id === i.category)?.en ?? ""} ${MARKET_CATEGORIES.find((c) => c.id === i.category)?.sq ?? ""}`.toLowerCase();
       return { ...i, score: words.filter((w) => hay.includes(w.slice(0, Math.max(4, w.length - 2)))).length };
     }).filter((i) => f.rankOnly || i.score > 0);
   }

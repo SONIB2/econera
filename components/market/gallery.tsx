@@ -4,11 +4,12 @@ import { useState } from "react";
 import { useLang } from "@/components/lang-provider";
 import { CategoryArt } from "./category-art";
 
-export function Gallery({ photos, title, category }: { photos: string[]; title: string; category: string }) {
+export function Gallery({ photos, title, category, representative }: { photos: string[]; title: string; category: string; representative?: string }) {
   const { t } = useLang();
   const [i, setI] = useState(0);
   const [zoom, setZoom] = useState<{ x: number; y: number } | null>(null);
   const [open, setOpen] = useState(false);
+  if (!photos.length && representative) photos = [representative];
   if (!photos.length) return (
     <div className="relative aspect-[4/3] overflow-hidden rounded-[1.5rem] border border-line bg-bg-2">
       <CategoryArt id={category} />
@@ -22,6 +23,7 @@ export function Gallery({ photos, title, category }: { photos: string[]; title: 
         onMouseLeave={() => setZoom(null)} className="relative aspect-[4/3] cursor-zoom-in overflow-hidden rounded-[1.5rem] border border-line bg-bg-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={photos[i]} alt={`${title} (${i + 1}/${photos.length})`} className="size-full object-cover transition-transform duration-200" style={zoom ? { transform: "scale(1.8)", transformOrigin: `${zoom.x}% ${zoom.y}%` } : undefined} />
+        {representative && photos[0] === representative && <span className="absolute bottom-3 left-3 rounded-full bg-black/55 px-3 py-1 text-xs text-white">{t("Foto ilustruese e kategorisë · shitësi s'ka ngarkuar ende foto të miratuara", "Representative category photo · no approved seller photos yet")}</span>}
       </button>
       {photos.length > 1 && (
         <div className="flex gap-2 overflow-x-auto">{photos.map((p, k) => (

@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { CategoryArt } from "@/components/market/category-art";
 import { ProductCard } from "@/components/market/product-card";
 import { SearchBar } from "@/components/market/search-bar";
 import { BasketVisual, CutVisual, RenovationVisual, VoiceVisual } from "@/components/tools/visuals";
 import { tr, type Lang, type Region } from "@/lib/lang";
 import { MARKET_CATEGORIES } from "@/lib/market/categories";
+import { CATEGORY_PHOTO, TOOL_PHOTO, unsplash } from "@/lib/market/photos";
 import { applyFilters, countByCategory, type MarketItem } from "@/lib/market/live";
 import { EUR_TO_LEK } from "@/lib/tools/inventory";
 
@@ -21,10 +21,10 @@ export function HomeSections({ lang, region, items }: { lang: Lang; region: Regi
     ? ["40 m² porcelain tiles near Tirana", "OSB offcuts 18 mm", "reclaimed bricks under 30 L", "mineral wool insulation"]
     : ["40 m² pllaka porcelani afër Tiranës", "copa OSB 18 mm", "tulla të rikuperuara nën 30 L", "izolim lesh mineral"];
   const tools = [
-    { href: "/ai/renovim", name: "AI Renovation", text: t("Ngarko një foto të dhomës dhe shiko si duket me materiale që ekzistojnë në treg.", "Upload a room photo and see it with materials that exist on the marketplace."), visual: <RenovationVisual /> },
-    { href: "/ai/shporta", name: "Smart Basket", text: t("Shkruaj listën e projektit; merr kombinimin më të mirë nga shitës realë brenda buxhetit.", "Write your project list; get the best combination from real sellers within budget."), visual: <BasketVisual /> },
-    { href: "/ai/smartcut", name: "SmartCut", text: t("Fut prerjet që të duhen; gjej copat e mbetura që i mbulojnë para se të blesh panel të ri.", "Enter the cuts you need; find offcuts that cover them before buying a new sheet."), visual: <CutVisual /> },
-    { href: "/ai", name: "ECONERA Voice", text: t("Kërko, listo dhe menaxho materialet me zë, në shqip ose anglisht.", "Search, list and manage materials by voice, in Albanian or English."), visual: <VoiceVisual /> },
+    { href: "/ai/renovim", name: "AI Renovation", text: t("Ngarko një foto të dhomës dhe shiko si duket me materiale që ekzistojnë në treg.", "Upload a room photo and see it with materials that exist on the marketplace."), visual: <RenovationVisual />, photo: TOOL_PHOTO.renovation },
+    { href: "/ai/shporta", name: "Smart Basket", text: t("Shkruaj listën e projektit; merr kombinimin më të mirë nga shitës realë brenda buxhetit.", "Write your project list; get the best combination from real sellers within budget."), visual: <BasketVisual />, photo: TOOL_PHOTO.basket },
+    { href: "/ai/smartcut", name: "SmartCut", text: t("Fut prerjet që të duhen; gjej copat e mbetura që i mbulojnë para se të blesh panel të ri.", "Enter the cuts you need; find offcuts that cover them before buying a new sheet."), visual: <CutVisual />, photo: TOOL_PHOTO.smartcut },
+    { href: "/ai", name: "ECONERA Voice", text: t("Kërko, listo dhe menaxho materialet me zë, në shqip ose anglisht.", "Search, list and manage materials by voice, in Albanian or English."), visual: <VoiceVisual />, photo: TOOL_PHOTO.voice },
   ];
   const journey = [
     [t("Zbulo", "Discover"), t("Kërko me fjalë të thjeshta ose me zë.", "Search in plain words or by voice.")],
@@ -51,7 +51,8 @@ export function HomeSections({ lang, region, items }: { lang: Lang; region: Regi
         <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {FEATURED.map((id) => { const c = MARKET_CATEGORIES.find((x) => x.id === id)!; const n = counts.get(id) ?? 0; return (
             <li key={id}><Link href={`/treg?kategoria=${id}`} className="group block overflow-hidden rounded-2xl border border-line bg-card transition hover:border-lime">
-              <div className="aspect-[4/3] overflow-hidden"><CategoryArt id={id} className="transition duration-500 group-hover:scale-105" /></div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <div className="aspect-[4/3] overflow-hidden bg-bg-2"><img src={unsplash(CATEGORY_PHOTO[id], 420, 315)} alt="" loading="lazy" className="size-full object-cover transition duration-700 group-hover:scale-105" /></div>
               <div className="px-3.5 py-3"><p className="text-sm font-semibold leading-snug">{c[lang]}</p><p className="mt-0.5 text-xs text-ink-2">{n ? t(`${n} ${n === 1 ? "listim" : "listime"}`, `${n} listing${n === 1 ? "" : "s"}`) : t("Ende pa listime", "No listings yet")}</p></div>
             </Link></li>
           ); })}
@@ -76,7 +77,12 @@ export function HomeSections({ lang, region, items }: { lang: Lang; region: Regi
           <div className="max-w-2xl"><h2 id="ai" className="text-3xl md:text-5xl">{t("Më shumë se një treg. Një mënyrë më e zgjuar për të ndërtuar.", "More than a marketplace. A smarter way to build.")}</h2><p className="mt-3 text-ink-2">{t("Çdo sugjerim lidhet me listime që ekzistojnë. AI ndihmon; vendimet i merr ti dhe shitësi.", "Every suggestion links to listings that exist. AI assists; you and the seller decide.")}</p></div>
           <ul className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">{tools.map((tool) => (
             <li key={tool.name}><Link href={tool.href} className="group flex h-full flex-col overflow-hidden rounded-card border border-line bg-card transition hover:border-lime">
-              <div className="aspect-[16/10] overflow-hidden bg-bg-2">{tool.visual}</div>
+              <div className="relative aspect-[4/3] overflow-hidden bg-bg-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={unsplash(tool.photo, 640, 480)} alt="" loading="lazy" className="size-full object-cover transition duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#04211d]/70 to-transparent" />
+                <div className="absolute right-3 bottom-3 w-[58%] overflow-hidden rounded-lg border border-white/20 shadow-2xl">{tool.visual}</div>
+              </div>
               <div className="flex flex-1 flex-col p-5"><p className="text-lg font-semibold">{tool.name}</p><p className="mt-2 flex-1 text-sm text-ink-2">{tool.text}</p><span className="mt-4 text-sm font-medium text-lime">{t("Hap mjetin", "Open tool")}</span></div>
             </Link></li>
           ))}</ul>

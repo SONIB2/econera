@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useLang } from "@/components/lang-provider";
 import { HOTSPOTS, hotspotById, hotspotLabel } from "@/lib/interior";
-import { createAmbient } from "./ambient";
 import { LogoDraw } from "./logo-draw";
 import { PRODUCT_LEVEL, ProductSpots, type Level, type ProductId } from "./model";
 import { PRODUCTS, ProductPanel } from "./product-panel";
@@ -60,7 +59,6 @@ export function Experience() {
   const lowPower = small;
 
   const [phase, setPhase] = useState<Phase>("boot");
-  const [sound, setSound] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [xray, setXray] = useState(false);
@@ -80,7 +78,6 @@ export function Experience() {
   }, []);
   const highlight: Level | null = hotLevel ?? (hotSpot ? PRODUCT_LEVEL[hotSpot] : product ? PRODUCT_LEVEL[product] : null);
   const fadeRef = useRef<HTMLDivElement>(null);
-  const ambient = useMemo(() => (typeof window === "undefined" ? null : createAmbient()), []);
 
   // First visit: welcome screen. Returning visitors land on the finished building, with a replay option.
   useEffect(() => {
@@ -93,8 +90,6 @@ export function Experience() {
   const start = () => { remember(); setProduct(null); setExploded(true); setPhase("intro"); };
 
   const exit = useCallback(() => { setSelected(null); setHovered(null); setXray(false); setPhase("exiting"); }, []);
-  useEffect(() => { ambient?.set(sound); }, [ambient, sound]);
-  useEffect(() => () => ambient?.dispose(), [ambient]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -152,7 +147,6 @@ export function Experience() {
                 {phase === "intro"
                   ? <button type="button" onClick={() => setPhase("outside")} className="underline-offset-4 hover:text-ink hover:underline">{t("Kalo animacionin", "Skip animation")}</button>
                   : <><button type="button" onClick={onDoor} className="underline-offset-4 hover:text-ink hover:underline">{t("Hyr në interier", "Step inside")}</button><button type="button" onClick={start} className="underline-offset-4 hover:text-ink hover:underline">{t("Rishiko hyrjen", "Replay intro")}</button></>}
-                <SoundToggle on={sound} onChange={setSound} labelled />
               </div>
             </div>
           </div>
@@ -229,7 +223,6 @@ export function Experience() {
             <div className="xp-rise mt-9 flex flex-col items-center gap-4 [animation-delay:.24s]">
               <button type="button" autoFocus onClick={start} className="btn-primary h-13 px-9 text-base">{t("Eksploro ECONERA", "Explore ECONERA")} <span aria-hidden>→</span></button>
               <Link href="/treg" onClick={remember} className="text-sm text-ink-2 underline-offset-4 hover:text-ink hover:underline">{t("Kalo hyrjen · Shko te tregu", "Skip intro · Go to Marketplace")}</Link>
-              <SoundToggle on={sound} onChange={setSound} labelled />
             </div>
             <ul className="mt-14 hidden flex-wrap justify-center sm:flex gap-x-6 gap-y-2 border-t border-line pt-5 text-[11px] tracking-[0.18em] text-ink-2">
               <li>{t("EKONOMI QARKULLUESE", "CIRCULAR ECONOMY")}</li><li>{t("ME AI", "AI POWERED")}</li><li>{t("TREG MATERIALESH", "MATERIALS MARKETPLACE")}</li>
@@ -241,15 +234,3 @@ export function Experience() {
   );
 }
 
-function SoundToggle({ on, onChange, labelled = false }: { on: boolean; onChange: (on: boolean) => void; labelled?: boolean }) {
-  const { t } = useLang();
-  return (
-    <button type="button" aria-pressed={on} onClick={() => onChange(!on)} className={labelled ? "inline-flex items-center gap-2 text-xs text-ink-2 hover:text-ink" : "btn-ghost size-11 px-0"} aria-label={labelled ? undefined : on ? t("Fik tingullin", "Mute") : t("Ndiz tingullin", "Unmute")}>
-      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 7h3l4-3v10l-4-3H3z" />
-        {on ? <path d="M12.5 6.5a3.5 3.5 0 0 1 0 5M14.5 4.5a6.5 6.5 0 0 1 0 9" /> : <path d="M13 7l4 4M17 7l-4 4" />}
-      </svg>
-      {labelled && <span>{on ? t("Tingulli: ndezur", "Sound: on") : t("Tingulli: fikur", "Sound: off")}</span>}
-    </button>
-  );
-}

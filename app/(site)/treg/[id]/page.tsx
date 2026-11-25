@@ -6,6 +6,8 @@ import { Gallery } from "@/components/market/gallery";
 import { ProductActions } from "@/components/market/product-actions";
 import { convertedText, priceText, ProductCard, unitText } from "@/components/market/product-card";
 import { SaveButton } from "@/components/market/save-button";
+import { regionLabel, unitLabel } from "@/lib/market/i18n";
+import { representativePhoto, unsplash } from "@/lib/market/photos";
 import { formatNumber } from "@/lib/format";
 import { parseRegion, REGION_COOKIE, tr } from "@/lib/lang";
 import { getLang } from "@/lib/lang-server";
@@ -62,7 +64,7 @@ export default async function Product({ params }: { params: Promise<{ id: string
       <nav aria-label="Breadcrumb" className="text-sm text-ink-2"><Link href="/treg" className="hover:text-ink">{t("Tregu", "Marketplace")}</Link> / <Link href={`/treg?kategoria=${item.category}`} className="hover:text-ink">{cat?.[lang]}</Link></nav>
       <div className="mt-5 grid gap-10 lg:grid-cols-[1.25fr_1fr]">
         <div className="grid content-start gap-8">
-          <Gallery photos={photos} title={item.title} category={item.category} />
+          <Gallery photos={photos} title={item.title} category={item.category} representative={unsplash(representativePhoto(item.category, item.dbCategory, item.id), 1400, 1050)} />
           <section aria-labelledby="pershkrimi"><h2 id="pershkrimi" className="text-2xl">{t("Përshkrimi", "Description")}</h2><p className="mt-3 whitespace-pre-line leading-relaxed text-ink-2">{item.description}</p><p className="mt-2 text-xs text-ink-2">{t("Teksti është i shitësit, në gjuhën origjinale.", "Text by the seller, in the original language.")}</p></section>
           <section aria-labelledby="spec"><h2 id="spec" className="text-2xl">{t("Specifikimet", "Specifications")}</h2>
             <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 text-sm md:grid-cols-3">{specs.filter(([, x]) => x).map(([k, x]) => <div key={k} className="border-b border-line pb-3"><dt className="text-xs text-ink-2">{k}</dt><dd className="mt-1 font-medium">{x}</dd></div>)}</dl>
@@ -86,8 +88,8 @@ export default async function Product({ params }: { params: Promise<{ id: string
               <div><p className="text-xs font-medium text-lime-dim">{CONDITION_UI[item.condition][lang]} · {cat?.[lang]}</p><h1 className="display mt-2 text-3xl md:text-4xl">{item.title}</h1></div>
               <SaveButton id={item.id} title={item.title} href={`/treg/${item.id}`} large />
             </div>
-            <p className="flex flex-wrap items-baseline gap-2"><span className="text-3xl font-semibold tabular-nums">{priceText(item, lang)}</span><span className="text-ink-2">/ {item.unit}</span>{conv && <span className="text-sm text-ink-2">{conv}</span>}{unitNote && <span className="text-xs text-ink-2">{unitNote}</span>}</p>
-            <p className="text-sm text-ink-2">{formatNumber(item.quantity, 1)} {item.unit} {t("në dispozicion", "available")} · {item.region} · {fulfil}</p>
+            <p className="flex flex-wrap items-baseline gap-2"><span className="text-3xl font-semibold tabular-nums">{priceText(item, lang)}</span><span className="text-ink-2">/ {unitLabel(item.unit, lang)}</span>{conv && <span className="text-sm text-ink-2">{conv}</span>}{unitNote && <span className="text-xs text-ink-2">{unitNote}</span>}</p>
+            <p className="text-sm text-ink-2">{formatNumber(item.quantity, 1)} {item.unit} {t("në dispozicion", "available")} · {regionLabel(item.region, lang)} · {fulfil}</p>
             {item.seller && <p className="rounded-xl bg-bg-2 px-4 py-3 text-sm"><span className="text-ink-2">{t("Shitësi", "Seller")}:</span> <span className="font-medium">{item.seller}</span>{(item.verifiedBusiness || item.verifiedIdentity) && <span className="ml-2 text-lime-dim">✓ {t("i verifikuar", "verified")}</span>}</p>}
             <ProductActions p={{ id: item.id, title: item.title, unit: item.unit, unitPrice: item.unitPrice, currency: item.currency, priceLek: item.priceLek, quantity: item.quantity, seller: item.seller, city: item.region, toolCategory: toolCategoryOf(item.dbCategory), sheet: Boolean(item.sheet), fulfillment: item.fulfillment }} />
           </div>

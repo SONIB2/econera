@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useLang } from "@/components/lang-provider";
 import { cart, subscribeCart } from "@/lib/cart";
-import { LANG_COOKIE, LANGS, parseRegion, REGION_COOKIE, REGIONS, type Lang, type Region } from "@/lib/lang";
+import { COUNTRY_GROUPS, flagUrl, LANG_COOKIE, LANGS, parseRegion, REGION_COOKIE, REGIONS, type Lang, type Region } from "@/lib/lang";
 
 function usePopover() {
   const [open, setOpen] = useState(false);
@@ -22,42 +22,89 @@ function usePopover() {
 
 const readRegion = () => parseRegion(decodeURIComponent(document.cookie.split("; ").find((c) => c.startsWith(`${REGION_COOKIE}=`))?.split("=")[1] ?? ""));
 
-/** Globe button: language, country/region, currency and measurement system, saved independently. */
+const subscribeNever = () => () => {};
+function persist(next: { lang: Lang } & Region) {
+  document.cookie = `${LANG_COOKIE}=${next.lang}; path=/; max-age=31536000; samesite=lax`;
+  document.cookie = `${REGION_COOKIE}=${encodeURIComponent(JSON.stringify({ country: next.country, currency: next.currency, units: next.units }))}; path=/; max-age=31536000; samesite=lax`;
+  document.documentElement.lang = next.lang;
+}
+const countryNow = () => readRegion().country;
+
+/**
+ * Globe button: pick a country and the site adapts (language, currency, units). Language, currency and units
+ * can still be changed independently. Only validated languages are selectable.
+ */
 export function RegionMenu({ compact = false }: { compact?: boolean }) {
   const { lang, t } = useLang();
   const router = useRouter();
   const { open, setOpen, ref } = usePopover();
-  const [draft, setDraft] = useState<{ lang: Lang } & Region>({ lang, country: "AL", currency: "ALL", units: "metric" });
-  const openMenu = () => { setDraft({ lang, ...readRegion() }); setOpen(true); };
-  function save() {
-    document.cookie = `${LANG_COOKIE}=${draft.lang}; path=/; max-age=31536000; samesite=lax`;
-    document.cookie = `${REGION_COOKIE}=${encodeURIComponent(JSON.stringify({ country: draft.country, currency: draft.currency, units: draft.units }))}; path=/; max-age=31536000; samesite=lax`;
-    document.documentElement.lang = draft.lang;
+  const country = useSyncExternalStore(subscribeNever, countryNow, () => "AL");
+  const [query, setQuery] = useState("");
+  const [draft, setDraft] = useState<Region>({ country: "AL", currency: "ALL", units: "metric" });
+  const current = REGIONS.find((r) => r.country === country) ?? REGIONS[0];
+  const openMenu = () => { setDraft(readRegion()); setQuery(""); setOpen(true); };
+  function apply(next: { lang: Lang } & Region) {
+    persist(next);
     setOpen(false);
     router.refresh();
   }
+  const pick = (code: string) => { const r = REGIONS.find((x) => x.country === code)!; apply({ lang: r.lang, country: r.country, currency: r.currency, units: r.units }); };
+  const q = query.trim().toLowerCase();
+  const matches = (r: (typeof REGIONS)[number]) => !q || r.en.toLowerCase().includes(q) || r.sq.toLowerCase().includes(q) || r.country.toLowerCase() === q;
   const sel = "w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm";
   return (
     <div ref={ref} className="relative">
-      <button type="button" onClick={() => (open ? setOpen(false) : openMenu())} aria-expanded={open} aria-haspopup="dialog" aria-label={t("Gjuha dhe rajoni", "Language and region")}
-        className="flex h-10 items-center gap-1.5 rounded-full px-2.5 text-sm font-medium text-ink-2 hover:bg-bg-2 hover:text-ink">
-        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden><circle cx="10" cy="10" r="7.5" /><path d="M2.5 10h15M10 2.5c2.2 2.3 3.2 4.8 3.2 7.5S12.2 15.2 10 17.5C7.8 15.2 6.8 12.7 6.8 10S7.8 4.8 10 2.5z" /></svg>
+      <button type="button" onClick={() => (open ? setOpen(false) : openMenu())} aria-expanded={open} aria-haspopup="dialog" aria-label={t(`Shteti: ${current.sq}, gjuha: ${lang}`, `Country: ${current.en}, language: ${lang}`)}
+        className="flex h-10 items-center gap-2 rounded-full px-2.5 text-sm font-medium text-ink-2 hover:bg-bg-2 hover:text-ink">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={flagUrl(current.country)} alt="" width={20} height={14} className="h-3.5 w-5 rounded-[2px] object-cover ring-1 ring-black/10" />
         {!compact && <span className="uppercase">{lang}</span>}
       </button>
       {open && (
-        <div role="dialog" aria-label={t("Gjuha dhe rajoni", "Language and region")} className="absolute right-0 top-[calc(100%+0.5rem)] z-50 grid w-72 gap-3 rounded-card border border-line bg-card p-4 text-ink shadow-2xl">
-          <label className="grid gap-1 text-sm"><span className="font-medium">{t("Gjuha", "Language")}</span>
-            <select className={sel} value={draft.lang} onChange={(e) => setDraft({ ...draft, lang: e.target.value as Lang })}>{LANGS.map((l) => <option key={l.id} value={l.id}>{l.native}</option>)}</select></label>
-          <label className="grid gap-1 text-sm"><span className="font-medium">{t("Shteti / rajoni", "Country / region")}</span>
-            <select className={sel} value={draft.country} onChange={(e) => { const r = REGIONS.find((x) => x.country === e.target.value)!; setDraft({ ...draft, country: r.country, currency: r.currency, units: r.units }); }}>{REGIONS.map((r) => <option key={r.country} value={r.country}>{r[lang]}</option>)}</select></label>
-          <div className="grid grid-cols-2 gap-2">
-            <label className="grid gap-1 text-sm"><span className="font-medium">{t("Monedha", "Currency")}</span>
-              <select className={sel} value={draft.currency} onChange={(e) => setDraft({ ...draft, currency: e.target.value as Region["currency"] })}>{["ALL", "EUR", "GBP", "USD"].map((c) => <option key={c}>{c}</option>)}</select></label>
-            <label className="grid gap-1 text-sm"><span className="font-medium">{t("Njësitë", "Units")}</span>
-              <select className={sel} value={draft.units} onChange={(e) => setDraft({ ...draft, units: e.target.value as Region["units"] })}><option value="metric">{t("Metrike", "Metric")}</option><option value="imperial">{t("Imperiale", "Imperial")}</option></select></label>
+        <div role="dialog" aria-label={t("Shteti dhe gjuha", "Country and language")} className="fixed inset-x-3 top-20 z-50 grid max-h-[calc(100dvh-6rem)] gap-4 overflow-y-auto rounded-[1.5rem] border border-line bg-card p-5 text-ink shadow-2xl sm:absolute sm:inset-x-auto sm:top-[calc(100%+0.5rem)] sm:right-0 sm:w-[640px]">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div><p className="text-lg font-semibold tracking-tight">{t("Zgjidh shtetin", "Choose your country")}</p><p className="text-sm text-ink-2">{t("Gjuha, monedha dhe njësitë përshtaten automatikisht.", "Language, currency and units adapt automatically.")}</p></div>
+            <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Kërko shtetin", "Search country")} aria-label={t("Kërko shtetin", "Search country")} className="h-10 w-48 rounded-full border border-line bg-bg px-4 text-sm" />
           </div>
-          <p className="text-xs text-ink-2">{t("Çmimi origjinal i shitësit shfaqet gjithmonë. Konvertimet janë vetëm orientuese.", "The seller's original price is always shown. Conversions are indicative only.")}</p>
-          <button type="button" onClick={save} className="btn-primary">{t("Ruaj", "Save")}</button>
+          {COUNTRY_GROUPS.map((g) => {
+            const list = REGIONS.filter((r) => r.group === g.id && matches(r));
+            if (!list.length) return null;
+            return (
+              <section key={g.id} aria-label={g[lang]}>
+                <p className="mb-2 text-xs font-semibold text-ink-2">{g[lang]}</p>
+                <ul className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                  {list.map((r) => (
+                    <li key={r.country}>
+                      <button type="button" onClick={() => pick(r.country)} aria-current={r.country === country ? "true" : undefined}
+                        className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-left text-sm transition ${r.country === country ? "border-lime bg-accent" : "border-transparent hover:border-line hover:bg-bg-2"}`}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={flagUrl(r.country)} alt="" width={22} height={15} loading="lazy" className="h-[15px] w-[22px] shrink-0 rounded-[2px] object-cover ring-1 ring-black/10" />
+                        <span className="min-w-0"><span className="block truncate font-medium">{r[lang]}</span><span className="block truncate text-[11px] text-ink-2">{r.lang === "sq" ? "Shqip" : "English"} · {r.currency}</span></span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
+          <div className="grid gap-3 rounded-2xl bg-bg-2 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+            <div>
+              <p className="text-sm font-medium">{t("Gjuha", "Language")}</p>
+              <p className="text-xs text-ink-2">{t("Gjermanisht, italisht, frëngjisht, spanjisht, greqisht e të tjera vijnë sapo të verifikohen përkthimet.", "German, Italian, French, Spanish, Greek and more arrive once their translations are verified.")}</p>
+            </div>
+            <div className="flex rounded-full border border-line bg-card p-1" role="group" aria-label={t("Gjuha", "Language")}>
+              {LANGS.map((l) => <button key={l.id} type="button" aria-pressed={lang === l.id} onClick={() => apply({ lang: l.id, ...readRegion() })} className={`rounded-full px-4 py-1.5 text-sm font-medium ${lang === l.id ? "bg-ink text-bg" : "text-ink-2"}`}>{l.native}</button>)}
+            </div>
+          </div>
+          <details className="text-sm">
+            <summary className="cursor-pointer font-medium">{t("Monedha dhe njësitë", "Currency and units")}</summary>
+            <div className="mt-3 grid grid-cols-[1fr_1fr_auto] items-end gap-2">
+              <label className="grid gap-1"><span className="text-xs text-ink-2">{t("Monedha", "Currency")}</span><select className={sel} value={draft.currency} onChange={(e) => setDraft({ ...draft, currency: e.target.value as Region["currency"] })}>{["ALL", "EUR", "GBP", "USD"].map((c) => <option key={c}>{c}</option>)}</select></label>
+              <label className="grid gap-1"><span className="text-xs text-ink-2">{t("Njësitë", "Units")}</span><select className={sel} value={draft.units} onChange={(e) => setDraft({ ...draft, units: e.target.value as Region["units"] })}><option value="metric">{t("Metrike", "Metric")}</option><option value="imperial">{t("Imperiale", "Imperial")}</option></select></label>
+              <button type="button" onClick={() => apply({ lang, ...draft })} className="btn-primary h-10">{t("Ruaj", "Save")}</button>
+            </div>
+            <p className="mt-2 text-xs text-ink-2">{t("Çmimi origjinal i shitësit shfaqet gjithmonë; konvertimet janë orientuese.", "The seller's original price is always shown; conversions are indicative.")}</p>
+          </details>
         </div>
       )}
     </div>

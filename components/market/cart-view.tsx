@@ -20,11 +20,13 @@ export function CartView() {
   const groups = new Map<string, CartItem[]>();
   for (const i of items) groups.set(i.seller || "—", [...(groups.get(i.seller || "—") ?? []), i]);
   const total = items.reduce((s, i) => s + i.priceLek * i.quantity, 0);
+  const real = items.filter((i) => !i.demo);
+  const demoCount = items.length - real.length;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
     start(async () => {
-      const r = await sendCart({ items: items.map((i) => ({ id: i.id, quantity: i.quantity })), fulfillment, message });
+      const r = await sendCart({ items: real.map((i) => ({ id: i.id, quantity: i.quantity })), fulfillment, message });
       setResult(r);
       if (r.status === "done") r.sent.forEach((id) => cart.remove(id));
     });
@@ -53,7 +55,7 @@ export function CartView() {
             <ul className="mt-3 divide-y divide-line">
               {list.map((i) => (
                 <li key={i.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                  <div className="min-w-0"><Link href={`/treg/${i.id}`} className="font-medium hover:underline">{i.title}</Link><p className="text-xs text-ink-2">{i.city} · {formatNumber(i.priceLek, 0)} L / {i.unit}</p>{result?.status === "done" && result.failed.includes(i.id) && <p className="text-xs text-[#8a5a00]">{t("Kjo kërkesë nuk u pranua (sasia ose marrja nuk përputhet).", "This request was not accepted (quantity or fulfilment doesn't match).")}</p>}</div>
+                  <div className="min-w-0"><Link href={i.demo ? `/treg/demo/${encodeURIComponent(i.id.replace("demo:", ""))}` : `/treg/${i.id}`} className="font-medium hover:underline">{i.title}</Link>{i.demo && <span className="ml-2 rounded-full bg-bg-2 px-2 py-0.5 text-[11px] text-ink-2">{t("Demo", "Demo")}</span>}<p className="text-xs text-ink-2">{i.city} · {formatNumber(i.priceLek, 0)} L / {i.unit}</p>{result?.status === "done" && result.failed.includes(i.id) && <p className="text-xs text-[#8a5a00]">{t("Kjo kërkesë nuk u pranua (sasia ose marrja nuk përputhet).", "This request was not accepted (quantity or fulfilment doesn't match).")}</p>}</div>
                   <div className="flex items-center gap-3">
                     <label className="sr-only" htmlFor={`q-${i.id}`}>{t("Sasia", "Quantity")}</label>
                     <input id={`q-${i.id}`} type="number" min={1} max={i.max} value={i.quantity} onChange={(e) => cart.set(i.id, Number(e.target.value) || 1)} className="w-20 rounded-lg border border-line bg-bg px-2 py-1.5 text-right tabular-nums" />
@@ -73,7 +75,8 @@ export function CartView() {
           {(["pickup", "delivery"] as const).map((f) => <label key={f} className="flex items-center gap-2"><input type="radio" name="fulfillment" checked={fulfillment === f} onChange={() => setFulfillment(f)} className="accent-[var(--color-lime)]" />{f === "pickup" ? t("Marrje në vend", "Pickup") : t("Dorëzim", "Delivery")}</label>)}
         </fieldset>
         <label className="grid gap-1 text-sm"><span className="text-xs font-semibold text-ink-2">{t("Mesazh për shitësit", "Message to sellers")}</span><textarea required minLength={10} maxLength={1000} rows={4} value={message} onChange={(e) => setMessage(e.target.value)} placeholder={t("P.sh. afati, adresa e kantierit, nëse ju duhet faturë…", "E.g. timing, site address, whether you need an invoice…")} className="rounded-lg border border-line bg-bg px-3 py-2" /></label>
-        <button disabled={pending} className="btn-primary h-12">{pending ? t("Duke dërguar…", "Sending…") : t(`Dërgo ${items.length} kërkesa për ofertë`, `Send ${items.length} quote request${items.length === 1 ? "" : "s"}`)}</button>
+        {demoCount > 0 && <p className="rounded-xl bg-bg-2 px-3 py-2 text-xs text-ink-2">{t(`${demoCount} artikuj janë shembuj demo: shfaqin si funksionon shporta, por nuk u dërgohen shitësve.`, `${demoCount} item${demoCount === 1 ? " is a demo example" : "s are demo examples"}: they show how the cart works but are not sent to sellers.`)}</p>}
+        <button disabled={pending || real.length === 0} className="btn-primary h-12 disabled:opacity-50">{pending ? t("Duke dërguar…", "Sending…") : t(`Dërgo ${real.length} kërkesa për ofertë`, `Send ${real.length} quote request${real.length === 1 ? "" : "s"}`)}</button>
         {result?.status === "login" && <p role="alert" className="text-sm">{t("Hyr në llogari për të dërguar kërkesat.", "Log in to send your requests.")} <Link href="/hyr" className="font-medium underline">{t("Hyr", "Log in")}</Link></p>}
         {result?.status === "invalid" && <p role="alert" className="text-sm">{t("Kontrollo sasitë dhe shkruaj një mesazh me të paktën 10 shkronja.", "Check quantities and write a message of at least 10 characters.")}</p>}
         <p className="text-xs text-ink-2">{t("Pagesa online nuk është aktive ende. Çdo shitës konfirmon çmimin, sasinë dhe marrjen përpara se të paguash.", "Online payment is not active yet. Each seller confirms price, quantity and fulfilment before you pay.")}</p>

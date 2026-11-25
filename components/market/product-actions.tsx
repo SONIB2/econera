@@ -19,7 +19,7 @@ export function ProductActions({ p }: { p: P }) {
   const total = qty * p.unitPrice;
   const money = (n: number) => (p.currency === "EUR" ? `€${formatNumber(n, 2)}` : `${formatNumber(n, 0)} L`);
   function addToCart() {
-    cart.add({ id: p.id, title: p.title, unit: p.unit, priceLek: p.priceLek, quantity: qty, max: p.quantity, seller: p.seller, city: p.city });
+    cart.add({ id: p.id, title: p.title, unit: p.unit, priceLek: p.priceLek, quantity: qty, max: p.quantity, seller: p.seller, city: p.city, demo: p.demo || undefined });
     setNote(t("U shtua në shportë.", "Added to cart."));
   }
   function toBasket() {
@@ -44,21 +44,18 @@ export function ProductActions({ p }: { p: P }) {
         </div>
       </div>
       <p className="flex justify-between text-sm"><span className="text-ink-2">{t("Vlera e vlerësuar", "Estimated value")}</span><span className="font-semibold tabular-nums">{money(total)}</span></p>
-      {p.demo ? (
-        <p className="rounded-xl bg-bg-2 px-4 py-3 text-sm">{t("Ky është një shembull demonstrues dhe nuk mund të blihet.", "This is a demo example and cannot be bought.")}</p>
-      ) : (
-        <>
-          <button type="button" onClick={addToCart} className="btn-primary h-12 text-base">{t(`Shto në shportë · ${money(total)}`, `Add to cart · ${money(total)}`)}</button>
-          <Link href={`/materiale/${p.id}/oferte`} className="btn-ghost">{t("Kërko ofertë nga shitësi", "Request a quote")}</Link>
-        </>
-      )}
+      <button type="button" onClick={addToCart} className="btn-primary h-12 text-base">{t(`Shto në shportë · ${money(total)}`, `Add to cart · ${money(total)}`)}</button>
+      {note?.includes("shport") || note?.includes("cart") ? <Link href="/shporta" className="btn-ghost h-12 border-ink">{t("Shko te shporta →", "Go to cart →")}</Link> : null}
+      {p.demo
+        ? <p className="rounded-xl bg-bg-2 px-4 py-3 text-sm">{t("Shembull demo: mund ta provosh në shportë, por nuk i dërgohet asnjë shitësi.", "Demo example: you can try it in the cart, but it is not sent to any seller.")}</p>
+        : <Link href={`/materiale/${p.id}/oferte`} className="btn-ghost">{t("Kërko ofertë nga shitësi", "Request a quote")}</Link>}
       <button type="button" onClick={toBasket} disabled={p.demo} className="btn-ghost disabled:opacity-50">{t("Shto në Smart Basket", "Add to Smart Basket")}</button>
       <div className="grid grid-cols-2 gap-2">
         {p.sheet && <Link href="/ai/smartcut" className="rounded-xl border border-line px-3 py-2.5 text-center text-sm hover:border-lime">{t("Optimizo me SmartCut", "Optimize with SmartCut")}</Link>}
         <Link href="/ai/renovim" className="rounded-xl border border-line px-3 py-2.5 text-center text-sm hover:border-lime">{t("Vizualizo në AI Renovation", "Visualize in AI Renovation")}</Link>
         <button type="button" onClick={share} className="rounded-xl border border-line px-3 py-2.5 text-sm hover:border-lime">{t("Shpërndaj", "Share")}</button>
       </div>
-      {note && <p role="status" className="text-sm text-lime">{note} {note.includes("shport") || note.includes("cart") ? <Link href="/shporta" className="underline">{t("Hap shportën", "Open cart")}</Link> : null}</p>}
+      {note && <p role="status" className="text-sm text-lime-dim">{note}</p>}
       <p className="text-xs text-ink-2">{t("Pagesa online nuk është aktive ende: shporta dërgon kërkesa për ofertë te shitësit dhe çmimi konfirmohet prej tyre.", "Online payment is not active yet: the cart sends quote requests to sellers, who confirm the price.")}</p>
     </div>
   );

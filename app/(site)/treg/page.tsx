@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { ProductCard } from "@/components/market/product-card";
 import { SearchBar } from "@/components/market/search-bar";
 import { ALBANIA, project } from "@/lib/albania-map";
-import { parseRegion, REGION_COOKIE, tr } from "@/lib/lang";
+import { flagUrl, parseRegion, REGION_COOKIE, REGIONS as COUNTRIES, tr } from "@/lib/lang";
 import { getLang } from "@/lib/lang-server";
 import { CONDITION_UI, MARKET_CATEGORIES } from "@/lib/market/categories";
 import { interpret } from "@/lib/market/interpret";
@@ -100,6 +100,19 @@ export default async function Marketplace({ searchParams }: { searchParams: Prom
         </div>
         <p className="text-sm text-ink-2" aria-live="polite"><span className="text-2xl font-semibold text-ink tabular-nums">{results.length}</span> {t(results.length === 1 ? "listim" : "listime", results.length === 1 ? "listing" : "listings")}</p>
       </div>
+      {(() => {
+        const c = COUNTRIES.find((x) => x.country === region.country);
+        const local = region.country === "AL" || region.country === "XK";
+        return c && (
+          <p className="mt-5 flex flex-wrap items-center gap-2 text-sm text-ink-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={flagUrl(c.country)} alt="" width={20} height={14} className="h-3.5 w-5 rounded-[2px] object-cover ring-1 ring-black/10" />
+            {local
+              ? t(`Tregu për ${c.sq}: shitës në Shqipëri dhe Kosovë.`, `Marketplace for ${c.en}: sellers in Albania and Kosovo.`)
+              : t(`Ende s'ka shitës në ${c.sq}. Po shfaqen listimet nga Shqipëria; materialet e rënda kushtojnë shumë për t'u transportuar larg, ndaj tregu yt do të mbushet me shitës vendas.`, `No sellers in ${c.en} yet. Showing listings from Albania; heavy materials are costly to ship far, so your market will fill with local sellers.`)}
+          </p>
+        );
+      })()}
       <div className="mt-6"><Suspense><SearchBar /></Suspense></div>
       <nav aria-label={t("Kategoritë", "Categories")} className="mt-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
         <Link href={without("kategoria")} className={`shrink-0 rounded-full border px-4 py-2 text-sm ${!filters.category ? "border-ink bg-ink text-bg" : "border-line hover:border-lime"}`}>{t("Të gjitha", "All")}</Link>
@@ -142,7 +155,7 @@ export default async function Marketplace({ searchParams }: { searchParams: Prom
             <section className="mt-6 grid gap-4" aria-labelledby="demo">
               <div className="rounded-card border border-dashed border-line p-6">
                 <h2 id="demo" className="text-2xl">{connected && live.length ? t("Asnjë listim nuk përputhet me filtrat.", "No listings match these filters.") : t("Tregu po mbushet me listimet e para.", "The marketplace is receiving its first listings.")}</h2>
-                <p className="mt-2 text-ink-2">{t("Çdo listim publikohet vetëm pasi shqyrtohet nga ECONERA. Më poshtë janë shembuj demonstrues, që nuk mund të blihen.", "Every listing is published only after ECONERA reviews it. Below are demo examples, which cannot be bought.")}</p>
+                <p className="mt-2 text-ink-2">{t("Çdo listim publikohet vetëm pasi shqyrtohet nga ECONERA. Më poshtë janë shembuj demo: mund t’i provosh në shportë, por nuk u dërgohen shitësve.", "Every listing is published only after ECONERA reviews it. Below are demo examples: you can try them in the cart, but they are not sent to sellers.")}</p>
                 <div className="mt-4 flex flex-wrap gap-2"><Link href="/shit" className="btn-primary">{t("Shit materiale", "Sell materials")}</Link>{chips.length > 0 && <Link href="/treg" className="btn-ghost">{t("Pastro filtrat", "Clear filters")}</Link>}</div>
               </div>
               {demo.length > 0 && <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">{demo.map((i) => <ProductCard key={i.id} item={i} lang={lang} region={region} rate={EUR_TO_LEK} />)}</div>}

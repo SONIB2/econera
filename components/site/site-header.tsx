@@ -6,16 +6,16 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "@/app/(legacy)/account-actions";
 import { useLang } from "@/components/lang-provider";
-import { BasketVisual, CutVisual, RenovationVisual, VoiceVisual } from "@/components/tools/visuals";
+import { TOOL_PHOTO, unsplash } from "@/lib/market/photos";
 import { CartButton, RegionMenu, ThemeToggle } from "./header-controls";
 
 export type Account = { email: string; seller: boolean } | null;
 
 const TOOLS = [
-  { href: "/ai/renovim", name: "AI Renovation", sq: "Nga mbetja te dizajni. Dizajno hapësirën me materiale reale të ECONERA-s.", en: "From waste to design. Design your space and find real materials on ECONERA.", Visual: RenovationVisual },
-  { href: "/ai/shporta", name: "Smart Basket", sq: "Blerje më e zgjuar, çmime më të mira. Kombinimi më i mirë për buxhetin tënd.", en: "Smarter procurement, better prices. The best combination for your budget.", Visual: BasketVisual },
-  { href: "/ai/smartcut", name: "SmartCut", sq: "Çdo copë ka vlerë. Optimizo prerjen dhe gjej copëzat që të duhen.", en: "Make every piece count. Optimise cutting and find suitable offcuts.", Visual: CutVisual },
-  { href: "#asistenti", name: "ECONERA Voice", sq: "Asistenti yt i aksesueshëm. Kërko, publiko dhe menaxho me zë.", en: "Your accessible assistant. Search, publish and manage by voice.", Visual: VoiceVisual, voice: true },
+  { href: "/ai/renovim", name: "AI Renovation", tag: { sq: "Nga mbetja te dizajni", en: "From waste to design" }, sq: "Dizajno hapësirën dhe gjej materiale reale në ECONERA.", en: "Design your space and find real materials on ECONERA.", photo: TOOL_PHOTO.renovation },
+  { href: "/ai/shporta", name: "Smart Basket", tag: { sq: "Blerje më e zgjuar", en: "Smarter procurement" }, sq: "Kombinimi më i mirë i materialeve për projektin dhe buxhetin tënd.", en: "The best combination of materials for your project and budget.", photo: TOOL_PHOTO.basket },
+  { href: "/ai/smartcut", name: "SmartCut", tag: { sq: "Çdo copë ka vlerë", en: "Make every piece count" }, sq: "Optimizo prerjen dhe gjej copat e mbetura që të duhen.", en: "Optimise cutting and find the offcuts you need.", photo: TOOL_PHOTO.smartcut },
+  { href: "#asistenti", name: "ECONERA Voice", tag: { sq: "Asistent i aksesueshëm", en: "Accessible assistant" }, sq: "Kërko, publiko dhe menaxho materialet me zë.", en: "Search, publish and manage materials by voice.", photo: TOOL_PHOTO.voice, voice: true },
 ];
 
 /**
@@ -83,21 +83,29 @@ export function SiteHeader({ account, overlay = false }: { account: Account; ove
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden className={`transition ${mega ? "rotate-180" : ""}`}><path d="M2 3.5l3 3 3-3" strokeLinecap="round" /></svg>
             </button>
             {mega && (
-              <div id="mega-ai" className="absolute left-1/2 top-[calc(100%+0.75rem)] z-50 w-[min(760px,calc(100vw-2rem))] -translate-x-1/2 rounded-[1.5rem] border border-line bg-card p-3 text-ink shadow-2xl">
-                <ul className="grid grid-cols-2 gap-2">
-                  {TOOLS.map(({ href, name, Visual, voice, ...d }) => (
+              <div id="mega-ai" className="absolute left-1/2 top-[calc(100%+0.75rem)] z-50 w-[min(980px,calc(100vw-2rem))] -translate-x-1/2 overflow-hidden rounded-[1.75rem] border border-line bg-card text-ink shadow-[0_30px_80px_-30px_rgba(6,34,30,0.45)]">
+                <div className="flex items-end justify-between gap-6 px-6 pt-5 pb-4">
+                  <div><p className="text-xs font-medium text-lime-dim">{t("Mjete me inteligjencë artificiale", "AI Tools")}</p><p className="mt-1 text-lg font-semibold tracking-tight">{t("Më shumë se një treg. Një mënyrë më e zgjuar për të ndërtuar.", "More than a marketplace. A smarter way to build.")}</p></div>
+                  <Link href="/ai" onClick={() => setMega(false)} className="shrink-0 rounded-full border border-line px-4 py-2 text-sm font-medium hover:border-lime">{t("Të gjitha mjetet", "All tools")}</Link>
+                </div>
+                <ul className="grid grid-cols-4 gap-3 px-4 pb-4">
+                  {TOOLS.map(({ href, name, tag, photo, voice, ...d }) => (
                     <li key={name}>
-                      <Link href={href} data-open-assistant={voice ? "" : undefined} onClick={() => setMega(false)} className="group grid grid-cols-[112px_1fr] gap-4 rounded-2xl p-3 hover:bg-bg-2 focus-visible:bg-bg-2">
-                        <span className="block aspect-[4/3] overflow-hidden rounded-xl border border-line bg-bg-2">{<Visual />}</span>
-                        <span><span className="block font-semibold">{name}</span><span className="mt-1 block text-sm text-ink-2">{d[lang]}</span><span className="mt-2 block text-xs font-medium text-lime">{t("Hap mjetin →", "Open tool →")}</span></span>
+                      <Link href={href} data-open-assistant={voice ? "" : undefined} onClick={() => setMega(false)} className="group block rounded-2xl p-1.5 outline-none hover:bg-bg-2 focus-visible:bg-bg-2">
+                        <span className="relative block aspect-[4/5] overflow-hidden rounded-xl bg-bg-2">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={unsplash(photo, 480, 600)} alt="" loading="lazy" className="size-full object-cover transition duration-700 group-hover:scale-105" />
+                          <span className="absolute inset-0 bg-gradient-to-t from-[#04211d]/90 via-[#04211d]/20 to-transparent" />
+                          <span className="absolute top-3 left-3 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-md">{tag[lang]}</span>
+                          <span className="absolute inset-x-3 bottom-3 text-[17px] font-semibold tracking-tight text-white">{name}</span>
+                        </span>
+                        <span className="block px-1.5 pt-3 pb-1 text-[13px] leading-snug text-ink-2">{d[lang]}</span>
+                        <span className="block px-1.5 pb-1 text-xs font-semibold text-lime-dim group-hover:underline">{voice ? t("Hap asistentin", "Open assistant") : t("Hap mjetin", "Open tool")}</span>
                       </Link>
                     </li>
                   ))}
                 </ul>
-                <div className="mt-2 flex items-center justify-between rounded-2xl bg-bg-2 px-4 py-3 text-sm">
-                  <span className="text-ink-2">{t("Mjetet punojnë me stokun real të tregut dhe kalojnë të dhënat nga njëri te tjetri.", "The tools work with real market stock and pass data to each other.")}</span>
-                  <Link href="/ai" onClick={() => setMega(false)} className="font-medium text-lime">{t("Të gjitha mjetet", "All tools")}</Link>
-                </div>
+                <div className="border-t border-line bg-bg-2/60 px-6 py-3 text-xs text-ink-2">{t("Mjetet punojnë me stokun real të tregut dhe kalojnë të dhënat nga njëri te tjetri.", "The tools work with real marketplace stock and pass data to each other.")}</div>
               </div>
             )}
           </div>
@@ -140,7 +148,7 @@ export function SiteHeader({ account, overlay = false }: { account: Account; ove
         </ul>
         <p className="mt-3 px-3 text-xs font-medium text-ink-2">{t("Mjetet AI", "AI Tools")}</p>
         <ul className="mt-1 grid grid-cols-2 gap-2">
-          {TOOLS.map((tool) => <li key={tool.name}><Link href={tool.href} data-open-assistant={tool.voice ? "" : undefined} className="block rounded-xl border border-line px-3 py-3 text-sm font-medium">{tool.name}</Link></li>)}
+          {TOOLS.map((tool) => <li key={tool.name}><Link href={tool.href} data-open-assistant={tool.voice ? "" : undefined} className="relative block aspect-[16/10] overflow-hidden rounded-xl">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={unsplash(tool.photo, 360, 220)} alt="" loading="lazy" className="size-full object-cover" /><span className="absolute inset-0 bg-gradient-to-t from-[#04211d]/85 to-transparent" /><span className="absolute inset-x-2.5 bottom-2 text-sm font-semibold text-white">{tool.name}</span></Link></li>)}
         </ul>
         <div className="mt-3 flex items-center justify-between border-t border-line pt-3">
           <ThemeToggle />

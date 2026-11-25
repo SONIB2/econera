@@ -2,7 +2,7 @@
  * Cart: listings and quantities kept in this browser. Checkout sends one quote request per item to its seller
  * (no online payment until a payment provider is configured).
  */
-export type CartItem = { id: string; title: string; unit: string; priceLek: number; quantity: number; max: number; seller: string; city: string };
+export type CartItem = { id: string; title: string; unit: string; priceLek: number; quantity: number; max: number; seller: string; city: string; demo?: boolean };
 const KEY = "econera.cart.v1";
 const FAV = "econera.saved.v1";
 
