@@ -50,6 +50,19 @@ const SPOT_TEXT: Record<ProductId, { sq: string; en: string }> = {
   smartcut: { sq: "Optimizo materialet", en: "Optimize materials" }, voice: { sq: "Asistent AI i aksesueshëm", en: "Accessible AI assistant" }, sell: { sq: "Listo produktet e tua", en: "List your products" },
 };
 
+// The hero walks through the floors one by one; the matching floor lights up in the model.
+const TOUR: ProductId[] = ["marketplace", "basket", "renovation", "smartcut"];
+const TOUR_TEXT: Record<string, { sq: string; en: string }> = {
+  marketplace: { sq: "Materiale të tepërta, të rikuperuara dhe copa, gati për projektin tjetër.", en: "Surplus, reclaimed and offcut materials, ready for the next project." },
+  basket: { sq: "Shkruaj listën e projektit. AI gjen shitësit realë brenda buxhetit.", en: "Write your project list. AI finds real sellers within your budget." },
+  renovation: { sq: "Ngarko foton e dhomës dhe shihe me materiale që ekzistojnë në treg.", en: "Upload a room photo and see it with materials that exist on the market." },
+  smartcut: { sq: "Fut prerjet që të duhen. Gjej copat që i mbulojnë para se të blesh pllakë të re.", en: "Enter your cuts. Find offcuts that cover them before buying a new sheet." },
+};
+
+function Reveal({ text, delay }: { text: string; delay: number }) {
+  return <>{text.split("").map((ch, i) => <span key={i} className="xp-char" style={{ animationDelay: `${delay + i * 0.028}s` }}>{ch === " " ? "\u00a0" : ch}</span>)}</>;
+}
+
 export function Experience() {
   const { lang, t } = useLang();
   const router = useRouter();
@@ -84,7 +97,15 @@ export function Experience() {
     el.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0)`;
     el.style.visibility = visible ? "" : "hidden";
   }, []);
-  const highlight: Level | null = hotLevel ?? (hotSpot ? PRODUCT_LEVEL[hotSpot] : product ? PRODUCT_LEVEL[product] : null);
+  const [tour, setTour] = useState(0);
+  const touring = phase === "outside" && !paused && !product && !hotSpot && hotLevel === null;
+  useEffect(() => {
+    if (!touring) return;
+    const id = setInterval(() => setTour((i) => (i + 1) % TOUR.length), 4600);
+    return () => clearInterval(id);
+  }, [touring]);
+  const tourId = TOUR[tour];
+  const highlight: Level | null = hotLevel ?? (hotSpot ? PRODUCT_LEVEL[hotSpot] : product ? PRODUCT_LEVEL[product] : phase === "outside" ? PRODUCT_LEVEL[tourId] : null);
   const fadeRef = useRef<HTMLDivElement>(null);
 
   // First visit: welcome screen. Returning visitors land on the finished building, with a replay option.
@@ -142,7 +163,7 @@ export function Experience() {
               : <><span className="block text-[11px] font-semibold text-[#c8f169]">{t("Përshëndetje, jam ECONERA", "Hi, I'm ECONERA")}</span>{t("Asistenti yt për ndërtimin qarkullues. Ta ndërtoj para syve të tu?", "Your assistant for circular construction. Shall I build it in front of you?")}</>}
           </div>
         </div>
-        {phase !== "boot" && <ProductSpots refs={spotRefs} visible={phase === "outside"} labels={labels} onSelect={onProduct} onHover={setHotSpot} active={product} hot={hotLevel} />}
+        {phase !== "boot" && <ProductSpots refs={spotRefs} visible={phase === "outside"} labels={labels} onSelect={onProduct} onHover={setHotSpot} active={product} hot={highlight} />}
       </div>
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_60%_45%,transparent_40%,rgba(3,24,21,0.72))]" />
       {phase === "outside" && <div aria-hidden="true" className="xp-fade-in pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(3,24,21,0.85)_0%,rgba(3,24,21,0.35)_42%,transparent_62%),linear-gradient(0deg,rgba(3,24,21,0.75),transparent_38%)]" />}
@@ -152,17 +173,29 @@ export function Experience() {
         <div className="xp-fade-in absolute inset-x-0 bottom-28 z-20 flex justify-center sm:bottom-10"><button type="button" onClick={() => setPhase("outside")} className="rounded-full border border-line bg-bg/70 px-5 py-2.5 text-sm text-ink backdrop-blur hover:border-lime">{t("Kalo animacionin", "Skip animation")}</button></div>
       )}
       {phase === "outside" && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-5 pb-32 sm:px-8 sm:pb-14">
-          <div className="xp-fade-in mx-auto w-full max-w-7xl">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-5 pb-28 sm:px-8 sm:pb-12">
+          <div className="mx-auto w-full max-w-7xl">
             <div className="pointer-events-auto max-w-2xl">
-              <h1 className="display text-[clamp(2.3rem,7vw,5.6rem)] leading-[0.95] text-ink">{(lang === "en" ? ["Every material", "has a future."] : ["Çdo material", "ka një të ardhme."]).map((line, i) => <span key={line} className="block overflow-hidden pb-[0.08em]"><span className="xp-line block" style={{ animationDelay: `${0.25 + i * 0.14}s` }}>{line}</span></span>)}</h1>
-              <p className="xp-rise-soft mt-4 max-w-lg text-sm text-ink-2 sm:mt-5 sm:text-lg">{t("Eksploro një mënyrë më të zgjuar për të ndërtuar.", "Explore a smarter way to build.")}</p>
-              <div className="xp-rise-soft mt-7 flex flex-wrap gap-2 [animation-delay:.65s]">
+              <h1 aria-label={t("Çdo material ka një të ardhme.", "Every material has a future.")} className="display text-white text-[clamp(2.6rem,7.4vw,6.2rem)] leading-[0.92] tracking-[-0.035em]">
+                {(lang === "en" ? ["Every material", "has a future."] : ["Çdo material", "ka një të ardhme."]).map((line, i) => <span key={line} aria-hidden className="relative block whitespace-nowrap"><Reveal text={line} delay={0.15 + i * 0.4} /><span className="xp-glint absolute inset-0" style={{ animationDelay: `${2.2 + i * 0.25}s` }}>{line}</span></span>)}
+              </h1>
+
+              <button type="button" onClick={() => onProduct(tourId)} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}
+                className="xp-rise-soft group mt-7 flex w-full max-w-xl items-stretch gap-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-left backdrop-blur-md transition hover:border-[#c8f169]/50 sm:p-5 [animation-delay:1.1s]">
+                <span className="xp-num grid min-w-[4.5rem] place-items-center display text-5xl font-semibold leading-none sm:text-6xl">{String(tour + 1).padStart(2, "0")}</span>
+                <span key={tourId} className="xp-swap flex min-w-0 flex-1 flex-col justify-center">
+                  <span className="flex items-center gap-2 text-base font-semibold text-white sm:text-lg"><span className="size-2 rounded-full bg-[#c8f169] shadow-[0_0_12px_2px_rgba(200,241,105,.7)]" />{PRODUCTS[tourId].name}<span aria-hidden className="ml-auto text-[#c8f169] transition group-hover:translate-x-1">→</span></span>
+                  <span className="mt-1 text-sm leading-snug text-ink-2">{TOUR_TEXT[tourId][lang]}</span>
+                  <span className="mt-3 flex gap-1.5" aria-hidden>{TOUR.map((id, i) => <span key={id} className="relative h-[3px] flex-1 overflow-hidden rounded-full bg-white/10">{i < tour && <span className="absolute inset-0 bg-[#c8f169]/60" />}{i === tour && <span key={`${tour}-${paused}`} className={`absolute inset-y-0 left-0 bg-[#c8f169] ${touring ? "xp-progress" : "w-full"}`} />}</span>)}</span>
+                </span>
+              </button>
+
+              <div className="xp-rise-soft mt-6 flex flex-wrap gap-2 [animation-delay:1.3s]">
                 <Link href="/treg" className="btn-primary h-12 px-6 text-base">{t("Eksploro tregun", "Explore Marketplace")}</Link>
                 <Link href="/shit" className="btn-ghost h-12 bg-bg/60 px-6 text-base backdrop-blur">{t("Shit materiale", "Sell Materials")}</Link>
               </div>
-              <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-ink-2">
-                <Link href="/ai" className="font-medium text-lime underline-offset-4 hover:underline">{t("Zbulo mjetet AI", "Discover AI Tools")} <span aria-hidden>→</span></Link>
+              <div className="xp-rise-soft mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-ink-2 [animation-delay:1.45s]">
+                <Link href="/ai" className="font-medium text-lime underline-offset-4 hover:underline">{t("Zbulo mjetet AI", "Discover AI Tools")}</Link>
                 <button type="button" onClick={onDoor} className="underline-offset-4 hover:text-ink hover:underline">{t("Hyr në interier", "Step inside")}</button>
                 <button type="button" onClick={() => { setProduct(null); setPhase("welcome"); }} className="underline-offset-4 hover:text-ink hover:underline">{t("Rishiko hyrjen", "Replay intro")}</button>
               </div>
@@ -172,7 +205,7 @@ export function Experience() {
       )}
 
       {phase === "outside" && (
-        <div className="xp-fade-in absolute top-20 right-3 z-30 flex flex-col items-end gap-2 sm:top-24 sm:right-6">
+        <div className="xp-fade-in absolute top-20 right-3 z-30 flex max-w-[calc(100vw-1.5rem)] flex-col items-end gap-2 sm:top-24 sm:right-8">
           <div role="toolbar" aria-label={t("Kontrollet 3D", "3D controls")} className="flex items-center gap-1.5 rounded-full border border-line bg-bg/60 p-1.5 backdrop-blur">
             <details className="relative">
               <summary className={`${tool} w-auto cursor-pointer list-none px-3.5 text-xs font-medium [&::-webkit-details-marker]:hidden`}>{t("Produktet", "Products")}</summary>

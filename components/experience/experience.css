@@ -45,3 +45,14 @@
 @keyframes xp-line-in { from { transform: translateY(105%) } to { transform: none } }
 .xp-rise-soft { animation: xp-fade .9s cubic-bezier(.16,1,.3,1) .5s both }
 @media (prefers-reduced-motion: reduce) { .xp-line, .xp-rise-soft { animation: none } }
+
+/* Outside hero: letters rise out of blur, then a slow lime light passes across the headline */
+.xp-char { display: inline-block; animation: xp-char-in .9s cubic-bezier(.16,1,.3,1) both }
+@keyframes xp-char-in { from { opacity: 0; filter: blur(14px); transform: translateY(.35em) scale(1.08) } to { opacity: 1; filter: none; transform: none } }
+.xp-glint { color: transparent; pointer-events: none; background: linear-gradient(100deg, transparent 38%, rgba(200,241,105,.95) 47%, #fff 50%, rgba(200,241,105,.95) 53%, transparent 62%); background-size: 300% 100%; background-position: 100% 0; -webkit-background-clip: text; background-clip: text; animation: xp-sweep 6.5s ease-in-out infinite both }
+@keyframes xp-sweep { 0% { background-position: 100% 0 } 40%, 100% { background-position: 0% 0 } }
+.xp-num { color: transparent; -webkit-text-stroke: 1.2px rgba(200,241,105,.85); text-shadow: 0 0 24px rgba(200,241,105,.25) }
+.xp-swap { animation: xp-fade .6s cubic-bezier(.16,1,.3,1) both }
+.xp-progress { animation: xp-bar 4.6s linear both }
+@keyframes xp-bar { from { width: 0 } to { width: 100% } }
+@media (prefers-reduced-motion: reduce) { .xp-char, .xp-glint, .xp-swap, .xp-progress { animation: none } .xp-progress { width: 100% } }
