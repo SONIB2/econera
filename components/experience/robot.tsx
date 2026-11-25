@@ -36,10 +36,10 @@ export function Robot({ state, levelY, pointer, onClick, onHead, visible }: {
   const ring = useRef<THREE.Mesh>(null);
   const tmp = useMemo(() => ({ a: new THREE.Vector3(), b: new THREE.Vector3(), c: new THREE.Vector3(), q: new THREE.Quaternion(), fwd: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3(), headW: new THREE.Vector3() }), []);
   const mats = useMemo(() => ({
-    shell: new THREE.MeshStandardMaterial({ color: "#eef3ee", roughness: 0.32, metalness: 0.15 }),
-    visor: new THREE.MeshStandardMaterial({ color: "#04211d", roughness: 0.15, metalness: 0.6 }),
-    glow: new THREE.MeshBasicMaterial({ color: LIME.clone().multiplyScalar(2.2), toneMapped: false }),
-    dark: new THREE.MeshStandardMaterial({ color: "#163b35", roughness: 0.5, metalness: 0.4 }),
+    shell: new THREE.MeshPhysicalMaterial({ color: "#f4f8f6", roughness: 0.16, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.06, fog: false }),
+    visor: new THREE.MeshPhysicalMaterial({ color: "#020d0b", roughness: 0.05, metalness: 0.3, clearcoat: 1, clearcoatRoughness: 0.02, fog: false }),
+    glow: new THREE.MeshBasicMaterial({ color: LIME.clone().multiplyScalar(1.6), toneMapped: false, fog: false }),
+    dark: new THREE.MeshStandardMaterial({ color: "#0d2a25", roughness: 0.4, metalness: 0.5, fog: false }),
   }), []);
 
   useFrame(({ clock }) => {
@@ -83,6 +83,9 @@ export function Robot({ state, levelY, pointer, onClick, onHead, visible }: {
   return (
     <group ref={root} visible={visible} onClick={onClick ? (e) => { e.stopPropagation(); onClick(); } : undefined}
       onPointerOver={onClick ? () => { document.body.style.cursor = "pointer"; } : undefined} onPointerOut={onClick ? () => { document.body.style.cursor = ""; } : undefined}>
+      {/* Own key and rim light so the robot reads crisp and bright against the dark scene. */}
+      <pointLight position={[1.2, 1.8, 2.4]} intensity={9} distance={6} decay={2} color="#ffffff" />
+      <pointLight position={[-1.6, 1.2, -1.4]} intensity={5} distance={5} decay={2} color="#c8f169" />
       <group ref={head} position={[0, 0.55, 0]}>
         <RoundedBox args={[1.6, 1.15, 1.15]} radius={0.38} smoothness={5} material={mats.shell} castShadow />
         <RoundedBox args={[1.3, 0.62, 0.2]} radius={0.22} smoothness={4} position={[0, 0.02, 0.52]} material={mats.visor} />

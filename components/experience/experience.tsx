@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useLang } from "@/components/lang-provider";
 import { HOTSPOTS, hotspotById, hotspotLabel } from "@/lib/interior";
-import { LogoDraw } from "./logo-draw";
 import { PRODUCT_LEVEL, ProductSpots, type Level, type ProductId } from "./model";
 import { PRODUCTS, ProductPanel } from "./product-panel";
 import { MaterialPanel } from "./material-panel";
@@ -176,7 +175,7 @@ export function Experience() {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-5 pb-28 sm:px-8 sm:pb-12">
           <div className="mx-auto w-full max-w-7xl">
             <div className="pointer-events-auto max-w-2xl">
-              <h1 aria-label={t("Çdo material ka një të ardhme.", "Every material has a future.")} className="display text-white text-[clamp(2.6rem,7.4vw,6.2rem)] leading-[0.92] tracking-[-0.035em]">
+              <h1 aria-label={t("Çdo material ka një të ardhme.", "Every material has a future.")} className="display text-white text-[clamp(2.3rem,5.4vw,4.9rem)] leading-[0.98] tracking-[-0.045em]">
                 {(lang === "en" ? ["Every material", "has a future."] : ["Çdo material", "ka një të ardhme."]).map((line, i) => <span key={line} aria-hidden className="relative block whitespace-nowrap"><Reveal text={line} delay={0.15 + i * 0.4} /><span className="xp-glint absolute inset-0" style={{ animationDelay: `${2.2 + i * 0.25}s` }}>{line}</span></span>)}
               </h1>
 
@@ -268,9 +267,7 @@ export function Experience() {
           <div className="pointer-events-auto absolute inset-x-0 bottom-0 px-5 pb-28 sm:px-8 lg:top-0 lg:flex lg:items-center lg:pb-0" style={{ animation: reducedMotion ? undefined : "xp-fade 1s cubic-bezier(.16,1,.3,1) 2.4s both" }}>
             <div className="mx-auto w-full max-w-7xl">
               <div className="max-w-xl">
-                <LogoDraw className="w-full max-w-[15rem] max-sm:hidden" />
-                <p className="mt-4 text-[11px] font-medium tracking-[0.42em] text-ink-2 max-sm:hidden">CONSTRUCTION INTELLIGENCE</p>
-                <h1 className="display mt-6 text-[clamp(2.3rem,5.6vw,4.6rem)] leading-[0.98] text-ink sm:mt-8">{(lang === "en" ? ["The future is", "built differently."] : ["E ardhmja", "ndërtohet ndryshe."]).map((line, i) => <span key={line} className="block overflow-hidden pb-[0.08em]"><span className="xp-line block" style={{ animationDelay: `${2.5 + i * 0.14}s` }}>{line}</span></span>)}</h1>
+                <h1 className="display text-[clamp(2.3rem,5.6vw,4.6rem)] leading-[0.98] text-ink sm:mt-8">{(lang === "en" ? ["The future is", "built differently."] : ["E ardhmja", "ndërtohet ndryshe."]).map((line, i) => <span key={line} className="block overflow-hidden pb-[0.08em]"><span className="xp-line block" style={{ animationDelay: `${2.5 + i * 0.14}s` }}>{line}</span></span>)}</h1>
                 <p className="xp-rise-soft mt-4 max-w-md text-base text-ink-2 sm:text-lg">{t("Një platformë inteligjente. Mundësi pa fund për ndërtimin qarkullues.", "One intelligent platform. Endless possibilities for circular construction.")}</p>
                 <div className="xp-rise-soft mt-7 flex flex-wrap items-center gap-x-5 gap-y-3 [animation-delay:.7s]">
                   <button type="button" autoFocus onClick={start} className="btn-primary h-13 px-8 text-base">{t("Eksploro ECONERA", "Explore ECONERA")} <span aria-hidden>→</span></button>

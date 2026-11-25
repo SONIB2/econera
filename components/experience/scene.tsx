@@ -70,7 +70,7 @@ export default function Scene(props: SceneProps) {
       {/* Bloom is for the blueprint exterior only; the lit interior stays natural and never blows out. */}
       {!props.lowPower && props.phase !== "inside" && (
         <EffectComposer multisampling={0}>
-          <Bloom mipmapBlur intensity={0.55} luminanceThreshold={0.78} luminanceSmoothing={0.2} />
+          <Bloom mipmapBlur intensity={0.55} luminanceThreshold={0.93} luminanceSmoothing={0.2} />
         </EffectComposer>
       )}
     </Canvas>
