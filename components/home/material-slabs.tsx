@@ -35,7 +35,7 @@ function bricks() {
   return out + `<rect width='200' height='280' filter='url(#n)' opacity='.35'/>` + noise("n", ".9", 2, "0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .9 0");
 }
 
-const TEXTURE = {
+export const TEXTURE = {
   wood: svg(`${noise("w", ".012 .32", 3, "0 0 0 0 .47  0 0 0 0 .29  0 0 0 0 .15  0 0 0 -1.1 1.15", 8)}<rect width='200' height='280' fill='#8a5a32'/><rect width='200' height='280' filter='url(#w)'/>`),
   concrete: svg(`${noise("c", ".55", 4, "0 0 0 0 .38  0 0 0 0 .39  0 0 0 0 .38  0 0 0 -.9 .75")}<rect width='200' height='280' fill='#a7aaa5'/><rect width='200' height='280' filter='url(#c)'/>`),
   terrazzo: svg(`<rect width='200' height='280' fill='#d6d3cb'/>${chips()}`),

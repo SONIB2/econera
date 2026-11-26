@@ -12,11 +12,11 @@ export const metadata: Metadata = { title: "ECONERA Verify", robots: { index: fa
 
 type Seller = { kind: "individual" | "business"; legal_name: string; country: string; phone: string | null; address: string | null; registration_number: string | null; tax_number: string | null; representative: string | null; public_name: string | null; status: string; decision_reason: string | null };
 
-export default async function SellerVerification({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+export default async function SellerVerification({ searchParams }: { searchParams: Promise<{ status?: string; lloji?: string }> }) {
   const { db, user } = await requireAccount();
   const lang = await getLang();
   const t = (sq: string, en: string) => tr(lang, sq, en);
-  const { status } = await searchParams;
+  const { status, lloji } = await searchParams;
   const [{ data: seller, error }, { data: docs }] = await Promise.all([
     db.from("seller_verifications").select("*").eq("user_id", user.id).maybeSingle<Seller>(),
     db.from("verification_documents").select("id,doc_type,file_name,review_status,expires_on,review_notes,created_at").eq("subject_type", "seller").eq("subject_id", user.id).order("created_at", { ascending: false }),
@@ -40,7 +40,7 @@ export default async function SellerVerification({ searchParams }: { searchParam
           <fieldset className="md:col-span-2" disabled={!editable}>
             <legend className="mb-2 text-sm font-medium">{t("Lloji i shitësit", "Seller type")}</legend>
             <div className="flex flex-wrap gap-2">
-              {(["individual", "business"] as const).map((k) => <label key={k} className="cursor-pointer rounded-full border border-line px-4 py-2 text-sm has-[:checked]:border-lime has-[:checked]:bg-accent"><input type="radio" name="kind" value={k} defaultChecked={(s?.kind ?? "business") === k} className="sr-only" />{k === "individual" ? t("Individ", "Individual") : t("Biznes / kompani ndërtimi", "Business / construction company")}</label>)}
+              {(["individual", "business"] as const).map((k) => <label key={k} className="cursor-pointer rounded-full border border-line px-4 py-2 text-sm has-[:checked]:border-lime has-[:checked]:bg-accent"><input type="radio" name="kind" value={k} defaultChecked={(s?.kind ?? (lloji === "individual" ? "individual" : "business")) === k} className="sr-only" />{k === "individual" ? t("Individ", "Individual") : t("Biznes / kompani ndërtimi", "Business / construction company")}</label>)}
             </div>
           </fieldset>
           <F label={t("Emri ligjor (si në dokument)", "Legal name (as on the document)")}><input name="legal_name" required minLength={2} maxLength={160} defaultValue={s?.legal_name} disabled={!editable} className={input} /></F>

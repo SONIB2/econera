@@ -13,7 +13,8 @@ const CAT_EN: Record<string, string> = { dru: "Wood & parquet", qeramike: "Tiles
 type V = Record<string, string>;
 const START: V = { title: "", description: "", category: "", region: "", condition: "unused", unit: "m²", quantity: "", unit_price: "", currency: "ALL", fulfillment: "pickup", seller_label: "", intended_use: "non_structural", manufacturer: "", model_ref: "", batch_no: "", origin_country: "", age_years: "", known_defects: "", sheet_material: "", length_mm: "", width_mm: "", thickness_mm: "", color: "" };
 
-export function SellWizard() {
+/** `canSubmit` is false until ECONERA approves the seller account: drafts can be saved, review submission waits. */
+export function SellWizard({ canSubmit = true }: { canSubmit?: boolean }) {
   const { lang, t } = useLang();
   const [mode, setMode] = useState<"one" | "bulk">("one");
   const [step, setStep] = useState(0);
@@ -123,7 +124,7 @@ export function SellWizard() {
             {result && <p role="alert" className="text-sm">{result.status === "login" ? <>{t("Hyr në llogari për të listuar.", "Log in to create a listing.")} <Link href="/hyr" className="font-medium underline">{t("Hyr", "Log in")}</Link></> : result.status === "category" ? t("Kjo kategori nuk është aktive ende. Zgjidh një tjetër.", "This category isn't active yet. Choose another.") : result.status === "invalid" ? t("Disa fusha nuk janë të sakta. Kontrollo hapat.", "Some fields aren't valid. Check the steps.") : t("Ruajtja dështoi. Provo përsëri.", "Saving failed. Try again.")}</p>}
             <div className="flex flex-wrap justify-between gap-2 border-t border-line pt-5">
               <button type="button" onClick={() => { setError(null); setStep((s) => Math.max(0, s - 1)); }} disabled={step === 0} className="btn-ghost disabled:opacity-40">{t("Mbrapa", "Back")}</button>
-              {step < 5 ? <button type="button" onClick={next} className="btn-primary">{t("Vazhdo", "Continue")}</button> : <div className="flex gap-2"><button type="button" disabled={pending} onClick={() => submit(false)} className="btn-ghost">{t("Ruaj si skicë", "Save as draft")}</button><button type="button" disabled={pending} onClick={() => submit(true)} className="btn-primary">{pending ? t("Duke dërguar…", "Sending…") : t("Dërgo për shqyrtim", "Submit for review")}</button></div>}
+              {step < 5 ? <button type="button" onClick={next} className="btn-primary">{t("Vazhdo", "Continue")}</button> : <div className="flex gap-2"><button type="button" disabled={pending} onClick={() => submit(false)} className="btn-ghost">{t("Ruaj si skicë", "Save as draft")}</button>{canSubmit ? <button type="button" disabled={pending} onClick={() => submit(true)} className="btn-primary">{pending ? t("Duke dërguar…", "Sending…") : t("Dërgo për shqyrtim", "Submit for review")}</button> : <span className="self-center text-xs text-ink-2">{t("Dërgimi për shqyrtim hapet pasi të verifikohet llogaria.", "Submitting for review opens once your account is verified.")}</span>}</div>}
             </div>
           </div>
         </div>

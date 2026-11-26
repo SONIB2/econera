@@ -69,7 +69,7 @@ export function SiteHeader({ account, overlay = false }: { account: Account; ove
     ["/inventari", t("Listimet e mia", "My listings")], ["/verifikimi", t("Verifikimi i llogarisë", "Account verification")],
   ];
   const link = (href: string, label: string) => (
-    <Link key={href} href={href} aria-current={active(href) ? "page" : undefined} className={`whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium transition-colors ${active(href) ? "bg-lime/15 text-lime ring-1 ring-lime/35" : "text-ink-2 hover:text-ink"}`}>{label}</Link>
+    <Link key={href} href={href} aria-current={active(href) ? "page" : undefined} className={`whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium transition-colors ${active(href) ? "bg-[#dff5a8] text-[#0c2f2b] dark:bg-lime/15 dark:text-lime dark:ring-1 dark:ring-lime/35" : "text-ink-2 hover:text-ink"}`}>{label}</Link>
   );
 
   return (
