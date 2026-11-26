@@ -106,12 +106,14 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
     const r = rig.current;
     const fast = reducedMotion ? 0.001 : 1;
     let tl: gsap.core.Timeline | undefined;
+    // Robot offset to the right of the viewer, smaller on narrower windows so it stays on screen.
+    const fxw = Math.min(1.9, Math.round(((camera as THREE.PerspectiveCamera).aspect || 1.6) * 12) / 10);
     if (phase === "welcome") {
       // Opening sequence (about 6 s, skippable): logo → the building emerges as the camera moves in →
       // materials assemble → greenery and warm light → the robot flies forward to greet → hero appears.
       build.current.value = 0; growth.current.value = 0;
       const rb = robot.current;
-      Object.assign(rb, { mode: 0, scale: 0, wave: 0, fx: wide ? 1.9 : 1.3, fy: wide ? -1.1 : -0.4, fz: wide ? 30 : 34 });
+      Object.assign(rb, { mode: 0, scale: 0, wave: 0, fx: wide ? fxw : 1.3, fy: wide ? -1.1 : -0.4, fz: wide ? 30 : 34 });
       Object.assign(r, { radius: 92, height: 30, targetY: 4 });
       tl = gsap.timeline({ onComplete: onIntroDone });
       tl.to(r, { ...ORBIT, angle: r.angle + 0.8, duration: 4.6 * fast, ease: "power3.inOut" }, 0.6 * fast)
@@ -126,7 +128,7 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
       build.current.value = 1; growth.current.value = 1;
       // The robot stays in front of the building, beside the visitor.
       const rb = robot.current;
-      const pose0 = { mode: 0, scale: 1, fx: wide ? 1.9 : 1.3, fy: wide ? -1.1 : -0.4, fz: wide ? 9 : 12 };
+      const pose0 = { mode: 0, scale: 1, fx: wide ? fxw : 1.3, fy: wide ? -1.1 : -0.4, fz: wide ? 9 : 12 };
       if ((rb.mode < 0.01 && rb.scale > 0.99) || reducedMotion) Object.assign(rb, pose0);
       else { tl = gsap.timeline(); tl.to(rb, { ...pose0, wave: 0, duration: 1.2, ease: "power3.out" }, 0); }
     }
@@ -169,7 +171,7 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
     if (phase === "outside" || phase === "inside") { build.current.value = 1; growth.current.value = 1; }
     if (phase === "outside" && r.inside === 0 && r.radius > 35) gsap.to(r, { ...ORBIT, duration: 1.2 * fast, ease: "power3.out" });
     return () => { tl?.kill(); };
-  }, [phase, reducedMotion, onIntroDone, onEntered, onExited, onFade, wide]);
+  }, [phase, reducedMotion, onIntroDone, onEntered, onExited, onFade, wide, camera]);
 
   // Focus the camera on the selected element, or return to the room overview.
   useEffect(() => {

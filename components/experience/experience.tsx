@@ -83,7 +83,7 @@ export function Experience() {
   const router = useRouter();
   const reducedMotion = useMedia("(prefers-reduced-motion: reduce)");
   const small = useMedia("(max-width: 767px)");
-  const wide = useMedia("(min-width: 1024px)");
+  const wide = useMedia("(min-width: 768px)");
   const webgl = useSyncExternalStore(subscribeNever, hasWebGL, () => true);
   const lowPower = small;
 
@@ -106,6 +106,9 @@ export function Experience() {
     if (!el) return;
     el.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0)`;
     el.style.opacity = visible ? "1" : "0";
+    // Open towards whichever side has room, so the bubble never covers the headline.
+    const side = x + 330 < (el.parentElement?.clientWidth ?? window.innerWidth) ? "right" : "left";
+    if (el.dataset.side !== side) el.dataset.side = side;
   }, []);
   const placeSpot = useCallback((id: ProductId, x: number, y: number, visible: boolean) => {
     const el = spotRefs.current[id];
@@ -173,8 +176,8 @@ export function Experience() {
         {phase !== "boot" && <Scene phase={phase} focus={zone ? ZONES.find((z) => z.id === zone)!.focus : null} lowPower={lowPower} reducedMotion={reducedMotion} onReady={noop} onIntroDone={onIntroDone} onDoor={onDoor} onEntered={onEntered} onExited={onExited} onFade={onFade} hovered={hovered} selected={selected} xray={xray} onHover={setHovered} onSelect={onPickHotspot}
           exploded={exploded} paused={paused} zoom={zoom} resetKey={resetKey} highlight={highlight} onHotLevel={setHotLevel} placeSpot={placeSpot} placeBubble={placeBubble} wide={wide} onProduct={onProduct} />}
         {/* Speech bubble that follows the robot's head (welcome and intro only). */}
-        <div ref={bubbleRef} aria-live="polite" className="pointer-events-none absolute max-sm:hidden top-0 left-0 z-40 opacity-0 transition-opacity duration-500">
-          <div className="xp-bubble -mt-44 w-max max-w-[17rem] -translate-x-[calc(100%+2rem)] rounded-2xl rounded-br-sm border border-[#c8f169]/40 bg-[#04211d]/85 px-4 py-3 text-sm leading-snug text-white shadow-[0_10px_40px_-10px_rgba(200,241,105,0.35)] backdrop-blur-md sm:max-w-xs">
+        <div ref={bubbleRef} aria-live="polite" className="group/bubble pointer-events-none absolute max-sm:hidden top-0 left-0 z-40 opacity-0 transition-opacity duration-500" data-side="left">
+          <div className="xp-bubble -mt-44 w-max max-w-[17rem] rounded-2xl group-data-[side=left]/bubble:-translate-x-[calc(100%+2rem)] group-data-[side=left]/bubble:rounded-br-sm group-data-[side=right]/bubble:ml-12 group-data-[side=right]/bubble:rounded-bl-sm border border-[#c8f169]/40 bg-[#04211d]/85 px-4 py-3 text-sm leading-snug text-white shadow-[0_10px_40px_-10px_rgba(200,241,105,0.35)] backdrop-blur-md sm:max-w-xs">
             <span className="flex items-start gap-2.5">
               <span aria-hidden className="xp-voice mt-1 flex h-4 items-end gap-[2px]">{[0, 1, 2, 3, 4].map((k) => <i key={k} style={{ animationDelay: `${k * 0.12}s` }} />)}</span>
               <span>
@@ -196,11 +199,11 @@ export function Experience() {
         <div className="xp-fade-in absolute inset-x-0 bottom-28 z-20 flex justify-center sm:bottom-10"><button type="button" onClick={() => setPhase("outside")} className="rounded-full border border-line bg-bg/70 px-5 py-2.5 text-sm text-ink backdrop-blur hover:border-lime">{t("Kalo animacionin", "Skip animation")}</button></div>
       )}
       {phase === "outside" && (
-        <div className="pointer-events-none absolute inset-0 z-20 flex items-end px-5 pb-24 sm:px-8 sm:pb-16 lg:items-center lg:pb-0">
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-end px-5 pb-24 sm:px-8 sm:pb-16 md:items-center md:pb-0">
           <div className="mx-auto w-full max-w-7xl">
-            <div className="pointer-events-auto max-w-[36rem] lg:pt-10">
+            <div className="pointer-events-auto max-w-[36rem] md:max-w-[46%] lg:pt-10 xl:max-w-[36rem]">
               <p className="xp-rise-soft text-[11px] font-medium tracking-[0.42em] text-white/80 sm:text-xs [animation-delay:.05s]">{t("INTELIGJENCA E", "CONSTRUCTION")} <span className="font-semibold text-[#c8f169]">{t("NDËRTIMIT", "INTELLIGENCE")}</span></p>
-              <h1 aria-label={t("E ardhmja ndërtohet ndryshe.", "The future is built differently.")} className="display mt-4 text-[clamp(2.5rem,5.6vw,5.1rem)] leading-[0.98] tracking-[-0.045em] text-white">
+              <h1 aria-label={t("E ardhmja ndërtohet ndryshe.", "The future is built differently.")} className="display mt-4 text-[clamp(2.3rem,4.7vw,4.8rem)] leading-[0.98] tracking-[-0.045em] text-white">
                 {(lang === "en" ? [["The future is", ""], ["built ", "differently."]] : [["E ardhmja", ""], ["ndërtohet ", "ndryshe."]]).map(([plain, lime], i) => (
                   <span key={i} aria-hidden className="relative block whitespace-nowrap">
                     <Reveal text={plain} delay={0.15 + i * 0.4} />
@@ -229,7 +232,7 @@ export function Experience() {
       )}
 
       {phase === "outside" && (
-        <div className="xp-fade-in absolute top-20 right-3 z-30 flex max-w-[calc(100vw-1.5rem)] flex-col items-end gap-2 sm:top-24 sm:right-8">
+        <div className="xp-fade-in absolute top-24 right-8 z-30 hidden flex-col items-end gap-2 xl:flex">
           <div role="toolbar" aria-label={t("Kontrollet 3D", "3D controls")} className="flex items-center gap-1.5 rounded-full border border-line bg-bg/60 p-1.5 backdrop-blur">
             <details className="relative">
               <summary className={`${tool} w-auto cursor-pointer list-none px-3.5 text-xs font-medium [&::-webkit-details-marker]:hidden`}>{t("Produktet", "Products")}</summary>
