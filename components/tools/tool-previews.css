@@ -1,0 +1,4 @@
+/* Voice demo: speaking bars (same motion as the homepage robot bubble). */
+.xp-voice i { display: block; height: 100%; border-radius: 2px; background: #7fb52a; animation: tp-voice 1s ease-in-out infinite alternate }
+@keyframes tp-voice { from { transform: scaleY(.3) } to { transform: scaleY(1) } }
+@media (prefers-reduced-motion: reduce) { .xp-voice i { animation: none } }
