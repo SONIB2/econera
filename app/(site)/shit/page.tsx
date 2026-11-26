@@ -173,7 +173,7 @@ function Landing({ lang }: { lang: Lang }) {
               <Link href="/regjistrohu?lloji=furnitor" className="inline-flex h-13 items-center gap-2 rounded-full bg-[#0f4a43] px-7 text-base font-semibold text-white shadow-[0_10px_24px_-12px_rgba(15,74,67,.8)] transition hover:bg-[#0c3a35]">{t("Krijo llogari shitësi", "Create seller account")} <span aria-hidden>→</span></Link>
               <Link href="/hyr?lloji=furnitor" className="inline-flex h-13 items-center rounded-full border border-line bg-card px-7 text-base font-semibold text-[#0c2f2b] transition hover:border-[#0f4a43] dark:text-ink">{t("Hyr", "Log in")}</Link>
             </div>
-            <ul className="mt-9 grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-4">
+            <ul className="mt-9 grid grid-cols-2 gap-x-4 gap-y-5 xl:grid-cols-4">
               {benefits.map(([label, d]) => (
                 <li key={label} className="flex items-center gap-2.5 text-[13px] leading-snug text-[#0c2f2b] dark:text-ink">
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#5a9e22" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="shrink-0"><path d={d} /></svg>
