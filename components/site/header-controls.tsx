@@ -34,7 +34,8 @@ const countryNow = () => readRegion().country;
  * Globe button: pick a country and the site adapts (language, currency, units). Language, currency and units
  * can still be changed independently. Only validated languages are selectable.
  */
-export function RegionMenu({ compact = false }: { compact?: boolean }) {
+/** Country, language and currency picker. `pill` renders it as an inline selector (flag + text) instead of the header globe. */
+export function RegionMenu({ compact = false, pill }: { compact?: boolean; pill?: string }) {
   const { lang, t } = useLang();
   const router = useRouter();
   const { open, setOpen, ref } = usePopover();
@@ -54,14 +55,24 @@ export function RegionMenu({ compact = false }: { compact?: boolean }) {
   const sel = "w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm";
   return (
     <div ref={ref} className="relative">
+      {pill ? (
+        <button type="button" onClick={() => (open ? setOpen(false) : openMenu())} aria-expanded={open} aria-haspopup="dialog"
+          className="flex min-h-10 items-center gap-2.5 rounded-full border border-white/15 bg-white/[0.06] py-1.5 pr-3.5 pl-2 text-left text-sm text-white/90 backdrop-blur transition hover:border-[#c8f169]/60">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={flagUrl(current.country)} alt="" width={22} height={15} className="h-[15px] w-[22px] shrink-0 rounded-[2px] object-cover" />
+          <span>{pill}</span>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden className="shrink-0"><path d="M2 3.5l3 3 3-3" strokeLinecap="round" /></svg>
+        </button>
+      ) : (
       <button type="button" onClick={() => (open ? setOpen(false) : openMenu())} aria-expanded={open} aria-haspopup="dialog" aria-label={t(`Shteti: ${current.sq}, gjuha: ${lang}`, `Country: ${current.en}, language: ${lang}`)}
         className="flex h-10 items-center gap-2 rounded-full px-2.5 text-sm font-medium text-ink-2 hover:bg-bg-2 hover:text-ink">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.6 2.5 3.9 5.5 3.9 9S14.6 18.5 12 21c-2.6-2.5-3.9-5.5-3.9-9S9.4 5.5 12 3z" /></svg>
         {!compact && <span className="uppercase">{lang}</span>}
         <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden className="max-sm:hidden"><path d="M2 3.5l3 3 3-3" strokeLinecap="round" /></svg>
       </button>
+      )}
       {open && (
-        <div role="dialog" aria-label={t("Shteti dhe gjuha", "Country and language")} className="fixed inset-x-3 top-20 z-50 grid max-h-[calc(100dvh-6rem)] gap-4 overflow-y-auto rounded-[1.5rem] border border-line bg-card p-5 text-ink shadow-2xl sm:absolute sm:inset-x-auto sm:top-[calc(100%+0.5rem)] sm:right-0 sm:w-[640px]">
+        <div role="dialog" aria-label={t("Shteti dhe gjuha", "Country and language")} className={`fixed inset-x-3 top-20 z-50 grid max-h-[calc(100dvh-6rem)] gap-4 overflow-y-auto rounded-[1.5rem] border border-line bg-card p-5 text-ink shadow-2xl sm:absolute sm:inset-x-auto sm:top-[calc(100%+0.5rem)] ${pill ? "sm:left-0" : "sm:right-0"} sm:w-[640px]`}>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div><p className="text-lg font-semibold tracking-tight">{t("Zgjidh shtetin", "Choose your country")}</p><p className="text-sm text-ink-2">{t("Gjuha, monedha dhe njësitë përshtaten automatikisht.", "Language, currency and units adapt automatically.")}</p></div>
             <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Kërko shtetin", "Search country")} aria-label={t("Kërko shtetin", "Search country")} className="h-10 w-48 rounded-full border border-line bg-bg px-4 text-sm" />

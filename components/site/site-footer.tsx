@@ -24,6 +24,12 @@ export function SiteFooter({ email }: { email?: string }) {
         <div className="max-w-xs lg:border-r lg:border-white/10 lg:pr-8">
           <Image src="/brand/logo-dark.svg" alt="ECONERA" width={481} height={66} className="h-7 w-auto" />
           <p className="mt-5 text-sm leading-relaxed text-white/75">{t("Platforma inteligjente për ndërtimin qarkullues. Bli, shit, dizajno dhe optimizo materialet me AI.", "The intelligent platform for circular construction. Buy, sell, design and optimize materials with AI.")}</p>
+          {/* Only official profiles that exist. */}
+          <ul className="mt-5 flex gap-3">
+            <li><a href="https://www.instagram.com/econera.al/" target="_blank" rel="noopener noreferrer" aria-label="Instagram @econera.al" className="grid size-10 place-items-center rounded-full border border-white/15 text-white/85 transition hover:border-[#c8f169] hover:text-[#c8f169]">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden><rect x="3.5" y="3.5" width="17" height="17" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.2" cy="6.8" r=".9" fill="currentColor" stroke="none" /></svg>
+            </a></li>
+          </ul>
         </div>
 
         {cols.map((c) => (
@@ -51,7 +57,7 @@ export function SiteFooter({ email }: { email?: string }) {
         </div>
       </div>
       <div className="container-x flex flex-col gap-3 border-t border-white/10 py-6 text-xs text-white/60 sm:flex-row sm:items-center sm:justify-between">
-        <p>© 2026 ECONERA. {t("Të gjitha të drejtat e rezervuara.", "All rights reserved.")}</p>
+        <p>© {new Date().getFullYear()} ECONERA. {t("Të gjitha të drejtat e rezervuara.", "All rights reserved.")}</p>
         <ul className="flex flex-wrap gap-x-5 gap-y-2">
           <li><Link className="hover:text-white" href="/privatesia">{t("Politika e privatësisë", "Privacy Policy")}</Link></li>
           <li><Link className="hover:text-white" href="/aksesueshmeria">{t("Aksesueshmëria", "Accessibility")}</Link></li>
