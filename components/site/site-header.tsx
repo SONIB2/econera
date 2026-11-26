@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "@/app/(legacy)/account-actions";
 import { useLang } from "@/components/lang-provider";
-import { ArrowIcon, BasketIcon, BuildingIcon, CompassIcon, CutIcon, FactoryIcon, MarketIcon, PriceIcon, RenovationIcon, SellIcon, VoiceIcon } from "./tool-icons";
+import { ArrowIcon, BasketIcon, BuildingIcon, CutIcon, MarketIcon, PriceIcon, RenovationIcon, SellIcon, VoiceIcon } from "./tool-icons";
 import { CartButton, RegionMenu, ThemeToggle } from "./header-controls";
 
 export type Account = { email: string; seller: boolean } | null;
@@ -40,8 +40,6 @@ function useNav() {
       id: "nav-business", label: t("Për bizneset", "For Business"), href: undefined, match: ["/biznes", "/furnitore", "/cmimet"],
       items: [
         { href: "/biznes", label: t("Kompani ndërtimi", "Construction Companies"), desc: t("Stoku, kantieret dhe porositë në një vend.", "Stock, sites and orders in one place."), Icon: BuildingIcon },
-        { href: "/furnitore", label: t("Furnitorë dhe prodhues", "Suppliers & Manufacturers"), desc: t("Shit stokun e tepërt te blerës të rinj.", "Sell surplus stock to new buyers."), Icon: FactoryIcon },
-        { href: "/biznes#per-kend", label: t("Arkitektë dhe dizajnerë", "Architects & Designers"), desc: t("Koncepte me materiale që ekzistojnë realisht.", "Concepts built from materials that exist."), Icon: CompassIcon },
         { href: "/cmimet", label: t("Planet dhe çmimet", "Plans & Pricing"), desc: t("Abonime për furnitorët, falas për blerësit.", "Supplier plans, free for buyers."), Icon: PriceIcon },
       ],
     },
