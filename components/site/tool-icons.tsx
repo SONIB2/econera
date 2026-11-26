@@ -21,6 +21,14 @@ export function CutIcon({ className }: P) {
 export function VoiceIcon({ className }: P) {
   return <svg {...base} className={className}><path d="M4 10.5v3M8 7.5v9M12 4.5v15M16 7.5v9M20 10.5v3" /></svg>;
 }
+/** Stacked material slabs: the marketplace. */
+export function MarketIcon({ className }: P) {
+  return <svg {...base} className={className}><path d="m12 4 8 4-8 4-8-4z" /><path d="m4 12 8 4 8-4" /><path d="m4 16 8 4 8-4" /></svg>;
+}
+/** A shield with a check: verified materials and documents. */
+export function VerifyIcon({ className }: P) {
+  return <svg {...base} className={className}><path d="M12 3.5 19 6v5.5c0 4.2-2.9 7.4-7 9-4.1-1.6-7-4.8-7-9V6z" /><path d="m9 12 2.2 2.2L15.5 10" /></svg>;
+}
 export function ArrowIcon({ className }: P) {
   return <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden className={className}><path d="M4 10 10 4M5 4h5v5" /></svg>;
 }

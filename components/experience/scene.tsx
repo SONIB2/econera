@@ -26,6 +26,8 @@ export type SceneProps = {
   onFade: (value: number) => void;
   hovered: string | null;
   selected: string | null;
+  /** A product zone inside the building: camera focus on this hotspot without opening its material panel. */
+  focus?: string | null;
   xray: boolean;
   onHover: (id: string | null) => void;
   onSelect: (id: string) => void;
@@ -77,7 +79,7 @@ export default function Scene(props: SceneProps) {
   );
 }
 
-function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExited, onFade, hovered, selected, xray, onHover, onSelect, exploded, paused, zoom, resetKey, highlight, onHotLevel, placeSpot, placeBubble, wide, onProduct }: SceneProps) {
+function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExited, onFade, hovered, selected, focus, xray, onHover, onSelect, exploded, paused, zoom, resetKey, highlight, onHotLevel, placeSpot, placeBubble, wide, onProduct }: SceneProps) {
   const rig = useRef<Rig>({ angle: 0.55, shift: 0, ...CRANE });
   const robot = useRef<RobotState>({ mode: 0, wave: 0, scale: 1, fx: 0, fy: -0.9, fz: 9 });
   const door = useRef({ open: 0 });
@@ -164,11 +166,11 @@ function World({ phase, lowPower, reducedMotion, onIntroDone, onEntered, onExite
   // Focus the camera on the selected element, or return to the room overview.
   useEffect(() => {
     if (phase !== "inside") return;
-    const hotspot = hotspotById(selected);
+    const hotspot = hotspotById(selected ?? focus ?? null);
     const view = hotspot ? hotspot.focus : INSIDE_VIEW;
     const tween = gsap.to(rig.current, { ...pose(view.position, view.target), duration: reducedMotion ? 0.001 : 1.3, ease: "power3.inOut" });
     return () => { tween.kill(); };
-  }, [phase, selected, reducedMotion]);
+  }, [phase, selected, focus, reducedMotion]);
 
   // Exploded view separates the floors; the camera rises and widens to keep all labels in frame.
   useEffect(() => {
