@@ -4,6 +4,7 @@ import { answer, type Account } from "@/lib/assistant/brain";
 import { detectLang } from "@/lib/assistant/registry";
 import { REGIONS } from "@/lib/tools/inventory";
 import { MARKET_CATEGORIES } from "@/lib/market/categories";
+import { clientIp, rateLimited } from "@/lib/rate-limit";
 import { sessionDatabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +38,7 @@ async function account(): Promise<Account> {
 
 /** ECONERA Voice: understands a message and returns a structured, validated reply (no free-form links). */
 export async function POST(req: Request) {
+  if (rateLimited(`assistant:${clientIp(req.headers)}`, 40, 60 * 1000)) return NextResponse.json({ error: "rate" }, { status: 429 });
   const parsed = body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "invalid" }, { status: 400 });
   const { text, lang, ctx } = parsed.data;

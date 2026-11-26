@@ -29,7 +29,7 @@ export function PartnerForm() {
   // Server messages are written in Albanian; in English show a short neutral hint instead.
   const err = (k: string) => state.errors?.[k] && (lang === "en" ? "Please check this field." : state.errors[k]);
   const v = state.values ?? {};
-  const field = "h-11 rounded-xl border border-line bg-bg-2 px-3.5 text-ink placeholder:text-ink-2/60 focus:border-lime focus:outline-none";
+  const field = "h-11 w-full min-w-0 rounded-xl border border-line bg-bg-2 px-3.5 text-ink placeholder:text-ink-2/60 focus:border-lime focus:outline-none";
   const f = ({ name, label, type = "text", required, auto, def }: { name: string; label: string; type?: string; required?: boolean; auto?: string; def?: string }) => (
     <label key={name} className="grid gap-1.5 text-sm">
       <span>{label}{!required && <span className="text-ink-2"> ({t("opsionale", "optional")})</span>}</span>

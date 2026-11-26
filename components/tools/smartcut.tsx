@@ -82,12 +82,12 @@ export function SmartCut({ listings }: { listings: Listing[] }) {
 
   return (
     <div className="grid gap-6">
-      <section aria-labelledby="pjeset" className="card p-5 md:p-7">
+      <section aria-labelledby="pjeset" className="card min-w-0 p-5 md:p-7">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <h2 id="pjeset" className="text-2xl">{t("Pjesët që të duhen", "Pieces you need")}</h2>
           <div className="flex flex-wrap items-center gap-3 text-sm">
-            <label className="flex items-center gap-2">{t("Materiali", "Material")}
-              <select value={state.material} onChange={(e) => setState((s) => ({ ...s, material: e.target.value }))} className="rounded-lg border border-line bg-bg px-3 py-2">{MATERIALS.map((m) => <option key={m}>{m}</option>)}</select>
+            <label className="flex min-w-0 items-center gap-2">{t("Materiali", "Material")}
+              <select value={state.material} onChange={(e) => setState((s) => ({ ...s, material: e.target.value }))} className="min-w-0 max-w-[13rem] rounded-lg border border-line bg-bg px-3 py-2">{MATERIALS.map((m) => <option key={m}>{m}</option>)}</select>
             </label>
             <label className="flex items-center gap-2">{t("Trashësia", "Thickness")}
               <input type="number" min={1} value={state.thickness} onChange={(e) => setState((s) => ({ ...s, thickness: Number(e.target.value) }))} list="trashesite" className="w-20 rounded-lg border border-line bg-bg px-3 py-2" /> mm

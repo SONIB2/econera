@@ -4,13 +4,12 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { passwordMatches, setAdminSession } from "@/lib/admin-auth";
 import { leadSchema, saveLead } from "@/lib/leads";
-import { rateLimited } from "@/lib/rate-limit";
+import { clientIp, rateLimited } from "@/lib/rate-limit";
 
 export type LeadState = { status: "idle" | "ok" | "error"; message?: string; errors?: Record<string, string>; values?: Record<string, string>; attempt?: number };
 
 async function clientKey() {
-  const h = await headers();
-  return h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "local";
+  return clientIp(await headers());
 }
 
 export async function submitLead(previous: LeadState, form: FormData): Promise<LeadState> {

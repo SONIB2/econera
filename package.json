@@ -11,7 +11,7 @@
     "start": "next start --hostname 127.0.0.1",
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "tsx --require ./tests/support/server-only.cjs --test tests/*.test.ts",
     "test:e2e": "playwright test",
     "test:supabase": "playwright test --config playwright.supabase.config.ts"
   },

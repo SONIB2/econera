@@ -139,7 +139,8 @@ test("masonry studio swaps its visual and specifications with keyboard and touch
   expect(violations).toEqual([]);
 });
 
-test("protected inventory redirects and disconnected login explains the unavailable state", async ({ page }) => {
+test("protected inventory redirects and disconnected login explains the unavailable state", async ({ page, context, baseURL }) => {
+  await context.addCookies([{ name: "lang", value: "sq", url: baseURL! }]);
   await page.goto("/paneli/organizatat");
   await expect(page).toHaveURL(/\/hyr\?status=unavailable$/);
   await page.goto("/inventari");

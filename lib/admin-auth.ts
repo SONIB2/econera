@@ -4,12 +4,15 @@ import { cookies } from "next/headers";
 
 const COOKIE = "econera_admin";
 
-function token() {
+const MAX_AGE = 60 * 60 * 8;
+
+/** Session value: issue time plus an HMAC of it keyed by the admin password, so sessions expire and a password change revokes them. */
+function sign(issued: number) {
   const password = process.env.ADMIN_PASSWORD;
-  return password && password.length >= 10 ? createHmac("sha256", password).update("econera-admin-v1").digest("hex") : null;
+  return password && password.length >= 10 ? `${issued}.${createHmac("sha256", password).update(`econera-admin-v2:${issued}`).digest("hex")}` : null;
 }
 
-export const adminConfigured = () => token() !== null;
+export const adminConfigured = () => sign(0) !== null;
 
 export function passwordMatches(input: string) {
   const password = process.env.ADMIN_PASSWORD ?? "";
@@ -18,14 +21,16 @@ export function passwordMatches(input: string) {
 }
 
 export async function isAdmin() {
-  const expected = token();
-  const value = (await cookies()).get(COOKIE)?.value;
-  if (!expected || !value || value.length !== expected.length) return false;
+  const value = (await cookies()).get(COOKIE)?.value ?? "";
+  const issued = Number(value.split(".")[0]);
+  if (!Number.isInteger(issued) || Date.now() / 1000 - issued > MAX_AGE || issued > Date.now() / 1000 + 60) return false;
+  const expected = sign(issued);
+  if (!expected || value.length !== expected.length) return false;
   return timingSafeEqual(Buffer.from(value), Buffer.from(expected));
 }
 
 export async function setAdminSession(on: boolean) {
   const store = await cookies();
   if (!on) { store.delete(COOKIE); return; }
-  store.set(COOKIE, token()!, { httpOnly: true, sameSite: "strict", secure: process.env.NODE_ENV === "production", path: "/admin", maxAge: 60 * 60 * 8 });
+  store.set(COOKIE, sign(Math.floor(Date.now() / 1000))!, { httpOnly: true, sameSite: "strict", secure: process.env.NODE_ENV === "production", path: "/admin", maxAge: MAX_AGE });
 }

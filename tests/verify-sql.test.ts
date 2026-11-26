@@ -24,6 +24,8 @@ async function database() {
   const dir = new URL("../supabase/migrations/", import.meta.url);
   for (const f of (await readdir(dir)).filter((x) => x.endsWith(".sql")).sort()) await db.exec(await readFile(new URL(f, dir), "utf8"));
   await db.exec(`insert into public.staff_roles (user_id, role) values ('${officer}','product_officer'), ('${tech}','technical_reviewer'), ('${sellerOfficer}','seller_officer')`);
+  // The seller in these scenarios has already passed seller verification (migration 0010 gates submission on it).
+  await db.exec(`insert into public.seller_verifications (user_id, kind, legal_name, status) values ('${seller}','individual','Shitës Prove','approved')`);
   async function as(user?: string, aal: "aal1" | "aal2" = "aal2") {
     await db.exec(`reset role; set role ${user ? "authenticated" : "anon"}`);
     await db.query("select set_config('request.jwt.claim.sub', $1, false)", [user ?? ""]);
@@ -103,6 +105,10 @@ test("ECONERA Verify: human approval, documents, dual approval, re-review, suspe
     assert.equal((await one<{ ok: boolean }>("select public.review_document($1,'accepted','Raport i nënshkruar.') as ok", [report.id])).ok, false, "nobody reviews their own document");
     await as(officer);
     assert.equal((await one<{ ok: boolean }>("select public.review_document($1,'accepted','Raport i nënshkruar.') as ok", [report.id])).ok, true);
+    // If the seller's verification disappears after submission, the listing still cannot be approved.
+    await db.exec("reset role");
+    await db.query("delete from public.seller_verifications where user_id = $1", [seller]);
+    await as(officer);
     assert.equal(await decide(high.id, r, "approve"), "seller_unverified");
 
     // Seller verification is private and needs an accepted identity document.
@@ -181,6 +187,22 @@ test("Expired mandatory certificate takes a listing out of the catalogue", async
     await db.query("update public.verification_documents set expires_on = current_date - 1 where doc_type = 'technical_datasheet'");
     await as(officer);
     assert.equal((await one<{ n: number }>("select public.expire_listings() as n")).n, 1);
+    await as();
+    assert.equal((await db.query("select 1 from public.public_catalogue")).rows.length, 0);
+  } finally {
+    await db.close();
+  }
+});
+
+test("A seller without approved verification cannot submit a listing, even by calling the RPC directly", async () => {
+  const { db, as, one } = await database();
+  try {
+    await as(buyer);
+    const m = await one<{ id: string; revision: number }>(listing());
+    assert.equal((await one<{ ok: boolean }>("select public.change_material_state($1,$2,'submit') as ok", [m.id, m.revision])).ok, false);
+    await assert.rejects(db.query("update public.materials set moderation = 'pending' where id = $1", [m.id]));
+    await as(buyer);
+    await assert.rejects(db.query("update public.seller_verifications set status = 'approved' where user_id = $1", [buyer]));
     await as();
     assert.equal((await db.query("select 1 from public.public_catalogue")).rows.length, 0);
   } finally {

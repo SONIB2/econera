@@ -137,7 +137,7 @@ function Steps({ lang, done = 0 }: { lang: Lang; done?: number }) {
   return (
     <section aria-labelledby="hapat" className="mt-12 rounded-[1.75rem] border border-line bg-card px-6 py-8 shadow-[0_20px_50px_-36px_rgba(12,47,43,0.5)] md:px-10">
       <h2 id="hapat" className="text-center text-2xl text-[#0c2f2b] md:text-4xl dark:text-ink">{t("Si funksionon? ", "How it works? ")}<span className="text-[#5a9e22]">{t("3 hapa të thjeshtë.", "3 simple steps.")}</span></h2>
-      <ol className="mt-8 grid gap-7 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-start">
+      <ol className="mt-8 grid gap-7 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-start">
         {steps.map(([title, text, d], i) => (
           <li key={title} className="contents">
             <div className="flex items-start gap-4">
@@ -145,7 +145,7 @@ function Steps({ lang, done = 0 }: { lang: Lang; done?: number }) {
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="shrink-0 text-[#0c2f2b] dark:text-ink"><path d={d} /></svg>
               <span><span className="block text-lg font-semibold text-[#0c2f2b] dark:text-ink">{title}</span><span className="mt-0.5 block text-ink-2">{text}</span></span>
             </div>
-            {i < 2 && <span aria-hidden className="hidden pt-2 text-2xl text-ink-2 md:block">→</span>}
+            {i < 2 && <span aria-hidden className="hidden pt-2 text-2xl text-ink-2 lg:block">→</span>}
           </li>
         ))}
       </ol>

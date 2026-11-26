@@ -13,6 +13,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   retries: process.env.CI ? 1 : 0,
   use: { baseURL, trace: "retain-on-failure", channel: installedChannel, launchOptions: {
+    executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
     args: ["--enable-unsafe-swiftshader", ...(process.env.CI && !installedChannel ? ["--use-angle=swiftshader"] : [])],
   } },
   projects: [

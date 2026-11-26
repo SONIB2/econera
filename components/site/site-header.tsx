@@ -89,11 +89,11 @@ export function SiteHeader({ account, overlay = false }: { account: Account; ove
   const close = () => setMobileOn(null);
 
   return (
-    <header className={`${overlay ? "fixed inset-x-0" : "sticky"} top-0 z-40 px-3 pt-3 transition-[padding] sm:px-5 ${overlay || pathname === "/treg" ? "theme-dark" : ""} ${onHero ? "!bg-transparent" : ""}`}>
-      <div className={`mx-auto flex max-w-7xl items-center justify-between gap-4 rounded-full border pr-2 pl-5 transition-all duration-300 sm:pl-6 ${scrolled && !onHero ? "h-14" : "h-16"} ${onHero ? "border-transparent bg-transparent" : scrolled ? "border-line bg-card/85 shadow-[0_10px_30px_-18px_rgba(12,47,43,0.35)] backdrop-blur-xl" : "border-line/70 bg-card/60 backdrop-blur-md"}`}>
+    <header className={`${overlay ? "fixed inset-x-0" : "sticky"} top-0 z-40 px-2 pt-3 min-[380px]:px-3 transition-[padding] sm:px-5 ${overlay || pathname === "/treg" ? "theme-dark" : ""} ${onHero ? "!bg-transparent" : ""}`}>
+      <div className={`mx-auto flex max-w-7xl items-center justify-between gap-2 rounded-full border pr-1 pl-3 transition-all duration-300 min-[380px]:pl-4 min-[380px]:pr-1.5 sm:gap-4 sm:pr-2 sm:pl-6 ${scrolled && !onHero ? "h-14" : "h-16"} ${onHero ? "border-transparent bg-transparent" : scrolled ? "border-line bg-card/85 shadow-[0_10px_30px_-18px_rgba(12,47,43,0.35)] backdrop-blur-xl" : "border-line/70 bg-card/60 backdrop-blur-md"}`}>
         <Link href="/" aria-label={t("ECONERA, kreu", "ECONERA, home")} className="flex shrink-0 items-center">
-          <Image src="/brand/logo-light.svg" alt="" width={481} height={66} priority className="h-6 w-auto dark:hidden" />
-          <Image src="/brand/logo-dark.svg" alt="" width={481} height={66} priority className="hidden h-6 w-auto dark:block" />
+          <Image src="/brand/logo-light.svg" alt="" width={481} height={66} priority className="h-[18px] w-auto min-[360px]:h-5 sm:h-6 dark:hidden" />
+          <Image src="/brand/logo-dark.svg" alt="" width={481} height={66} priority className="hidden h-[18px] w-auto min-[360px]:h-5 sm:h-6 dark:block" />
         </Link>
 
         <nav aria-label={t("Navigimi kryesor", "Main navigation")} className="hidden items-center gap-0.5 xl:flex">
@@ -104,7 +104,7 @@ export function SiteHeader({ account, overlay = false }: { account: Account; ove
           ))}
         </nav>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center sm:gap-1">
           <RegionMenu />
           <span className="hidden sm:block"><ThemeToggle /></span>
           <CartButton />
@@ -127,7 +127,7 @@ export function SiteHeader({ account, overlay = false }: { account: Account; ove
               <Link href="/regjistrohu" className="btn-primary hidden whitespace-nowrap sm:inline-flex">{t("Regjistrohu", "Sign up")}</Link>
             </>
           )}
-          <button type="button" className="ml-1 grid size-10 place-items-center rounded-full border border-line text-ink xl:hidden" aria-expanded={mobile} aria-controls="menu-celular"
+          <button type="button" className="ml-0.5 grid size-10 shrink-0 place-items-center rounded-full border border-line text-ink sm:ml-1 xl:hidden" aria-expanded={mobile} aria-controls="menu-celular"
             aria-label={mobile ? t("Mbyll menunë", "Close menu") : t("Hap menunë", "Open menu")} onClick={() => setMobileOn(mobile ? null : pathname)}>
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">{mobile ? <path d="M4 4l10 10M14 4L4 14" /> : <path d="M2 5h14M2 9h14M2 13h14" />}</svg>
           </button>

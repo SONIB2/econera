@@ -121,7 +121,7 @@ export default async function PartneretPage() {
       </section>
 
       <section id="apliko" aria-labelledby="apliko-h" className="scroll-mt-24 bg-[#062321] text-white">
-        <div className="container-x grid gap-8 py-14 md:py-16 lg:grid-cols-[0.8fr_1.2fr]">
+        <div className="container-x grid gap-8 py-14 md:py-16 lg:grid-cols-[0.8fr_1.2fr] [&>*]:min-w-0">
           <div>
             <HandshakeIcon className="size-10 text-[#c8f169]" />
             <h2 id="apliko-h" className="display mt-4 text-3xl text-white md:text-4xl">{t("Bashkohu me rrjetin e partnerëve.", "Join the ECONERA partner network.")}</h2>

@@ -64,13 +64,13 @@ export function AiDock() {
       <nav aria-label={t("Mjetet AI", "AI Tools")} className={`fixed right-4 bottom-[5.5rem] z-40 hidden flex-col items-center gap-2 transition duration-300 md:flex ${away ? "pointer-events-none translate-x-4 opacity-0" : ""}`} inert={away}>
         <button type="button" onClick={toggle} aria-expanded={!collapsed} aria-controls="ai-dock-tools"
           aria-label={collapsed ? t("Shfaq mjetet AI", "Show AI tools") : t("Fshih mjetet AI", "Hide AI tools")}
-          className="dock-btn size-8 text-[#c8f169]/80">
+          className="dock-btn grid place-items-center size-8 text-[#c8f169]/80">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden className={`transition ${collapsed ? "rotate-180" : ""}`}><path d="M3.5 5.5 7 9l3.5-3.5" /></svg>
         </button>
         <ul id="ai-dock-tools" className={`grid gap-2 transition-all duration-300 ${collapsed ? "pointer-events-none max-h-0 -translate-y-2 opacity-0" : "max-h-80"}`} inert={collapsed}>
           {tools.map((tool) => (
             <li key={tool.name} className="group relative flex justify-end">
-              <Link href={tool.href} data-open-assistant={tool.voice ? "voice" : undefined} aria-label={tool.name} className="dock-btn size-12 text-[#c8f169]">
+              <Link href={tool.href} data-open-assistant={tool.voice ? "voice" : undefined} aria-label={tool.name} className="dock-btn grid place-items-center size-12 text-[#c8f169]">
                 <tool.Icon className="size-5" />
               </Link>
               <span aria-hidden className="pointer-events-none absolute top-1/2 right-[calc(100%+0.6rem)] -translate-y-1/2 translate-x-1 whitespace-nowrap rounded-full border border-white/10 bg-[#062321]/95 px-3.5 py-1.5 text-[13px] font-medium text-white opacity-0 shadow-lg backdrop-blur transition duration-200 group-hover:translate-x-0 group-hover:opacity-100 group-focus-within:translate-x-0 group-focus-within:opacity-100">
@@ -83,7 +83,7 @@ export function AiDock() {
 
       {/* Phone: one button, one sheet */}
       <button type="button" onClick={() => setSheet(true)} aria-haspopup="dialog" aria-label={t("Mjetet AI", "AI Tools")}
-        className={`dock-btn fixed right-5 bottom-[9.25rem] z-40 size-11 text-[#c8f169] transition md:hidden ${away || sheet ? "pointer-events-none opacity-0" : ""}`}>
+        className={`dock-btn grid place-items-center fixed right-5 bottom-[9.25rem] z-40 size-11 text-[#c8f169] transition md:hidden ${away || sheet ? "pointer-events-none opacity-0" : ""}`}>
         <SparkleIcon className="size-5" />
       </button>
       {sheet && (

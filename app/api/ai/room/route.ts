@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { claude, firstJson, parsePhoto } from "@/lib/ai/providers";
-import { rateLimited } from "@/lib/rate-limit";
+import { clientIp, rateLimited } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -11,7 +11,7 @@ const input = z.object({ image: z.string().max(7_500_000), lang: z.enum(["sq", "
 export type RoomAnalysis = { room: string; observations: string[]; currentMaterials: string[]; condition: string; suggestions: string[]; caution: string };
 
 export async function POST(request: NextRequest) {
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
+  const ip = clientIp(request.headers);
   if (rateLimited(`room:${ip}`, 6, 60 * 60 * 1000)) return NextResponse.json({ error: "rate" }, { status: 429 });
   if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json({ error: "not-configured" }, { status: 503 });
   const parsed = input.safeParse(await request.json().catch(() => null));

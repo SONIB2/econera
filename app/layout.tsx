@@ -25,8 +25,8 @@ export const viewport: Viewport = { themeColor: [{ media: "(prefers-color-scheme
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const chosen = (await cookies()).get(LANG_COOKIE)?.value;
-  // English for new visitors; legacy /sq/ /en/ routes still pass their locale header.
-  const locale = (chosen || (await headers()).get("x-econera-locale") || "en") === "sq" ? "sq" : "en";
+  // A language in the URL (?lang=, /sq/, /en/) wins over the saved choice; new visitors get English.
+  const locale = ((await headers()).get("x-econera-locale") || chosen || "en") === "sq" ? "sq" : "en";
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>

@@ -16,11 +16,12 @@ type WorldEngine = ReturnType<typeof createWorld>;
 type Stock = { kind: "ready"; items: CatalogueEntry[] } | { kind: "error" | "unavailable" };
 const isTransit = (phase: WorldPhase) => phase === "approaching" || phase === "opening" || phase === "entering" || phase === "focusing";
 
-function worldPath(destination: Destination, locale: Locale, kind?: MasonryType) {
+function worldPath(destination: Destination, locale: Locale, kind?: MasonryType, explicit = false) {
   const query = new URLSearchParams();
   if (destination !== "intro") query.set("scene", destination);
   if (destination === "masonry" && kind) query.set("tipi", kind);
-  if (locale === "en") query.set("lang", locale);
+  // The language switch names the language explicitly, because a saved choice or the English default would otherwise win.
+  if (locale === "en" || explicit) query.set("lang", locale);
   return query.size ? `/bota?${query}` : "/bota";
 }
 
@@ -46,7 +47,7 @@ export function ImmersiveWorld({ initial, initialKind, stock, locale }: { initia
     phase === "house" || phase === "opening" || phase === "entering" ? "portal" : "intro";
   const alternate = locale === "sq" ? "en" : "sq";
   const destination = isTransit(phase) ? back : worldDestination(phase);
-  const languageLink = <a className="world-language" href={worldPath(destination, alternate, kind)} hrefLang={alternate} lang={alternate}>{alternate === "en" ? "English" : "Shqip"}</a>;
+  const languageLink = <a className="world-language" href={worldPath(destination, alternate, kind, true)} hrefLang={alternate} lang={alternate}>{alternate === "en" ? "English" : "Shqip"}</a>;
 
   function act(action: WorldAction) {
     setPhase((current) => advanceWorld(current, action));

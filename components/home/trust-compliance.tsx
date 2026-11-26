@@ -46,7 +46,7 @@ export function TrustCompliance({ lang, business = true }: { lang: Lang; busines
   ];
   const passport: [string, React.ReactNode][] = [
     [t("Materiali", "Material"), t("Parket lisi i rikuperuar, 40 m²", "Reclaimed oak flooring, 40 m²")],
-    [t("Shitësi", "Seller"), <span key="s" className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-[#3f8f2f] dark:bg-lime" />{t("Biznes i verifikuar", "Verified business")}</span>],
+    [t("Shitësi", "Seller"), <span key="s" className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-[#2b6e1f] dark:bg-lime" />{t("Biznes i verifikuar", "Verified business")}</span>],
     [t("Listimi", "Listing review"), t("Miratuar nga stafi i ECONERA", "Approved by ECONERA staff")],
     [t("Origjina", "Origin"), t("Rinovim banese, Tiranë", "Apartment renovation, Tirana")],
     [t("Dokumentet", "Documents"), t("Fletë teknike (PDF)", "Technical datasheet (PDF)")],
@@ -58,7 +58,7 @@ export function TrustCompliance({ lang, business = true }: { lang: Lang; busines
     <section aria-labelledby="besimi" className="bg-[#f5f7f4] text-ink dark:bg-bg">
       <div className="container-x py-16 md:py-20">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-[11px] font-semibold tracking-[0.28em] text-[#3f8f2f] dark:text-lime">{t("ECONERA BESIMI DHE PËRPUTHSHMËRIA", "ECONERA TRUST & COMPLIANCE")}</p>
+          <p className="text-[11px] font-semibold tracking-[0.28em] text-[#2b6e1f] dark:text-lime">{t("ECONERA BESIMI DHE PËRPUTHSHMËRIA", "ECONERA TRUST & COMPLIANCE")}</p>
           <h2 id="besimi" className={`display mt-3 text-[clamp(2rem,3.8vw,3rem)] leading-[1.06] ${ink}`}>{t("Ndërtuar mbi besim. Projektuar për transparencë.", "Built on trust. Designed for transparency.")}</h2>
           <p className="mx-auto mt-4 max-w-2xl text-ink-2">{t("Një qasje e përgjegjshme ndaj ndërtimit qarkullues, me shqyrtim njerëzor, dokumentacion transparent dhe gjurmueshmëri të materialeve.", "A responsible approach to circular construction, supported by human review, transparent documentation and material traceability.")}</p>
         </div>
@@ -66,7 +66,7 @@ export function TrustCompliance({ lang, business = true }: { lang: Lang; busines
         <ul className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-5 lg:gap-0 lg:divide-x lg:divide-line">
           {pillars.map(({ Icon, title, text }) => (
             <li key={title} className="text-center lg:px-5">
-              <span className="mx-auto grid size-12 place-items-center text-[#3f8f2f] dark:text-lime"><Icon /></span>
+              <span className="mx-auto grid size-12 place-items-center text-[#2b6e1f] dark:text-lime"><Icon /></span>
               <p className={`mt-3 font-semibold ${ink}`}>{title}</p>
               <p className="mt-1.5 text-sm leading-relaxed text-ink-2">{text}</p>
             </li>
@@ -79,7 +79,7 @@ export function TrustCompliance({ lang, business = true }: { lang: Lang; busines
             <p className="mt-2 text-sm text-ink-2">{t("Këto standarde janë objektiva për të ardhmen. ECONERA nuk është ende e certifikuar në asnjërin.", "These standards are future objectives. ECONERA is not yet certified to any of them.")}</p>
             <ul className="mt-4 divide-y divide-line border-y border-line">
               {standards.map(([code, name]) => (
-                <li key={code} className="flex items-center gap-4 py-3">
+                <li key={code} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-3">
                   <span className={`w-32 shrink-0 whitespace-nowrap font-semibold tabular-nums ${ink}`}>{code}</span>
                   <span className="min-w-0 flex-1 text-sm text-ink-2">{name}</span>
                   <span className="shrink-0 rounded-full border border-line px-2.5 py-0.5 text-xs text-ink-2">{t("Objektiv i planifikuar", "Planned objective")}</span>
@@ -96,7 +96,7 @@ export function TrustCompliance({ lang, business = true }: { lang: Lang; busines
           <figure className="rounded-2xl border border-line bg-card p-5 shadow-[0_18px_40px_-30px_rgba(6,34,30,0.45)] md:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="flex items-center gap-2 text-sm font-semibold text-[#3f8f2f] dark:text-lime"><VerifyIcon className="size-5" />{t("Pasaporta dixhitale e materialit", "Digital Material Passport")}</p>
+                <p className="flex items-center gap-2 text-sm font-semibold text-[#2b6e1f] dark:text-lime"><VerifyIcon className="size-5" />{t("Pasaporta dixhitale e materialit", "Digital Material Passport")}</p>
                 <p className={`mt-1 font-mono text-xs ${ink}`}>ECN-EX-2026-0001</p>
               </div>
               <span className="rounded-full bg-[#eef3e6] px-2.5 py-0.5 text-[11px] font-semibold text-[#0c2f2b] dark:bg-lime/15 dark:text-lime">{t("Shembull ilustrues", "Illustrative example")}</span>
