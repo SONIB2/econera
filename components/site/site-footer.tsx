@@ -3,71 +3,98 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useLang } from "@/components/lang-provider";
+import { BookIcon, BuildingIcon, GlobeIcon, GrowthIcon, LeafIcon, MailIcon, MarketIcon, PinIcon, VerifyIcon } from "./tool-icons";
+
+/** Official social profiles only. Add a row here when a new official account exists; nothing else renders. */
+const SOCIAL = [
+  { href: "https://www.instagram.com/econera.al/", label: "Instagram @econera.al", d: <><rect x="3.5" y="3.5" width="17" height="17" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.2" cy="6.8" r=".9" fill="currentColor" stroke="none" /></> },
+];
 
 /**
- * Global footer. Every link points to a page that exists; contact details come from configuration
- * (PILOT_CONTACT_EMAIL) and are omitted when not set. No social profiles are linked until official ones exist.
+ * GlobalFooter: the one footer used on every public page. Five compact columns on desktop,
+ * brand + accordions on phones, and a thin legal bar. Contact details come from configuration
+ * (PILOT_CONTACT_EMAIL); without it the contact form is linked instead. No invented details.
  */
 export function SiteFooter({ email }: { email?: string }) {
   const { t } = useLang();
-  const cols: { title: string; links: [string, string][] }[] = [
-    { title: t("Platforma", "Platform"), links: [["/treg", t("Tregu", "Marketplace")], ["/shit", t("Shit materiale", "Sell Materials")], ["/ai", t("Mjetet AI", "AI Tools")], ["/verifikimi", "ECONERA Verify"], ["/biznes", t("Për bizneset", "For Business")]] },
-    { title: t("Burime", "Resources"), links: [["/ai", t("Si funksionon", "How it works")], ["/cmimet", t("Çmimet", "Pricing")], ["/kontakt", t("Mbështetje", "Support")], ["/mbrojtja", t("Qendra e ndihmës", "Help Center")]] },
-    { title: t("Kompania", "Company"), links: [["/rreth-nesh", t("Rreth ECONERA", "About ECONERA")], ["/kontakt", t("Kontakt", "Contact")], ["/furnitore", t("Për furnitorët", "For suppliers")], ["/certifikata", t("Certifikata", "Certificate")]] },
+  const cols: { title: string; Icon: (p: { className?: string }) => React.ReactElement; links: [string, string][] }[] = [
+    { title: t("Platforma", "Platform"), Icon: MarketIcon, links: [["/treg", t("Tregu", "Marketplace")], ["/shit", t("Shit materiale", "Sell Materials")], ["/ai", t("Mjetet AI", "AI Tools")], ["/verify", "ECONERA Verify"], ["/biznes", t("Për bizneset", "For Business")]] },
+    { title: t("Burime", "Resources"), Icon: BookIcon, links: [["/ai#bashke", t("Si funksionon", "How it works")], ["/cmimet", t("Planet dhe çmimet", "Plans & Pricing")], ["/kontakt", t("Mbështetja", "Support")], ["/mbrojtja", t("Qendra e ndihmës", "Help Center")]] },
+    { title: t("Kompania", "Company"), Icon: BuildingIcon, links: [["/rreth-nesh", t("Rreth ECONERA", "About ECONERA")], ["/partneret", t("Partnerët", "Our Partners")], ["/partneret#apliko", t("Bëhu partner", "Become a Partner")], ["/kontakt", t("Kontakt", "Contact")]] },
   ];
-  const head = "text-sm font-semibold text-[#c8f169]";
-  const link = "text-sm text-white/70 transition hover:text-white";
+  const contact: { Icon: (p: { className?: string }) => React.ReactElement; node: React.ReactNode }[] = [
+    { Icon: MailIcon, node: email ? <a className="hover:text-white" href={`mailto:${email}`}>{email}</a> : <Link className="hover:text-white" href="/kontakt">{t("Formulari i kontaktit", "Contact form")}</Link> },
+    { Icon: PinIcon, node: t("Tiranë, Shqipëri", "Tirana, Albania") },
+    { Icon: GlobeIcon, node: <a className="hover:text-white" href="https://www.econera.al">www.econera.al</a> },
+  ];
+  const legal: [string, string][] = [
+    ["/privatesia", t("Privatësia", "Privacy Policy")], ["/kushtet", t("Kushtet e përdorimit", "Terms & Conditions")], ["/cookies", t("Politika e cookies", "Cookie Policy")],
+    ["/qasshmeria", t("Aksesueshmëria", "Accessibility")], ["/mbrojtja", t("Mbrojtja e klientit", "Customer Protection")],
+  ];
+  const values = [
+    { Icon: VerifyIcon, label: t("Listime të shqyrtuara nga njerëz", "Human-reviewed listings") },
+    { Icon: LeafIcon, label: t("Ndërtim qarkullues", "Circular Construction") },
+    { Icon: GrowthIcon, label: t("Praktika të qëndrueshme", "Sustainable Practices") },
+  ];
+  const head = "flex items-center gap-2 text-[14px] font-semibold text-[#c8f169]";
+  const link = "text-[13.5px] text-white/70 transition-colors hover:text-white focus-visible:text-white";
+  const list = (links: [string, string][]) => <ul className="grid gap-2">{links.map(([href, label]) => <li key={href + label}><Link className={link} href={href}>{label}</Link></li>)}</ul>;
+  const contactList = <ul className="grid gap-2 text-[13.5px] text-white/70">{contact.map(({ Icon, node }, i) => <li key={i} className="flex items-center gap-2.5"><Icon className="size-4 shrink-0 text-white/75" />{node}</li>)}</ul>;
 
   return (
-    <footer className="theme-dark border-t border-white/10 bg-[#062321] text-ink">
-      <div className="container-x grid gap-10 py-14 lg:grid-cols-[1.4fr_repeat(3,1fr)_1.2fr]">
-        <div className="max-w-xs lg:border-r lg:border-white/10 lg:pr-8">
-          <Image src="/brand/logo-dark.svg" alt="ECONERA" width={481} height={66} className="h-7 w-auto" />
-          <p className="mt-5 text-sm leading-relaxed text-white/75">{t("Platforma inteligjente për ndërtimin qarkullues. Bli, shit, dizajno dhe optimizo materialet me AI.", "The intelligent platform for circular construction. Buy, sell, design and optimize materials with AI.")}</p>
-          {/* Only official profiles that exist. */}
-          <ul className="mt-5 flex gap-3">
-            <li><a href="https://www.instagram.com/econera.al/" target="_blank" rel="noopener noreferrer" aria-label="Instagram @econera.al" className="grid size-10 place-items-center rounded-full border border-white/15 text-white/85 transition hover:border-[#c8f169] hover:text-[#c8f169]">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden><rect x="3.5" y="3.5" width="17" height="17" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.2" cy="6.8" r=".9" fill="currentColor" stroke="none" /></svg>
-            </a></li>
-          </ul>
+    <footer data-global-footer className="theme-dark border-t border-white/10 bg-[#062321] pb-20 text-ink md:pb-0">
+      <div className="mx-auto max-w-[1440px] px-5 sm:px-8">
+        <div className="grid gap-6 py-7 md:grid-cols-[1.35fr_repeat(4,1fr)] md:gap-8 md:py-8">
+          <div className="md:border-r md:border-white/10 md:pr-8">
+            <Image src="/brand/logo-dark.svg" alt="ECONERA" width={481} height={66} className="h-[22px] w-auto" />
+            <p className="mt-3 max-w-xs text-[13px] leading-relaxed text-white/72">{t("Platforma inteligjente për ndërtimin qarkullues. Bli, shit, dizajno dhe optimizo materialet me AI.", "The intelligent platform for circular construction. Buy, sell, design and optimize materials with AI.")}</p>
+            <ul className="mt-4 flex gap-2">
+              {SOCIAL.map((s) => (
+                <li key={s.href}><a href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} className="grid size-8 place-items-center rounded-full border border-white/15 text-white/85 transition hover:border-[#c8f169] hover:text-[#c8f169] focus-visible:border-[#c8f169]">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden>{s.d}</svg>
+                </a></li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Desktop columns */}
+          {cols.map((c) => (
+            <nav key={c.title} aria-label={c.title} className="hidden md:block">
+              <p className={head}><c.Icon className="size-[18px]" />{c.title}</p>
+              <div className="mt-3.5">{list(c.links)}</div>
+            </nav>
+          ))}
+          <div className="hidden md:block">
+            <p className={head}><MailIcon className="size-[18px]" />{t("Na kontaktoni", "Contact us")}</p>
+            <div className="mt-3.5">{contactList}</div>
+          </div>
+
+          {/* Phone accordions */}
+          <div className="divide-y divide-white/10 border-y border-white/10 md:hidden">
+            {[...cols.map((c) => ({ title: c.title, Icon: c.Icon, body: list(c.links) })), { title: t("Na kontaktoni", "Contact us"), Icon: MailIcon, body: contactList }].map((c) => (
+              <details key={c.title} className="group">
+                <summary className={`${head} min-h-12 cursor-pointer list-none [&::-webkit-details-marker]:hidden`}>
+                  <c.Icon className="size-[18px]" />{c.title}
+                  <svg width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden className="ml-auto text-white/50 transition group-open:rotate-180"><path d="M2 3.5l3 3 3-3" strokeLinecap="round" /></svg>
+                </summary>
+                <div className="pb-4 pl-[26px] [&_a]:inline-block [&_a]:py-1">{c.body}</div>
+              </details>
+            ))}
+          </div>
         </div>
 
-        {cols.map((c) => (
-          <nav key={c.title} aria-label={c.title}>
-            {/* Collapsible on mobile, always open from md up. */}
-            <details className="group md:hidden">
-              <summary className={`${head} flex cursor-pointer list-none items-center justify-between py-1 [&::-webkit-details-marker]:hidden`}>{c.title}<span aria-hidden className="text-white/50 transition group-open:rotate-45">+</span></summary>
-              <ul className="mt-3 space-y-2.5">{c.links.map(([href, label]) => <li key={href + label}><Link className={link} href={href}>{label}</Link></li>)}</ul>
-            </details>
-            <div className="hidden md:block">
-              <p className={head}>{c.title}</p>
-              <ul className="mt-4 space-y-2.5">{c.links.map(([href, label]) => <li key={href + label}><Link className={link} href={href}>{label}</Link></li>)}</ul>
-            </div>
+        <div className="flex flex-col gap-3 border-t border-white/10 py-4 text-xs text-white/60 lg:flex-row lg:items-center lg:justify-between lg:gap-6 md:pr-16">
+          <p className="shrink-0">© {new Date().getFullYear()} ECONERA. {t("Të gjitha të drejtat e rezervuara.", "All rights reserved.")}</p>
+          <ul className="flex flex-wrap gap-x-5 gap-y-1.5" aria-label={t("Parimet tona", "Our principles")}>
+            {values.map(({ Icon, label }) => <li key={label} className="flex items-center gap-1.5 text-white/70"><Icon className="size-4 text-[#c8f169]" />{label}</li>)}
+          </ul>
+          <nav aria-label={t("Ligjore", "Legal")}>
+            <ul className="flex flex-wrap gap-x-1 gap-y-1">
+              {legal.map(([href, label], i) => <li key={href} className="flex items-center">{i > 0 && <span aria-hidden className="mx-1.5 h-3 w-px bg-white/20" />}<Link className="py-1 transition-colors hover:text-white focus-visible:text-white" href={href}>{label}</Link></li>)}
+            </ul>
           </nav>
-        ))}
-
-        <div>
-          <p className={head}>{t("Na kontaktoni", "Contact us")}</p>
-          <ul className="mt-4 space-y-3 text-sm text-white/75">
-            {email && <li className="flex items-center gap-3"><Icon d="M3.5 6.5h17v11h-17zM3.5 7l8.5 6 8.5-6" /><a className="hover:text-white" href={`mailto:${email}`}>{email}</a></li>}
-            {!email && <li className="flex items-center gap-3"><Icon d="M3.5 6.5h17v11h-17zM3.5 7l8.5 6 8.5-6" /><Link className="hover:text-white" href="/kontakt">{t("Formulari i kontaktit", "Contact form")}</Link></li>}
-            <li className="flex items-center gap-3"><Icon d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11zM12 12.2a2.2 2.2 0 1 0 0-4.4 2.2 2.2 0 0 0 0 4.4z" />{t("Tiranë, Shqipëri", "Tirana, Albania")}</li>
-            <li className="flex items-center gap-3"><Icon d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3c2.6 2.5 3.9 5.5 3.9 9s-1.3 6.5-3.9 9c-2.6-2.5-3.9-5.5-3.9-9S9.4 5.5 12 3z" /><a className="hover:text-white" href="https://www.econera.al">www.econera.al</a></li>
-          </ul>
         </div>
-      </div>
-      <div className="container-x flex flex-col gap-3 border-t border-white/10 py-6 text-xs text-white/60 sm:flex-row sm:items-center sm:justify-between">
-        <p>© {new Date().getFullYear()} ECONERA. {t("Të gjitha të drejtat e rezervuara.", "All rights reserved.")}</p>
-        <ul className="flex flex-wrap gap-x-5 gap-y-2">
-          <li><Link className="hover:text-white" href="/privatesia">{t("Politika e privatësisë", "Privacy Policy")}</Link></li>
-          <li><Link className="hover:text-white" href="/aksesueshmeria">{t("Aksesueshmëria", "Accessibility")}</Link></li>
-          <li><Link className="hover:text-white" href="/mbrojtja">{t("Mbrojtja e klientit", "Customer protection")}</Link></li>
-        </ul>
       </div>
     </footer>
   );
-}
-
-function Icon({ d }: { d: string }) {
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="shrink-0 text-white/80"><path d={d} /></svg>;
 }

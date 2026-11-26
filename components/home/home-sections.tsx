@@ -7,10 +7,11 @@ import { applyFilters, type MarketItem } from "@/lib/market/live";
 import { EUR_TO_LEK } from "@/lib/tools/inventory";
 import { IntelligenceRing } from "./intelligence-ring";
 import { MaterialSlabs } from "./material-slabs";
+import { TrustCompliance } from "./trust-compliance";
 
 /**
  * Homepage below the 3D hero: Intelligence Universe → materials marketplace (samples, search, live listings)
- * → business and trust. Only approved live listings are shown; nothing here is invented.
+ * → Trust & Compliance and business. Only approved live listings are shown; nothing here is invented.
  */
 export function HomeSections({ lang, region, items }: { lang: Lang; region: Region; items: MarketItem[] }) {
   const t = (sq: string, en: string) => tr(lang, sq, en);
@@ -18,29 +19,20 @@ export function HomeSections({ lang, region, items }: { lang: Lang; region: Regi
   const examples = lang === "en"
     ? ["40 m² of oak flooring under €600 near Tirana", "OSB offcuts 18 mm", "reclaimed bricks", "mineral wool insulation"]
     : ["40 m² parket lisi nën 600 € afër Tiranës", "copa OSB 18 mm", "tulla të rikuperuara", "izolim lesh mineral"];
-  const audiences = [t("Kompani ndërtimi", "Construction companies"), t("Furnitorë materialesh", "Material suppliers"), t("Prodhues", "Manufacturers"), t("Arkitektë", "Architects"), t("Kontraktorë", "Contractors")];
-  const trust = [
-    [t("Listime të shqyrtuara nga njerëz", "Human-reviewed listings"), t("Çdo listim kontrollohet para publikimit.", "Every listing is checked before it goes live."), "/verifikimi"],
-    [t("Shitës të verifikuar", "Verified sellers"), t("Identiteti ose NIPT-i, me dokumente.", "Identity or business registration, with documents."), "/verifikimi"],
-    [t("Dokumentacion teknik", "Technical documentation"), t("Fletë teknike, CE, DoP kur dorëzohen.", "Datasheets, CE, DoP when submitted."), "/verifikimi"],
-    [t("Pasaporta dixhitale", "Digital material passports"), t("Kod publik: çfarë u kontrollua dhe kur.", "A public code: what was checked and when."), "/verifikimi"],
-    [t("Mbrojtja e klientit", "Customer protection"), t("Raporto një problem; e shqyrton një person.", "Report a problem; a person reviews it."), "/mbrojtja"],
-  ];
 
   return (
+    <>
     <div className="theme-dark bg-[#062321] text-ink">
       <IntelligenceRing />
 
       <section aria-labelledby="tregu" className="relative overflow-hidden border-t border-white/5">
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_60%_at_75%_45%,rgba(200,243,109,0.10),transparent_70%)]" />
-        <div className="container-x relative grid items-center gap-6 py-16 md:grid-cols-[0.8fr_1.2fr] md:py-20">
-          <div>
-            <p className="text-[11px] font-semibold tracking-[0.3em] text-[#c8f169]">{t("TREGU I MATERIALEVE", "MATERIALS MARKETPLACE")}</p>
-            <h2 id="tregu" className="display mt-4 text-[clamp(2.2rem,4.4vw,3.6rem)] leading-[1.02] text-white">{t("Gjej. Bli. Ripërdor.", "Find. Buy. Reuse.")}<br />{t("Ndërto më zgjuar.", "Build smarter.")}</h2>
-            <p className="mt-4 max-w-sm text-white/75">{t("Materiale të reja, të rikuperuara dhe të tepërta për çdo projekt.", "New, reclaimed and surplus materials for every project.")}</p>
-            <Link href="/treg" className="mt-6 inline-flex items-center gap-2 font-semibold text-[#c8f169] underline-offset-4 hover:underline">{t("Eksploro materialet", "Explore materials")} <span aria-hidden>→</span></Link>
-          </div>
-          <MaterialSlabs lang={lang} />
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_55%_45%_at_50%_62%,rgba(200,243,109,0.10),transparent_70%)]" />
+        <div className="container-x relative pt-16 text-center md:pt-24">
+          <p className="flex items-center justify-center gap-4 text-[12px] font-semibold tracking-[0.3em] text-[#c8f169]"><span aria-hidden className="h-px w-14 bg-[#c8f169]/50" />{t("TREGU I MATERIALEVE", "MATERIALS MARKETPLACE")}<span aria-hidden className="h-px w-14 bg-[#c8f169]/50" /></p>
+          <h2 id="tregu" className="display mx-auto mt-5 max-w-4xl text-balance text-[clamp(2.2rem,5vw,4.2rem)] leading-[1.02] text-white">{t("Gjej. Bli. Ripërdor. Ndërto më zgjuar.", "Find. Buy. Reuse. Build smarter.")}</h2>
+          <p className="mx-auto mt-4 max-w-xl text-lg text-white/75">{t("Materiale të reja, të rikuperuara dhe të tepërta për çdo projekt.", "New, reclaimed and surplus materials for every project.")}</p>
+          <Link href="/treg" className="mt-8 inline-flex h-12 items-center gap-2 rounded-full bg-[#c8f169] px-7 font-semibold text-[#062321] transition hover:bg-[#d6f68a] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#c8f169]">{t("Eksploro materialet", "Explore materials")} <span aria-hidden>→</span></Link>
+          <MaterialSlabs lang={lang} wide />
         </div>
 
         <div className="container-x relative pb-20">
@@ -68,28 +60,8 @@ export function HomeSections({ lang, region, items }: { lang: Lang; region: Regi
         </div>
       </section>
 
-      <section aria-labelledby="biznes" className="border-t border-white/5">
-        <div className="container-x grid gap-10 py-16 md:grid-cols-2 md:py-20">
-          <div>
-            <h2 id="biznes" className="display text-[clamp(1.9rem,3.4vw,2.8rem)] leading-[1.05] text-white">{t("Ndërtuar për një industri ndërtimi më të zgjuar.", "Built for a smarter construction industry.")}</h2>
-            <ul className="mt-6 flex flex-wrap gap-2">{audiences.map((a) => <li key={a} className="rounded-full border border-white/12 px-3.5 py-1.5 text-sm text-white/80">{a}</li>)}</ul>
-            <Link href="/biznes" className="btn-primary mt-7">{t("Për bizneset", "For Business")} <span aria-hidden>→</span></Link>
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold tracking-[0.3em] text-[#c8f169]">ECONERA VERIFY</p>
-            <ul className="mt-4 divide-y divide-white/10 border-y border-white/10">
-              {trust.map(([a, b, href]) => (
-                <li key={a}><Link href={href} className="group flex items-center gap-4 py-3.5">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8f169" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="shrink-0"><path d="M12 3.5 19 6v5.5c0 4.2-2.9 7.4-7 9-4.1-1.6-7-4.8-7-9V6z" /><path d="m9 12 2.2 2.2L15.5 10" /></svg>
-                  <span className="min-w-0 flex-1"><span className="block font-semibold text-white">{a}</span><span className="block text-sm text-white/65">{b}</span></span>
-                  <span aria-hidden className="text-white/40 transition group-hover:translate-x-0.5 group-hover:text-[#c8f169]">→</span>
-                </Link></li>
-              ))}
-            </ul>
-            <p className="mt-3 text-xs text-white/50">{t("“I shqyrtuar” do të thotë kontroll i dokumenteve nga ECONERA; inspektimi fizik ose certifikimi i pavarur shfaqen veçmas, vetëm kur janë kryer.", "“Reviewed” means ECONERA checked the documents; physical inspection or independent certification is shown separately, only when it has taken place.")}</p>
-          </div>
-        </div>
-      </section>
     </div>
+    <TrustCompliance lang={lang} />
+    </>
   );
 }

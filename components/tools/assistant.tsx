@@ -62,11 +62,20 @@ export function Assistant() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
+  // Over the footer the launcher shrinks to an icon so it never covers the legal links.
+  const [atFooter, setAtFooter] = useState(false);
+  useEffect(() => {
+    const el = document.querySelector("footer[data-global-footer]");
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setAtFooter(e.isIntersecting), { rootMargin: "0px 0px -40px 0px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
   // Any element with data-open-assistant (e.g. the Voice card) opens the panel.
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       const el = (e.target as Element | null)?.closest?.("[data-open-assistant]");
-      if (el) { e.preventDefault(); setOpen(true); }
+      if (el) { e.preventDefault(); setOpen(true); if (el.getAttribute("data-open-assistant") === "voice") { setVoice(true); } }
     };
     document.addEventListener("click", onClick);
     return () => document.removeEventListener("click", onClick);
@@ -136,9 +145,9 @@ export function Assistant() {
   return (
     <>
       <button type="button" onClick={() => { setOpen((v) => !v); if (open) stopSpeaking(); }} aria-expanded={open} aria-controls="asistenti"
-        className="fixed right-4 bottom-20 z-50 flex h-14 items-center gap-2 rounded-full bg-lime pr-5 pl-4 font-semibold text-bg shadow-[0_12px_30px_-10px_rgba(12,47,43,0.6)] transition hover:bg-lime-dim md:bottom-6">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden><rect x="7" y="2" width="6" height="10" rx="3" /><path d="M4 9.5a6 6 0 0 0 12 0M10 15.5V18" /></svg>
-        <span>{open ? t("Mbyll", "Close") : t("Asistenti", "Assistant")}</span>
+        className={`fixed right-4 bottom-20 z-50 flex h-14 items-center gap-2 rounded-full bg-lime font-semibold ${atFooter && !open ? "w-14 justify-center px-0" : "pr-5 pl-4"} text-bg shadow-[0_12px_30px_-10px_rgba(12,47,43,0.6)] transition-all hover:bg-lime-dim md:bottom-6`}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M4 12a8 7 0 1 1 3.5 5.8L4 19.5l1.2-3.4A6.7 6.7 0 0 1 4 12z" /></svg>
+        <span className={atFooter && !open ? "sr-only" : ""}>{open ? t("Mbyll", "Close") : t("Asistenti", "Assistant")}</span>
       </button>
 
       {open && (

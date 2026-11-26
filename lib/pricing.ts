@@ -64,3 +64,7 @@ export const ENTERPRISE_EN = "For developers and large companies: ERP integratio
 export const BUYER_FEATURES_EN = ["AI search across all stock", "Unlimited quote requests", "Compare price, distance and match", "Plan → quote from a floor plan", "Green certificate for every purchase"];
 export const PILOT_OFFER_EN = "The first 20 pilot suppliers in Tirana get the Growth plan free for 3 months.";
 export const PLAN_NAME_EN: Record<Plan["id"], string> = { falas: "ECONERA Free", start: "Start", rritje: "Growth", pro: "Pro" };
+
+/** Last day of the pilot offer (YYYY-MM-DD). Null means no end date has been set; once the date passes the offer disappears from the site. */
+export const PILOT_OFFER_ENDS: string | null = null;
+export const pilotOfferActive = (now = new Date()) => !PILOT_OFFER_ENDS || now <= new Date(`${PILOT_OFFER_ENDS}T23:59:59`);

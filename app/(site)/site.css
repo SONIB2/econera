@@ -114,3 +114,12 @@ html.dark [class*="text-[#7a5a12]"], html.dark [class*="text-[#8a4b12]"] { color
 html.dark [class*="text-[#8a2f1d]"] { color: #f3b2a2; }
 html.dark [class*="bg-[#f3ead6]"] { background-color: #3a3214; color: #f0d58a; }
 html.dark img { filter: none; }
+
+/* Intelligence dock buttons: dark glass circles with a lime glyph, in both themes. */
+.dock-btn { display: grid; place-items: center; border-radius: 9999px; border: 1px solid rgba(200, 241, 105, 0.22);
+  background: rgba(6, 35, 33, 0.86); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  box-shadow: 0 8px 22px -12px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: border-color .2s, background-color .2s, transform .2s; outline: none; }
+.dock-btn:hover { border-color: rgba(200, 241, 105, 0.6); background: rgba(10, 52, 47, 0.95); transform: translateY(-1px); }
+.dock-btn:focus-visible { border-color: #c8f169; box-shadow: 0 0 0 3px rgba(200, 241, 105, 0.35); }
+@media (prefers-reduced-motion: reduce) { .dock-btn { transition: none; } .dock-btn:hover { transform: none; } }

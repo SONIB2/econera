@@ -57,9 +57,9 @@ const SAMPLES: { id: keyof typeof TEXTURE; cat: string; sq: string; en: string }
   { id: "stone", cat: "bricks", sq: "Gur natyral", en: "Natural stone" },
 ];
 
-export function MaterialSlabs({ lang }: { lang: Lang }) {
+export function MaterialSlabs({ lang, wide = false }: { lang: Lang; wide?: boolean }) {
   return (
-    <ul className="ms-row" aria-label={lang === "en" ? "Material samples" : "Mostra materialesh"}>
+    <ul className={`ms-row${wide ? " ms-wide" : ""}`} aria-label={lang === "en" ? "Material samples" : "Mostra materialesh"}>
       {SAMPLES.map((m, i) => (
         <li key={m.id} className="ms-item" style={{ ["--i" as string]: i }}>
           <Link href={`/treg?kategoria=${m.cat}`} className={`ms-slab ms-${m.id}`} style={{ ["--tex" as string]: TEXTURE[m.id] }}>

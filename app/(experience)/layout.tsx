@@ -1,4 +1,5 @@
 import "../(site)/site.css";
+import { AiDock } from "@/components/site/ai-dock";
 import { BottomNav } from "@/components/site/bottom-nav";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
@@ -15,6 +16,7 @@ export default async function ExperienceLayout({ children }: Readonly<{ children
       <SiteHeader account={account} overlay />
       <main id="permbajtja" tabIndex={-1}>{children}</main>
       <SiteFooter email={process.env.PILOT_CONTACT_EMAIL} />
+      <AiDock />
       <Assistant />
       <BottomNav />
     </>

@@ -6,38 +6,71 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "@/app/(legacy)/account-actions";
 import { useLang } from "@/components/lang-provider";
-import { ArrowIcon, TOOL_ICON } from "./tool-icons";
+import { ArrowIcon, BasketIcon, BuildingIcon, CompassIcon, CutIcon, FactoryIcon, MarketIcon, PriceIcon, RenovationIcon, SellIcon, VoiceIcon } from "./tool-icons";
 import { CartButton, RegionMenu, ThemeToggle } from "./header-controls";
 
 export type Account = { email: string; seller: boolean } | null;
 
-const TOOLS = [
-  { id: "renovation", href: "/ai/renovim", name: "AI Renovation", sq: "Dizajno hapësirën tënde me AI.", en: "Design your space with AI." },
-  { id: "basket", href: "/ai/shporta", name: "Smart Basket", sq: "Materialet më të mira për buxhetin tënd.", en: "Find the best materials for your budget." },
-  { id: "smartcut", href: "/ai/smartcut", name: "SmartCut", sq: "Optimizo materialet. Minimizo mbetjet.", en: "Optimize materials. Minimize waste." },
-  { id: "voice", href: "#asistenti", name: "ECONERA Voice", sq: "Asistenti yt inteligjent me zë.", en: "Your intelligent voice assistant.", voice: true },
-] as const;
+type Icon = (p: { className?: string }) => React.ReactElement;
+type Item = { href: string; label: string; desc: string; Icon: Icon; voice?: boolean };
+type Group = { id: string; label: string; href?: string; items: Item[]; more?: { href: string; label: string }; wide?: boolean; match: string[] };
+
+/** The six main destinations, shared by the desktop bar and the mobile drawer. */
+function useNav() {
+  const { t } = useLang();
+  const groups: Group[] = [
+    {
+      id: "nav-market", label: t("Tregu", "Marketplace"), href: "/treg", match: ["/treg", "/shit"],
+      items: [
+        { href: "/treg", label: t("Bli materiale", "Buy Materials"), desc: t("Zbulo materialet e ndërtimit në dispozicion.", "Discover available construction materials."), Icon: MarketIcon },
+        { href: "/shit", label: t("Shit materiale", "Sell Materials"), desc: t("Listo materialet e tepërta ose të rikuperuara.", "List your surplus or reclaimed materials."), Icon: SellIcon },
+      ],
+    },
+    {
+      id: "nav-ai", label: t("Mjetet AI", "AI Tools"), href: undefined, match: ["/ai"], wide: true,
+      more: { href: "/ai", label: t("Shiko të gjitha mjetet AI", "Explore All AI Tools") },
+      items: [
+        { href: "/ai/renovim", label: "AI Renovation", desc: t("Dizajno hapësirën tënde me AI.", "Design your space with AI."), Icon: RenovationIcon },
+        { href: "/ai/shporta", label: "Smart Basket", desc: t("Materialet më të mira për buxhetin tënd.", "The best materials for your budget."), Icon: BasketIcon },
+        { href: "/ai/smartcut", label: "SmartCut", desc: t("Optimizo prerjet. Minimizo mbetjet.", "Optimize cuts. Minimize waste."), Icon: CutIcon },
+        { href: "#asistenti", label: "ECONERA Voice", desc: t("Kërko dhe lundro me zë.", "Search and navigate by voice."), Icon: VoiceIcon, voice: true },
+      ],
+    },
+    {
+      id: "nav-business", label: t("Për bizneset", "For Business"), href: undefined, match: ["/biznes", "/furnitore", "/cmimet"],
+      items: [
+        { href: "/biznes", label: t("Kompani ndërtimi", "Construction Companies"), desc: t("Stoku, kantieret dhe porositë në një vend.", "Stock, sites and orders in one place."), Icon: BuildingIcon },
+        { href: "/furnitore", label: t("Furnitorë dhe prodhues", "Suppliers & Manufacturers"), desc: t("Shit stokun e tepërt te blerës të rinj.", "Sell surplus stock to new buyers."), Icon: FactoryIcon },
+        { href: "/biznes#per-kend", label: t("Arkitektë dhe dizajnerë", "Architects & Designers"), desc: t("Koncepte me materiale që ekzistojnë realisht.", "Concepts built from materials that exist."), Icon: CompassIcon },
+        { href: "/cmimet", label: t("Planet dhe çmimet", "Plans & Pricing"), desc: t("Abonime për furnitorët, falas për blerësit.", "Supplier plans, free for buyers."), Icon: PriceIcon },
+      ],
+    },
+  ];
+  const links = [
+    { href: "/partneret", label: t("Partnerët", "Our Partners") },
+    { href: "/rreth-nesh", label: t("Rreth nesh", "About Us") },
+    { href: "/kontakt", label: t("Kontakt", "Contact") },
+  ];
+  return { groups, links };
+}
+
+const ACTIVE = "bg-[#dff5a8] text-[#0c2f2b] dark:bg-lime/15 dark:text-lime dark:ring-1 dark:ring-lime/35";
+const Chevron = ({ open, size = 10 }: { open: boolean; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden className={`transition duration-200 ${open ? "rotate-180" : ""}`}><path d="M2 3.5l3 3 3-3" strokeLinecap="round" /></svg>
+);
 
 /**
- * Global header: Logo | Marketplace | Sell | AI Tools (mega menu) | For Business | region | theme | cart | Log in · Sign up.
- * `overlay` keeps it transparent over the homepage hero until the visitor scrolls past it.
+ * `overlay` keeps the header transparent over the homepage hero until the visitor scrolls past it.
  */
 export function SiteHeader({ account, overlay = false }: { account: Account; overlay?: boolean }) {
   const pathname = usePathname();
-  const { lang, t } = useLang();
+  const { t } = useLang();
+  const { groups, links } = useNav();
   const [mobileOn, setMobileOn] = useState<string | null>(null);
   const mobile = mobileOn === pathname;
-  const [mega, setMega] = useState(false);
-  const [aiOpen, setAiOpen] = useState(false);
-  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hoverMega = (open: boolean) => {
-    if (hoverTimer.current) clearTimeout(hoverTimer.current);
-    hoverTimer.current = setTimeout(() => setMega(open), open ? 80 : 180);
-  };
   const [accountOpen, setAccountOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [pastHero, setPastHero] = useState(!overlay);
-  const megaRef = useRef<HTMLDivElement>(null);
   const accRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -47,42 +80,21 @@ export function SiteHeader({ account, overlay = false }: { account: Account; ove
     return () => window.removeEventListener("scroll", onScroll);
   }, [overlay]);
   useEffect(() => {
-    if (!mega && !accountOpen && !mobile) return;
-    const down = (e: PointerEvent) => {
-      if (mega && !megaRef.current?.contains(e.target as Node)) setMega(false);
-      if (accountOpen && !accRef.current?.contains(e.target as Node)) setAccountOpen(false);
-    };
-    const key = (e: KeyboardEvent) => { if (e.key === "Escape") { setMega(false); setAccountOpen(false); setMobileOn(null); } };
+    if (!accountOpen && !mobile) return;
+    const down = (e: PointerEvent) => { if (accountOpen && !accRef.current?.contains(e.target as Node)) setAccountOpen(false); };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") { setAccountOpen(false); setMobileOn(null); } };
     window.addEventListener("pointerdown", down); window.addEventListener("keydown", key);
     return () => { window.removeEventListener("pointerdown", down); window.removeEventListener("keydown", key); };
-  }, [mega, accountOpen, mobile]);
+  }, [accountOpen, mobile]);
 
   const onHero = overlay && !pastHero && !mobile;
   const active = (href: string) => pathname.startsWith(href);
-  const nav = [
-    { href: "/treg", label: t("Tregu", "Marketplace") },
-    { href: "/shit", label: t("Shit", "Sell") },
-  ];
-  const clients = [
-    { href: "/treg", label: t("Gjej materiale", "Find materials"), desc: t("Materiale të tepërta dhe të rikuperuara", "Surplus and reclaimed materials") },
-    { href: "/ai/shporta", label: "Smart Basket", desc: t("Lista e projektit brenda buxhetit", "Your project list within budget") },
-    { href: "/ai/renovim", label: "AI Renovation", desc: t("Dizajno hapësirën tënde", "Design your space") },
-    { href: "/mbrojtja", label: t("Mbrojtja e klientit", "Customer protection"), desc: t("Raporto një problem", "Report a problem") },
-  ];
-  const companies = [
-    { href: "/biznes", label: t("Për bizneset", "For Business"), desc: t("Zgjidhje për kompanitë e ndërtimit", "Solutions for construction companies") },
-    { href: "/shit", label: t("Shit materiale", "Sell materials"), desc: t("Listo stokun e tepërt", "List your surplus stock") },
-    { href: "/furnitore", label: t("Për furnitorët", "For suppliers"), desc: t("Import stoku dhe profil biznesi", "Stock import and business profile") },
-    { href: "/cmimet", label: t("Çmimet", "Pricing"), desc: t("Planet për furnitorët", "Supplier plans") },
-  ];
   const accountLinks = [
     ["/paneli", t("Paneli", "Dashboard")], ["/projektet", t("Projektet e mia", "My projects")], ["/ruajtura", t("Të ruajturat", "Saved materials")],
     ["/inventari/ofertat", t("Porositë dhe ofertat", "Orders and quotes")], ["/njoftimet", t("Njoftimet", "Notifications")], ["/mbrojtja", t("Mesazhet dhe ankesat", "Messages and complaints")],
     ["/inventari", t("Listimet e mia", "My listings")], ["/verifikimi", t("Verifikimi i llogarisë", "Account verification")],
   ];
-  const link = (href: string, label: string) => (
-    <Link key={href} href={href} aria-current={active(href) ? "page" : undefined} className={`whitespace-nowrap rounded-full px-2.5 py-2 text-[13.5px] font-medium transition-colors ${active(href) ? "bg-[#dff5a8] text-[#0c2f2b] dark:bg-lime/15 dark:text-lime dark:ring-1 dark:ring-lime/35" : "text-ink-2 hover:text-ink"}`}>{label}</Link>
-  );
+  const close = () => setMobileOn(null);
 
   return (
     <header className={`${overlay ? "fixed inset-x-0" : "sticky"} top-0 z-40 px-3 pt-3 transition-[padding] sm:px-5 ${overlay || pathname === "/treg" ? "theme-dark" : ""} ${onHero ? "!bg-transparent" : ""}`}>
@@ -92,47 +104,12 @@ export function SiteHeader({ account, overlay = false }: { account: Account; ove
           <Image src="/brand/logo-dark.svg" alt="" width={481} height={66} priority className="hidden h-6 w-auto dark:block" />
         </Link>
 
-        <nav aria-label={t("Navigimi kryesor", "Main navigation")} className="hidden items-center gap-0 xl:flex">
-          {nav.map((n) => link(n.href, n.label))}
-          <div ref={megaRef} className="relative" onMouseEnter={() => hoverMega(true)} onMouseLeave={() => hoverMega(false)}>
-            <button type="button" aria-expanded={mega} aria-controls="mega-ai" onClick={() => setMega((v) => !v)}
-              className={`flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-2 text-[13.5px] font-medium transition-colors ${mega || active("/ai") ? "text-ink" : "text-ink-2 hover:text-ink"} ${active("/ai") ? "bg-[#dff5a8] !text-[#0c2f2b] dark:bg-lime/15 dark:!text-lime" : ""}`}>
-              {t("Mjetet AI", "AI Tools")}
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden className={`transition duration-200 ${mega ? "rotate-180" : ""}`}><path d="M2 3.5l3 3 3-3" strokeLinecap="round" /></svg>
-            </button>
-            {/* Compact Intelligence dropdown: two columns, icon + name + one line, whole row clickable. */}
-            <div id="mega-ai" inert={!mega} className={`absolute top-full left-1/2 z-50 w-[min(700px,calc(100vw-2rem))] -translate-x-1/2 pt-3 transition duration-200 ease-out ${mega ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"}`}>
-              <div className="overflow-hidden rounded-2xl border border-line bg-card text-ink shadow-[0_24px_60px_-24px_rgba(6,34,30,0.45)]">
-                <p className="px-5 pt-4 text-[11px] font-semibold tracking-[0.14em] text-lime-dim">ECONERA INTELLIGENCE</p>
-                <ul className="grid grid-cols-2 gap-1 p-2.5">
-                  {TOOLS.map((tool) => {
-                    const Icon = TOOL_ICON[tool.id];
-                    return (
-                      <li key={tool.id}>
-                        <Link href={tool.href} data-open-assistant={"voice" in tool ? "" : undefined} onClick={() => setMega(false)}
-                          className="group flex items-center gap-3.5 rounded-xl p-2.5 outline-none transition-colors hover:bg-bg-2 focus-visible:bg-bg-2 focus-visible:ring-2 focus-visible:ring-lime">
-                          <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-bg-2 text-lime transition-colors group-hover:border-lime/50 group-hover:bg-accent/60"><Icon /></span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block text-[15px] font-semibold tracking-tight">{tool.name}</span>
-                            <span className="block text-[13px] leading-snug text-ink-2">{tool[lang]}</span>
-                          </span>
-                          <ArrowIcon className="shrink-0 text-ink-2 transition duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-lime" />
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <Link href="/ai" onClick={() => setMega(false)} className="group flex items-center justify-between border-t border-line px-5 py-3.5 text-sm font-semibold text-lime outline-none transition-colors hover:bg-bg-2 focus-visible:bg-bg-2">
-                  {t("Eksploro të gjitha mjetet AI", "Explore all AI tools")}
-                  <span aria-hidden className="transition group-hover:translate-x-0.5">→</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-          <NavDrop id="nav-clients" label={t("Për klientët", "For Clients")} items={clients} active={false} />
-          <NavDrop id="nav-companies" label={t("Për kompanitë", "For Companies")} items={companies} active={["/biznes", "/furnitore", "/cmimet"].some(active)} />
-          {link("/rreth-nesh", t("Rreth nesh", "About Us"))}
-          {link("/kontakt", t("Kontakt", "Contact"))}
+        <nav aria-label={t("Navigimi kryesor", "Main navigation")} className="hidden items-center gap-0.5 xl:flex">
+          {groups.map((g) => <NavDrop key={g.id} group={g} active={g.match.some(active)} />)}
+          {links.map((l) => (
+            <Link key={l.href} href={l.href} aria-current={active(l.href) ? "page" : undefined}
+              className={`whitespace-nowrap rounded-full px-3 py-2 text-[13.5px] font-medium transition-colors ${active(l.href) ? ACTIVE : "text-ink-2 hover:text-ink"}`}>{l.label}</Link>
+          ))}
         </nav>
 
         <div className="flex items-center gap-1">
@@ -167,43 +144,10 @@ export function SiteHeader({ account, overlay = false }: { account: Account; ove
 
       <nav id="menu-celular" aria-label={t("Menuja", "Menu")} hidden={!mobile} className="mx-auto mt-2 max-h-[calc(100dvh-6rem)] max-w-7xl overflow-y-auto rounded-card border border-line bg-card/95 p-3 text-ink shadow-xl backdrop-blur-xl xl:hidden">
         <ul className="grid gap-1">
-          {nav.map((n) => <li key={n.href}><Link href={n.href} onClick={() => setMobileOn(null)} className="flex min-h-12 items-center rounded-xl px-3 text-base font-medium hover:bg-bg-2">{n.label}</Link></li>)}
-          <li>
-            <button type="button" aria-expanded={aiOpen} aria-controls="menu-ai" onClick={() => setAiOpen((v) => !v)}
-              className={`flex min-h-12 w-full items-center gap-2 rounded-xl px-3 text-left text-base font-medium transition-colors ${aiOpen ? "bg-bg-2 text-lime" : "hover:bg-bg-2"}`}>
-              {t("Mjetet AI", "AI Tools")}
-              <svg width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden className={`ml-auto transition duration-200 ${aiOpen ? "rotate-180" : ""}`}><path d="M2 3.5l3 3 3-3" strokeLinecap="round" /></svg>
-            </button>
-            <div id="menu-ai" className={`grid transition-[grid-template-rows] duration-300 ease-out ${aiOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
-              <div className="overflow-hidden" inert={!aiOpen}>
-                <ul className="grid gap-0.5 py-1.5 pl-2">
-                  {TOOLS.map((tool) => {
-                    const Icon = TOOL_ICON[tool.id];
-                    return (
-                      <li key={tool.id}>
-                        <Link href={tool.href} data-open-assistant={"voice" in tool ? "" : undefined} onClick={() => setMobileOn(null)} className="flex min-h-14 items-center gap-3 rounded-xl px-2 py-2 hover:bg-bg-2">
-                          <span className="grid size-10 shrink-0 place-items-center rounded-xl border border-line bg-bg-2 text-lime"><Icon /></span>
-                          <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">{tool.name}</span><span className="block text-[13px] text-ink-2">{tool[lang]}</span></span>
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden className="shrink-0 text-ink-2"><path d="M5 3l4 4-4 4" strokeLinecap="round" /></svg>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                  <li><Link href="/ai" onClick={() => setMobileOn(null)} className="flex min-h-12 items-center px-2 text-sm font-semibold text-lime">{t("Eksploro të gjitha mjetet", "Explore all tools")} <span aria-hidden className="ml-1">→</span></Link></li>
-                </ul>
-              </div>
-            </div>
-          </li>
-          {[[t("Për klientët", "For Clients"), clients], [t("Për kompanitë", "For Companies"), companies]].map(([title, items]) => (
-            <li key={title as string}>
-              <details className="group">
-                <summary className="flex min-h-12 cursor-pointer list-none items-center rounded-xl px-3 text-base font-medium hover:bg-bg-2 [&::-webkit-details-marker]:hidden">{title as string}<svg width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden className="ml-auto transition group-open:rotate-180"><path d="M2 3.5l3 3 3-3" strokeLinecap="round" /></svg></summary>
-                <ul className="grid gap-0.5 py-1 pl-3">{(items as typeof clients).map((i) => <li key={i.href + i.label}><Link href={i.href} onClick={() => setMobileOn(null)} className="block rounded-xl px-3 py-2.5 hover:bg-bg-2"><span className="block text-[15px] font-semibold">{i.label}</span><span className="block text-[13px] text-ink-2">{i.desc}</span></Link></li>)}</ul>
-              </details>
-            </li>
+          {groups.map((g) => <li key={g.id}><MobileGroup group={g} onPick={close} /></li>)}
+          {links.map((l) => (
+            <li key={l.href}><Link href={l.href} onClick={close} aria-current={active(l.href) ? "page" : undefined} className={`flex min-h-12 items-center rounded-xl px-3 text-base font-medium ${active(l.href) ? "text-lime" : "hover:bg-bg-2"}`}>{l.label}</Link></li>
           ))}
-          <li><Link href="/rreth-nesh" onClick={() => setMobileOn(null)} className="flex min-h-12 items-center rounded-xl px-3 text-base font-medium hover:bg-bg-2">{t("Rreth nesh", "About Us")}</Link></li>
-          <li><Link href="/kontakt" onClick={() => setMobileOn(null)} className="flex min-h-12 items-center rounded-xl px-3 text-base font-medium hover:bg-bg-2">{t("Kontakt", "Contact")}</Link></li>
         </ul>
         <div className="mt-3 flex items-center justify-between border-t border-line pt-3">
           <ThemeToggle />
@@ -214,8 +158,9 @@ export function SiteHeader({ account, overlay = false }: { account: Account; ove
   );
 }
 
-/** Small dropdown for a nav group (For Clients, For Companies): opens on hover or click, closes on Escape or outside click. */
-function NavDrop({ id, label, items, active }: { id: string; label: string; items: { href: string; label: string; desc: string }[]; active: boolean }) {
+/** Compact dropdown: opens on hover or click, closes on Escape or outside click. With `href`, the label is a link and only the chevron toggles. */
+function NavDrop({ group, active }: { group: Group; active: boolean }) {
+  const { t } = useLang();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -227,22 +172,73 @@ function NavDrop({ id, label, items, active }: { id: string; label: string; item
     window.addEventListener("pointerdown", down); window.addEventListener("keydown", key);
     return () => { window.removeEventListener("pointerdown", down); window.removeEventListener("keydown", key); };
   }, [open]);
+  const tone = active ? ACTIVE : open ? "text-ink" : "text-ink-2 hover:text-ink";
+
   return (
     <div ref={ref} className="relative" onMouseEnter={() => hover(true)} onMouseLeave={() => hover(false)}>
-      <button type="button" aria-expanded={open} aria-controls={id} onClick={() => setOpen((v) => !v)}
-        className={`flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-2 text-[13.5px] font-medium transition-colors ${active ? "bg-[#dff5a8] text-[#0c2f2b] dark:bg-lime/15 dark:text-lime" : open ? "text-ink" : "text-ink-2 hover:text-ink"}`}>
-        {label}
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden className={`transition duration-200 ${open ? "rotate-180" : ""}`}><path d="M2 3.5l3 3 3-3" strokeLinecap="round" /></svg>
-      </button>
-      <div id={id} inert={!open} className={`absolute top-full left-1/2 z-50 w-72 -translate-x-1/2 pt-3 transition duration-200 ${open ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"}`}>
-        <ul className="grid gap-0.5 rounded-2xl border border-line bg-card p-2 text-ink shadow-[0_24px_60px_-24px_rgba(6,34,30,0.45)]">
-          {items.map((i) => (
-            <li key={i.href + i.label}><Link href={i.href} onClick={() => setOpen(false)} className="block rounded-xl px-3 py-2.5 transition-colors hover:bg-bg-2 focus-visible:bg-bg-2">
-              <span className="block text-sm font-semibold">{i.label}</span><span className="block text-[13px] text-ink-2">{i.desc}</span>
-            </Link></li>
-          ))}
-        </ul>
+      {group.href ? (
+        <span className={`flex items-center rounded-full transition-colors ${tone}`}>
+          <Link href={group.href} onClick={() => setOpen(false)} className="whitespace-nowrap rounded-l-full py-2 pr-1 pl-3 text-[13.5px] font-medium">{group.label}</Link>
+          <button type="button" aria-expanded={open} aria-controls={group.id} aria-label={t(`Opsionet: ${group.label}`, `${group.label} options`)} onClick={() => setOpen((v) => !v)} className="grid h-9 place-items-center rounded-r-full pr-2.5 pl-1"><Chevron open={open} /></button>
+        </span>
+      ) : (
+        <button type="button" aria-expanded={open} aria-controls={group.id} onClick={() => setOpen((v) => !v)}
+          className={`flex items-center gap-1 whitespace-nowrap rounded-full px-3 py-2 text-[13.5px] font-medium transition-colors ${tone}`}>
+          {group.label}<Chevron open={open} />
+        </button>
+      )}
+      <div id={group.id} inert={!open} className={`absolute top-full left-1/2 z-50 -translate-x-1/2 pt-3 transition duration-200 ease-out ${group.wide ? "w-[min(600px,calc(100vw-2rem))]" : "w-80"} ${open ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"}`}>
+        <div className="overflow-hidden rounded-2xl border border-line bg-card text-ink shadow-[0_24px_60px_-24px_rgba(6,34,30,0.45)]">
+          <ul className={`grid gap-0.5 p-2 ${group.wide ? "grid-cols-2" : ""}`}>
+            {group.items.map((i) => (
+              <li key={i.href + i.label}>
+                <Link href={i.href} data-open-assistant={i.voice ? "voice" : undefined} onClick={() => setOpen(false)}
+                  className="group flex items-center gap-3 rounded-xl p-2.5 outline-none transition-colors hover:bg-bg-2 focus-visible:bg-bg-2 focus-visible:ring-2 focus-visible:ring-lime">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-line bg-bg-2 text-lime transition-colors group-hover:border-lime/50"><i.Icon className="size-[18px]" /></span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold tracking-tight">{i.label}</span>
+                    <span className="block text-[12.5px] leading-snug text-ink-2">{i.desc}</span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          {group.more && (
+            <Link href={group.more.href} onClick={() => setOpen(false)} className="group flex items-center justify-between border-t border-line px-4 py-3 text-sm font-semibold text-lime outline-none transition-colors hover:bg-bg-2 focus-visible:bg-bg-2">
+              {group.more.label}<ArrowIcon className="transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </Link>
+          )}
+        </div>
       </div>
     </div>
+  );
+}
+
+/** Drawer accordion for a nav group; the group's own page (if any) is the first row. */
+function MobileGroup({ group, onPick }: { group: Group; onPick: () => void }) {
+  const [open, setOpen] = useState(false);
+  const panel = `${group.id}-m`;
+  return (
+    <>
+      <button type="button" aria-expanded={open} aria-controls={panel} onClick={() => setOpen((v) => !v)}
+        className={`flex min-h-12 w-full items-center gap-2 rounded-xl px-3 text-left text-base font-medium transition-colors ${open ? "bg-bg-2 text-lime" : "hover:bg-bg-2"}`}>
+        {group.label}<span className="ml-auto"><Chevron open={open} size={12} /></span>
+      </button>
+      <div id={panel} className={`grid transition-[grid-template-rows] duration-300 ease-out ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+        <div className="overflow-hidden" inert={!open}>
+          <ul className="grid gap-0.5 py-1.5 pl-2">
+            {group.items.map((i) => (
+              <li key={i.href + i.label}>
+                <Link href={i.href} data-open-assistant={i.voice ? "voice" : undefined} onClick={onPick} className="flex min-h-14 items-center gap-3 rounded-xl px-2 py-2 hover:bg-bg-2">
+                  <span className="grid size-10 shrink-0 place-items-center rounded-xl border border-line bg-bg-2 text-lime"><i.Icon /></span>
+                  <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">{i.label}</span><span className="block text-[13px] text-ink-2">{i.desc}</span></span>
+                </Link>
+              </li>
+            ))}
+            {group.more && <li><Link href={group.more.href} onClick={onPick} className="flex min-h-12 items-center px-2 text-sm font-semibold text-lime">{group.more.label} <span aria-hidden className="ml-1">→</span></Link></li>}
+          </ul>
+        </div>
+      </div>
+    </>
   );
 }

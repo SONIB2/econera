@@ -18,7 +18,7 @@ export const leadSchema = z.object({
   interest: z.enum(Object.keys(INTERESTS) as [keyof typeof INTERESTS, ...(keyof typeof INTERESTS)[]]),
   materials: z.string().trim().min(3, "Na trego shkurt çfarë materialesh.").max(1000),
   consent: z.literal("on", { error: "Duhet pëlqimi për të ruajtur të dhënat." }),
-  source: z.enum(["kontakt", "furnitore"]),
+  source: z.enum(["kontakt", "furnitore", "partner"]),
 });
 
 export type LeadInput = z.infer<typeof leadSchema>;
