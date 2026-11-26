@@ -81,10 +81,10 @@ export default async function AiToolsPage() {
       <section className="relative overflow-hidden border-b border-[#0c2f2b]/5 bg-[radial-gradient(ellipse_60%_80%_at_85%_40%,rgba(200,241,105,0.22),transparent_70%)] dark:border-line">
         <div className="container-x grid items-center gap-10 py-12 md:grid-cols-[1.15fr_1fr] md:py-16">
           <div>
-            <p className="inline-flex rounded-full bg-[#e6f6c4] px-3 py-1 text-xs font-bold tracking-wide text-[#2f5d10] dark:bg-lime/15 dark:text-lime">ECONERA AI TOOLS</p>
-            <h1 className={`display mt-4 text-[clamp(2.1rem,4.4vw,3.6rem)] leading-[1.04] ${ink}`}>{t("Eksploro katër mjete inteligjente për ndërtimin qarkullues.", "Explore four intelligent tools for circular construction.")}</h1>
+            <p className="inline-flex rounded-full bg-[#e6f6c4] px-3 py-1 text-xs font-bold tracking-wide text-[#2f5d10] dark:bg-lime/15 dark:text-lime">{t("MJETET AI", "AI TOOLS")}</p>
+            <h1 className={`display mt-4 text-[clamp(2.1rem,4.4vw,3.6rem)] leading-[1.04] ${ink}`}>{t("Katër mjete inteligjente për ndërtimin qarkullues.", "Four intelligent tools for circular construction.")}</h1>
             <p className={`mt-4 max-w-xl text-lg ${soft}`}>{t("Dizajno, gjej, optimizo dhe menaxho materialet e ndërtimit me AI, të gjitha në një vend.", "Design, source, optimize and manage construction materials with AI, all in one place.")}</p>
-            <a href="#mjetet" className="mt-7 inline-flex h-12 items-center gap-2 rounded-full bg-[#0f4a43] px-6 font-semibold text-white transition hover:bg-[#0c3a35] dark:bg-lime dark:text-bg">{t("Eksploro mjetet AI", "Explore AI Tools")} <span aria-hidden>→</span></a>
+            <a href="#mjetet" className="mt-7 inline-flex h-12 items-center gap-2 rounded-full bg-[#0f4a43] px-6 font-semibold text-white transition hover:bg-[#0c3a35] dark:bg-lime dark:text-bg">{t("Shiko mjetet", "See the tools")} <span aria-hidden>→</span></a>
           </div>
           <div aria-hidden className="relative mx-auto flex w-full max-w-md items-center justify-between py-6">
             <svg viewBox="0 0 400 120" className="absolute inset-x-[-8%] top-1/2 w-[116%] -translate-y-1/2" fill="none"><path d="M4 96 C 90 120, 160 30, 250 54 S 380 20, 396 6" stroke="#c8f169" strokeWidth="5" strokeLinecap="round" opacity=".8" /></svg>
@@ -99,7 +99,7 @@ export default async function AiToolsPage() {
 
       {/* Detailed showcases */}
       <section id="mjetet" aria-labelledby="eksploro" className="container-x scroll-mt-24 pt-12 pb-14">
-        <h2 id="eksploro" className={`display text-3xl md:text-4xl ${ink}`}>{t("Eksploro mjetet", "Explore the tools")}</h2>
+        <h2 id="eksploro" className={`display text-3xl md:text-4xl ${ink}`}>{t("Njihu me mjetet", "Meet the tools")}</h2>
         <div className="mt-6 grid gap-5 lg:grid-cols-2">
           {tools.map((tool) => (
             <article key={tool.id} id={tool.id} className="scroll-mt-24 rounded-[1.5rem] border border-[#0c2f2b]/10 bg-white p-5 shadow-[0_14px_40px_-30px_rgba(12,47,43,0.55)] md:p-6 dark:border-line dark:bg-card">
