@@ -1,8 +1,8 @@
 "use client";
 
-import { RoundedBox } from "@react-three/drei";
+import { RoundedBox, useTexture } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { Suspense, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { BUILDING } from "./geometry";
 
@@ -89,10 +89,12 @@ export function Robot({ state, levelY, pointer, onClick, onHead, visible }: {
       <group ref={head} position={[0, 0.55, 0]}>
         <RoundedBox args={[1.6, 1.15, 1.15]} radius={0.38} smoothness={5} material={mats.shell} castShadow />
         <RoundedBox args={[1.3, 0.62, 0.2]} radius={0.22} smoothness={4} position={[0, 0.02, 0.52]} material={mats.visor} />
-        <group ref={eyes} position={[0, 0.04, 0.64]}>
-          <mesh position={[-0.3, 0, 0]} material={mats.glow}><capsuleGeometry args={[0.075, 0.16, 4, 12]} /></mesh>
-          <mesh position={[0.3, 0, 0]} material={mats.glow}><capsuleGeometry args={[0.075, 0.16, 4, 12]} /></mesh>
+        {/* Happy arc eyes and a small smile, lit lime behind the dark glass visor. */}
+        <group ref={eyes} position={[0, 0.08, 0.64]}>
+          <mesh position={[-0.3, -0.04, 0]} material={mats.glow}><torusGeometry args={[0.12, 0.038, 10, 24, Math.PI]} /></mesh>
+          <mesh position={[0.3, -0.04, 0]} material={mats.glow}><torusGeometry args={[0.12, 0.038, 10, 24, Math.PI]} /></mesh>
         </group>
+        <mesh position={[0, -0.13, 0.64]} rotation-z={Math.PI} material={mats.glow}><torusGeometry args={[0.1, 0.026, 8, 20, Math.PI]} /></mesh>
         <mesh position={[0, 0.72, 0]} material={mats.dark}><cylinderGeometry args={[0.03, 0.03, 0.32, 8]} /></mesh>
         <mesh position={[0, 0.92, 0]} material={mats.glow}><sphereGeometry args={[0.09, 16, 16]} /></mesh>
         <mesh position={[-0.82, 0, 0]} rotation-z={Math.PI / 2} material={mats.dark}><cylinderGeometry args={[0.16, 0.16, 0.12, 20]} /></mesh>
@@ -100,9 +102,22 @@ export function Robot({ state, levelY, pointer, onClick, onHead, visible }: {
       </group>
       <mesh position={[0, -0.55, 0]} material={mats.shell} castShadow><capsuleGeometry args={[0.5, 0.45, 8, 20]} /></mesh>
       <mesh position={[0, -0.42, 0]} rotation-x={Math.PI / 2} material={mats.glow}><torusGeometry args={[0.52, 0.025, 8, 40]} /></mesh>
+      {/* ECONERA mark on the chest, inside a dark glass badge. */}
+      <Suspense fallback={null}><ChestBadge /></Suspense>
       <mesh ref={handL} position={[-0.98, -0.95, 0]} material={mats.shell}><sphereGeometry args={[0.2, 20, 20]} /></mesh>
       <mesh ref={handR} position={[0.98, -0.95, 0]} material={mats.shell}><sphereGeometry args={[0.2, 20, 20]} /></mesh>
       <mesh ref={ring} position={[0, -1.35, 0]} rotation-x={Math.PI / 2} material={mats.glow}><torusGeometry args={[0.3, 0.03, 8, 32]} /></mesh>
+    </group>
+  );
+}
+
+function ChestBadge() {
+  const mark = useTexture("/brand/mark.svg");
+  return (
+    <group position={[0, -0.62, 0.508]}>
+      <mesh><circleGeometry args={[0.2, 40]} /><meshPhysicalMaterial color="#04211d" roughness={0.1} clearcoat={1} fog={false} /></mesh>
+      <mesh position={[0, 0, 0.005]}><torusGeometry args={[0.2, 0.012, 8, 40]} /><meshBasicMaterial color="#c8f169" toneMapped={false} fog={false} /></mesh>
+      <mesh position={[0, 0, 0.01]}><planeGeometry args={[0.2, 0.228]} /><meshBasicMaterial map={mark} transparent toneMapped={false} fog={false} /></mesh>
     </group>
   );
 }

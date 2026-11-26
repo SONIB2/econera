@@ -12,6 +12,7 @@ import { MaterialPanel } from "./material-panel";
 import type { Phase } from "./scene";
 import { StaticFallback } from "./static-fallback";
 import { BasketIcon, CutIcon, MarketIcon, RenovationIcon, VerifyIcon, VoiceIcon } from "@/components/site/tool-icons";
+import { LogoDraw } from "./logo-draw";
 import "./experience.css";
 
 const Scene = dynamic(() => import("./scene"), { ssr: false });
@@ -62,14 +63,16 @@ const ZONES: { id: ProductId; focus: string; zone: { sq: string; en: string } }[
 
 const ZONE_ICON: Partial<Record<ProductId, (p: { className?: string }) => React.JSX.Element>> = { marketplace: MarketIcon, renovation: RenovationIcon, basket: BasketIcon, smartcut: CutIcon, verify: VerifyIcon, voice: VoiceIcon };
 
+const ic = { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+const HERO_POINTS = [
+  { sq: "Qarkullues", en: "Circular", icon: <svg {...ic}><path d="M7 18H4.5l3-5.2M17 6h2.5l-3 5.2M12 3.5l2.6 4.5M9.4 8 12 3.5M20 16l-2.6 4.5h-5M4 16l2.6 4.5" /></svg> },
+  { sq: "Me AI", en: "AI Powered", icon: <svg {...ic}><rect x="6" y="6" width="12" height="12" rx="2" /><rect x="9.5" y="9.5" width="5" height="5" rx="1" /><path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3" /></svg> },
+  { sq: "Materiale", en: "Materials", icon: <svg {...ic}><path d="m12 4 8 4-8 4-8-4z" /><path d="m4 12 8 4 8-4" /><path d="m4 16 8 4 8-4" /></svg> },
+  { sq: "I qëndrueshëm", en: "Sustainable", icon: <svg {...ic}><path d="M5 19c0-8 5-13 15-14-1 10-6 15-14 15" /><path d="M5 19 13 11" /></svg> },
+];
+
 // The hero walks through the floors one by one; the matching floor lights up in the model.
 const TOUR: ProductId[] = ["marketplace", "basket", "renovation", "smartcut"];
-const TOUR_TEXT: Record<string, { sq: string; en: string }> = {
-  marketplace: { sq: "Materiale të tepërta, të rikuperuara dhe copa, gati për projektin tjetër.", en: "Surplus, reclaimed and offcut materials, ready for the next project." },
-  basket: { sq: "Shkruaj listën e projektit. AI gjen shitësit realë brenda buxhetit.", en: "Write your project list. AI finds real sellers within your budget." },
-  renovation: { sq: "Ngarko foton e dhomës dhe shihe me materiale që ekzistojnë në treg.", en: "Upload a room photo and see it with materials that exist on the market." },
-  smartcut: { sq: "Fut prerjet që të duhen. Gjej copat që i mbulojnë para se të blesh pllakë të re.", en: "Enter your cuts. Find offcuts that cover them before buying a new sheet." },
-};
 
 function Reveal({ text, delay }: { text: string; delay: number }) {
   return <>{text.split("").map((ch, i) => <span key={i} className="xp-char" style={{ animationDelay: `${delay + i * 0.028}s` }}>{ch === " " ? "\u00a0" : ch}</span>)}</>;
@@ -89,7 +92,7 @@ export function Experience() {
   const [selected, setSelected] = useState<string | null>(null);
   const [xray, setXray] = useState(false);
   const [product, setProduct] = useState<ProductId | null>(null);
-  const [exploded, setExploded] = useState(true);
+  const [exploded, setExploded] = useState(false);
   const [paused, setPaused] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [resetKey, setResetKey] = useState(0);
@@ -129,7 +132,6 @@ export function Experience() {
     return () => clearTimeout(id);
   }, []);
   const remember = () => { try { localStorage.setItem(SEEN, "1"); } catch { /* ignore */ } };
-  const start = () => { remember(); setProduct(null); setExploded(true); setPhase("outside"); };
 
   const exit = useCallback(() => { setZone(null); setSelected(null); setHovered(null); setXray(false); setPhase("exiting"); }, []);
 
@@ -147,7 +149,7 @@ export function Experience() {
 
   const noop = useCallback(() => {}, []);
   const onPickHotspot = useCallback((id: string) => { setZone(null); setSelected(id); }, []);
-  const onIntroDone = useCallback(() => setPhase("outside"), []);
+  const onIntroDone = useCallback(() => { try { localStorage.setItem(SEEN, "1"); } catch { /* ignore */ } setPhase("outside"); }, []);
   const onDoor = useCallback(() => { setProduct(null); setZone(null); setPhase("entering"); }, []);
   const onEntered = useCallback(() => setPhase("inside"), []);
   const onExited = useCallback(() => setPhase("outside"), []);
@@ -172,13 +174,19 @@ export function Experience() {
           exploded={exploded} paused={paused} zoom={zoom} resetKey={resetKey} highlight={highlight} onHotLevel={setHotLevel} placeSpot={placeSpot} placeBubble={placeBubble} wide={wide} onProduct={onProduct} />}
         {/* Speech bubble that follows the robot's head (welcome and intro only). */}
         <div ref={bubbleRef} aria-live="polite" className="pointer-events-none absolute max-sm:hidden top-0 left-0 z-40 opacity-0 transition-opacity duration-500">
-          <div className="xp-bubble ml-14 -mt-36 w-max max-w-[16rem] rounded-2xl rounded-bl-sm border border-[#c8f169]/40 bg-[#04211d]/85 px-4 py-3 text-sm leading-snug text-white shadow-[0_10px_40px_-10px_rgba(200,241,105,0.35)] backdrop-blur-md sm:max-w-xs">
-            {phase === "intro"
-              ? <><span className="block text-[11px] font-semibold text-[#c8f169]">ECONERA</span>{t("Shiko si çdo material gjen vendin e vet.", "Watch every material find its place.")}</>
-              : <><span className="block text-[11px] font-semibold text-[#c8f169]">{t("ECONERA AI", "ECONERA AI")}</span>{t("Mirë se vjen në ECONERA. Të të tregoj si funksionon e ardhmja e ndërtimit?", "Welcome to ECONERA. Shall I show you how the future of construction works?")}</>}
+          <div className="xp-bubble -mt-44 w-max max-w-[17rem] -translate-x-[calc(100%+2rem)] rounded-2xl rounded-br-sm border border-[#c8f169]/40 bg-[#04211d]/85 px-4 py-3 text-sm leading-snug text-white shadow-[0_10px_40px_-10px_rgba(200,241,105,0.35)] backdrop-blur-md sm:max-w-xs">
+            <span className="flex items-start gap-2.5">
+              <span aria-hidden className="xp-voice mt-1 flex h-4 items-end gap-[2px]">{[0, 1, 2, 3, 4].map((k) => <i key={k} style={{ animationDelay: `${k * 0.12}s` }} />)}</span>
+              <span>
+                <span className="block font-semibold text-[#c8f169]">{t("Përshëndetje, jam ECONERA AI.", "Hi, I'm ECONERA AI.")}</span>
+                {phase === "inside"
+                  ? t("Zgjidh një zonë dhe të çoj atje.", "Pick a zone and I'll take you there.")
+                  : t("Të të tregoj çfarë ka brenda?", "Shall I show you what's inside?")}
+              </span>
+            </span>
           </div>
         </div>
-        {phase !== "boot" && <ProductSpots refs={spotRefs} visible={phase === "outside"} labels={labels} onSelect={onProduct} onHover={setHotSpot} active={product} hot={highlight} />}
+        {phase !== "boot" && <ProductSpots refs={spotRefs} visible={phase === "outside" && exploded} labels={labels} onSelect={onProduct} onHover={setHotSpot} active={product} hot={highlight} />}
       </div>
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_60%_45%,transparent_40%,rgba(3,24,21,0.72))]" />
       {phase === "outside" && <div aria-hidden="true" className="xp-fade-in pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(3,24,21,0.85)_0%,rgba(3,24,21,0.35)_42%,transparent_62%),linear-gradient(0deg,rgba(3,24,21,0.75),transparent_38%)]" />}
@@ -188,33 +196,32 @@ export function Experience() {
         <div className="xp-fade-in absolute inset-x-0 bottom-28 z-20 flex justify-center sm:bottom-10"><button type="button" onClick={() => setPhase("outside")} className="rounded-full border border-line bg-bg/70 px-5 py-2.5 text-sm text-ink backdrop-blur hover:border-lime">{t("Kalo animacionin", "Skip animation")}</button></div>
       )}
       {phase === "outside" && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-5 pb-28 sm:px-8 sm:pb-12">
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-end px-5 pb-24 sm:px-8 sm:pb-16 lg:items-center lg:pb-0">
           <div className="mx-auto w-full max-w-7xl">
-            <div className="pointer-events-auto max-w-2xl">
-              <h1 aria-label={t("E ardhmja ndërtohet ndryshe.", "The future is built differently.")} className="display text-white text-[clamp(2.3rem,5.4vw,4.9rem)] leading-[0.98] tracking-[-0.045em]">
-                {(lang === "en" ? ["The future is", "built differently."] : ["E ardhmja", "ndërtohet ndryshe."]).map((line, i) => <span key={line} aria-hidden className="relative block whitespace-nowrap"><Reveal text={line} delay={0.15 + i * 0.4} /><span className="xp-glint absolute inset-0" style={{ animationDelay: `${2.2 + i * 0.25}s` }}>{line}</span></span>)}
+            <div className="pointer-events-auto max-w-[36rem] lg:pt-10">
+              <p className="xp-rise-soft text-[11px] font-medium tracking-[0.42em] text-white/80 sm:text-xs [animation-delay:.05s]">{t("INTELIGJENCA E", "CONSTRUCTION")} <span className="font-semibold text-[#c8f169]">{t("NDËRTIMIT", "INTELLIGENCE")}</span></p>
+              <h1 aria-label={t("E ardhmja ndërtohet ndryshe.", "The future is built differently.")} className="display mt-4 text-[clamp(2.5rem,5.6vw,5.1rem)] leading-[0.98] tracking-[-0.045em] text-white">
+                {(lang === "en" ? [["The future is", ""], ["built ", "differently."]] : [["E ardhmja", ""], ["ndërtohet ", "ndryshe."]]).map(([plain, lime], i) => (
+                  <span key={i} aria-hidden className="relative block whitespace-nowrap">
+                    <Reveal text={plain} delay={0.15 + i * 0.4} />
+                    {lime && <span className="text-[#c8f169] [text-shadow:0_0_40px_rgba(200,241,105,.35)]"><Reveal text={lime} delay={0.15 + i * 0.4 + plain.length * 0.028} /></span>}
+                  </span>
+                ))}
               </h1>
-
-              <p className="xp-rise-soft mt-5 max-w-lg text-base text-ink-2 sm:text-lg [animation-delay:.9s]">{t("Eksploro arkitekturën, materialet dhe inteligjencën në një platformë për ndërtimin qarkullues.", "Explore architecture, materials and intelligence in one circular construction platform.")}</p>
-              <button type="button" onClick={() => onProduct(tourId)} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}
-                className="xp-rise-soft group mt-7 flex w-full max-w-xl items-stretch gap-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-left backdrop-blur-md transition hover:border-[#c8f169]/50 sm:p-5 [animation-delay:1.1s]">
-                <span className="xp-num grid min-w-[4.5rem] place-items-center display text-5xl font-semibold leading-none sm:text-6xl">{String(tour + 1).padStart(2, "0")}</span>
-                <span key={tourId} className="xp-swap flex min-w-0 flex-1 flex-col justify-center">
-                  <span className="flex items-center gap-2 text-base font-semibold text-white sm:text-lg"><span className="size-2 rounded-full bg-[#c8f169] shadow-[0_0_12px_2px_rgba(200,241,105,.7)]" />{PRODUCTS[tourId].name}<span aria-hidden className="ml-auto text-[#c8f169] transition group-hover:translate-x-1">→</span></span>
-                  <span className="mt-1 text-sm leading-snug text-ink-2">{TOUR_TEXT[tourId][lang]}</span>
-                  <span className="mt-3 flex gap-1.5" aria-hidden>{TOUR.map((id, i) => <span key={id} className="relative h-[3px] flex-1 overflow-hidden rounded-full bg-white/10">{i < tour && <span className="absolute inset-0 bg-[#c8f169]/60" />}{i === tour && <span key={`${tour}-${paused}`} className={`absolute inset-y-0 left-0 bg-[#c8f169] ${touring ? "xp-progress" : "w-full"}`} />}</span>)}</span>
-                </span>
-              </button>
-
-              <div className="xp-rise-soft mt-6 flex flex-wrap gap-2 [animation-delay:1.3s]">
-                <button type="button" onClick={onDoor} className="btn-primary h-12 px-6 text-base">{t("Hyr në ndërtesë", "Enter the building")}</button>
-                <Link href="/treg" className="btn-ghost h-12 bg-bg/60 px-6 text-base backdrop-blur">{t("Shko te tregu", "Go to Marketplace")}</Link>
-                <a href="#asistenti" data-open-assistant="" className="btn-ghost h-12 bg-bg/60 px-6 text-base backdrop-blur">{t("Fol me ECONERA AI", "Talk to ECONERA AI")}</a>
+              <p className="xp-rise-soft mt-5 max-w-md text-base text-white/80 sm:text-lg [animation-delay:.9s]">{t("Eksploro arkitekturën, materialet dhe inteligjencën në një platformë për ndërtimin qarkullues.", "Explore architecture, materials and intelligence in one circular construction platform.")}</p>
+              <div className="xp-rise-soft mt-7 flex flex-wrap gap-3 [animation-delay:1.1s]">
+                <button type="button" onClick={onDoor} className="btn-primary h-13 gap-3 px-7 text-base shadow-[0_0_40px_-8px_rgba(200,241,105,.6)]">
+                  <svg width="12" height="14" viewBox="0 0 12 14" fill="currentColor" aria-hidden><path d="M0 0l12 7-12 7z" /></svg>
+                  {t("Hyr në ndërtesë", "Enter the building")} <span aria-hidden>→</span>
+                </button>
+                <Link href="/treg" className="inline-flex h-13 items-center rounded-full border border-white/40 bg-white/[0.03] px-7 text-base font-semibold text-white backdrop-blur transition hover:border-[#c8f169] hover:text-[#c8f169]">{t("Shko te tregu", "Go to Marketplace")}</Link>
               </div>
-              <div className="xp-rise-soft mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-ink-2 [animation-delay:1.45s]">
-                <Link href="/ai" className="font-medium text-lime underline-offset-4 hover:underline">{t("Zbulo mjetet AI", "Discover AI Tools")}</Link>
-                <Link href="/shit" className="underline-offset-4 hover:text-ink hover:underline">{t("Shit materiale", "Sell Materials")}</Link>
-                <button type="button" onClick={() => { setProduct(null); setPhase("welcome"); }} className="underline-offset-4 hover:text-ink hover:underline">{t("Rishiko hyrjen", "Replay intro")}</button>
+              <ul className="xp-rise-soft mt-9 hidden max-w-md grid-cols-4 divide-x divide-white/10 sm:grid [animation-delay:1.3s]">
+                {HERO_POINTS.map((p) => <li key={p.en} className="flex flex-col items-center gap-2 px-2 text-center text-xs text-white/80"><span className="text-[#c8f169]">{p.icon}</span>{p[lang]}</li>)}
+              </ul>
+              <div className="xp-rise-soft mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-white/55 [animation-delay:1.45s]">
+                <a href="#asistenti" data-open-assistant="" className="underline-offset-4 hover:text-white hover:underline">{t("Fol me ECONERA AI", "Talk to ECONERA AI")}</a>
+                <button type="button" onClick={() => { setProduct(null); setPhase("welcome"); }} className="underline-offset-4 hover:text-white hover:underline">{t("Rishiko hyrjen", "Replay intro")}</button>
               </div>
             </div>
           </div>
@@ -236,7 +243,7 @@ export function Experience() {
             </button>
             <button type="button" onClick={() => setZoom((z) => Math.max(0.7, +(z - 0.15).toFixed(2)))} className={`${tool} max-sm:hidden`} aria-label={t("Afro", "Zoom in")}>+</button>
             <button type="button" onClick={() => setZoom((z) => Math.min(1.45, +(z + 0.15).toFixed(2)))} className={`${tool} max-sm:hidden`} aria-label={t("Largo", "Zoom out")}>−</button>
-            <button type="button" onClick={() => { setZoom(1); setExploded(true); setResetKey((k) => k + 1); }} className={tool} aria-label={t("Rikthe kamerën", "Reset camera")}>
+            <button type="button" onClick={() => { setZoom(1); setExploded(false); setResetKey((k) => k + 1); }} className={tool} aria-label={t("Rikthe kamerën", "Reset camera")}>
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden><path d="M2.5 8a5.5 5.5 0 1 0 1.7-4M2.5 2.5v3h3" strokeLinecap="round" /></svg>
             </button>
           </div>
@@ -302,24 +309,21 @@ export function Experience() {
 
       {/* Welcome: the robot greets the visitor in front of the blueprint; the marketplace is always one click away. */}
       <div className={`pointer-events-none absolute inset-0 z-30 transition-opacity duration-700 ${phase === "welcome" || phase === "boot" ? "opacity-100" : "opacity-0"}`} aria-hidden={phase !== "welcome"} inert={phase !== "welcome"}>
-        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_65%_45%,transparent_25%,rgba(3,22,19,0.85)_75%)] max-lg:bg-[linear-gradient(0deg,rgba(3,22,19,0.95)_35%,transparent_70%)] lg:bg-[linear-gradient(90deg,rgba(3,22,19,0.95)_0%,rgba(3,22,19,0.6)_40%,transparent_65%)]" />
+        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_60%_45%,transparent_30%,rgba(3,22,19,0.7)_80%)]" />
         <div aria-hidden className="xp-grid absolute inset-0 opacity-[0.05]" />
         {phase === "welcome" && (
-          <div className="pointer-events-auto absolute inset-x-0 bottom-0 px-5 pb-28 sm:px-8 lg:top-0 lg:flex lg:items-center lg:pb-0" style={{ animation: reducedMotion ? undefined : "xp-fade 1s cubic-bezier(.16,1,.3,1) 2.4s both" }}>
-            <div className="mx-auto w-full max-w-7xl">
-              <div className="max-w-xl">
-                <h1 className="display text-[clamp(2.3rem,5.6vw,4.6rem)] leading-[0.98] text-ink sm:mt-8">{(lang === "en" ? ["Welcome to", "ECONERA."] : ["Mirë se vjen në", "ECONERA."]).map((line, i) => <span key={line} className="block overflow-hidden pb-[0.08em]"><span className="xp-line block" style={{ animationDelay: `${2.5 + i * 0.14}s` }}>{line}</span></span>)}</h1>
-                <p className="xp-rise-soft mt-4 max-w-md text-base text-ink-2 sm:text-lg">{t("Inteligjenca e ndërtimit qarkullues: arkitekturë, materiale dhe AI në një platformë.", "Construction intelligence for circular building: architecture, materials and AI in one platform.")}</p>
-                <div className="xp-rise-soft mt-7 flex flex-wrap items-center gap-x-5 gap-y-3 [animation-delay:.7s]">
-                  <button type="button" autoFocus onClick={start} className="btn-primary h-13 px-8 text-base">{t("Eksploro ECONERA", "Explore ECONERA")} <span aria-hidden>→</span></button>
-                  <Link href="/treg" onClick={remember} className="text-sm text-ink-2 underline-offset-4 hover:text-ink hover:underline">{t("Kalo hyrjen · Shko te tregu", "Skip intro · Go to Marketplace")}</Link>
-                </div>
-                <ul className="mt-10 hidden flex-wrap gap-x-6 gap-y-2 border-t border-line pt-4 text-[11px] tracking-[0.18em] text-ink-2 sm:flex">
-                  <li>{t("EKONOMI QARKULLUESE", "CIRCULAR ECONOMY")}</li><li>{t("ME AI", "AI POWERED")}</li><li>{t("TREG MATERIALESH", "MATERIALS MARKETPLACE")}</li>
-                </ul>
+          <>
+            {/* Scene 1: the identity, alone in the dark, before the building emerges behind it. */}
+            <div aria-hidden className="xp-logo-scene absolute inset-0 grid place-items-center">
+              <div className="flex flex-col items-center gap-5">
+                <LogoDraw className="w-[min(70vw,20rem)]" />
+                <p className="text-[11px] font-medium tracking-[0.5em] text-white/70">CONSTRUCTION <span className="text-[#c8f169]">INTELLIGENCE</span></p>
               </div>
             </div>
-          </div>
+            <div className="pointer-events-auto absolute inset-x-0 bottom-28 flex justify-center lg:bottom-10">
+              <button type="button" onClick={() => { remember(); setPhase("outside"); }} className="rounded-full border border-white/20 bg-black/30 px-5 py-2.5 text-sm text-white/80 backdrop-blur hover:border-[#c8f169] hover:text-white">{t("Kalo hyrjen", "Skip intro")}</button>
+            </div>
+          </>
         )}
       </div>
     </section>

@@ -56,9 +56,9 @@ export function RegionMenu({ compact = false }: { compact?: boolean }) {
     <div ref={ref} className="relative">
       <button type="button" onClick={() => (open ? setOpen(false) : openMenu())} aria-expanded={open} aria-haspopup="dialog" aria-label={t(`Shteti: ${current.sq}, gjuha: ${lang}`, `Country: ${current.en}, language: ${lang}`)}
         className="flex h-10 items-center gap-2 rounded-full px-2.5 text-sm font-medium text-ink-2 hover:bg-bg-2 hover:text-ink">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={flagUrl(current.country)} alt="" width={20} height={14} className="h-3.5 w-5 rounded-[2px] object-cover ring-1 ring-black/10" />
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.6 2.5 3.9 5.5 3.9 9S14.6 18.5 12 21c-2.6-2.5-3.9-5.5-3.9-9S9.4 5.5 12 3z" /></svg>
         {!compact && <span className="uppercase">{lang}</span>}
+        <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden className="max-sm:hidden"><path d="M2 3.5l3 3 3-3" strokeLinecap="round" /></svg>
       </button>
       {open && (
         <div role="dialog" aria-label={t("Shteti dhe gjuha", "Country and language")} className="fixed inset-x-3 top-20 z-50 grid max-h-[calc(100dvh-6rem)] gap-4 overflow-y-auto rounded-[1.5rem] border border-line bg-card p-5 text-ink shadow-2xl sm:absolute sm:inset-x-auto sm:top-[calc(100%+0.5rem)] sm:right-0 sm:w-[640px]">

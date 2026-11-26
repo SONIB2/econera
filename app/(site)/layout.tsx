@@ -14,7 +14,7 @@ export default async function SiteLayout({ children }: Readonly<{ children: Reac
       <a href="#permbajtja" className="sr-only z-50 rounded-full bg-lime px-4 py-2 font-semibold text-bg focus:not-sr-only focus:fixed focus:top-3 focus:left-3">{tr(lang, "Kalo te përmbajtja", "Skip to content")}</a>
       <SiteHeader account={account} />
       <main id="permbajtja" tabIndex={-1}>{children}</main>
-      <SiteFooter />
+      <SiteFooter email={process.env.PILOT_CONTACT_EMAIL} />
       <Assistant />
       <BottomNav />
     </>

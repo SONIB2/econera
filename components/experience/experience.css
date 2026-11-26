@@ -59,3 +59,11 @@
 
 /* Inside: the selected zone "lights up" with a soft lime wash from the focus point. */
 .xp-zone-light { background: radial-gradient(ellipse 55% 50% at 45% 55%, rgba(200,241,105,.16), transparent 70%); mix-blend-mode: screen; animation: xp-fade .9s cubic-bezier(.16,1,.3,1) both }
+
+/* Opening scene 1: the logo holds, then dissolves as the building emerges. */
+.xp-logo-scene { animation: xp-logo-out 1s cubic-bezier(.65,0,.35,1) 1.9s both }
+@keyframes xp-logo-out { to { opacity: 0; transform: scale(1.08); filter: blur(6px) } }
+/* Speaking indicator in the robot's bubble */
+.xp-voice i { display: block; width: 2px; height: 100%; border-radius: 2px; background: #c8f169; animation: xp-voice 1s ease-in-out infinite alternate }
+@keyframes xp-voice { from { transform: scaleY(.3) } to { transform: scaleY(1) } }
+@media (prefers-reduced-motion: reduce) { .xp-logo-scene { animation: none; opacity: 0 } .xp-voice i { animation: none } }
