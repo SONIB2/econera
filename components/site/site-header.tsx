@@ -6,17 +6,17 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "@/app/(legacy)/account-actions";
 import { useLang } from "@/components/lang-provider";
-import { TOOL_PHOTO, unsplash } from "@/lib/market/photos";
+import { ArrowIcon, TOOL_ICON } from "./tool-icons";
 import { CartButton, RegionMenu, ThemeToggle } from "./header-controls";
 
 export type Account = { email: string; seller: boolean } | null;
 
 const TOOLS = [
-  { href: "/ai/renovim", name: "AI Renovation", tag: { sq: "Nga mbetja te dizajni", en: "From waste to design" }, sq: "Dizajno hapësirën dhe gjej materiale reale në ECONERA.", en: "Design your space and find real materials on ECONERA.", photo: TOOL_PHOTO.renovation },
-  { href: "/ai/shporta", name: "Smart Basket", tag: { sq: "Blerje më e zgjuar", en: "Smarter procurement" }, sq: "Kombinimi më i mirë i materialeve për projektin dhe buxhetin tënd.", en: "The best combination of materials for your project and budget.", photo: TOOL_PHOTO.basket },
-  { href: "/ai/smartcut", name: "SmartCut", tag: { sq: "Çdo copë ka vlerë", en: "Make every piece count" }, sq: "Optimizo prerjen dhe gjej copat e mbetura që të duhen.", en: "Optimise cutting and find the offcuts you need.", photo: TOOL_PHOTO.smartcut },
-  { href: "#asistenti", name: "ECONERA Voice", tag: { sq: "Asistent i aksesueshëm", en: "Accessible assistant" }, sq: "Kërko, publiko dhe menaxho materialet me zë.", en: "Search, publish and manage materials by voice.", photo: TOOL_PHOTO.voice, voice: true },
-];
+  { id: "renovation", href: "/ai/renovim", name: "AI Renovation", sq: "Dizajno hapësirën tënde me AI.", en: "Design your space with AI." },
+  { id: "basket", href: "/ai/shporta", name: "Smart Basket", sq: "Materialet më të mira për buxhetin tënd.", en: "Find the best materials for your budget." },
+  { id: "smartcut", href: "/ai/smartcut", name: "SmartCut", sq: "Optimizo materialet. Minimizo mbetjet.", en: "Optimize materials. Minimize waste." },
+  { id: "voice", href: "#asistenti", name: "ECONERA Voice", sq: "Asistenti yt inteligjent me zë.", en: "Your intelligent voice assistant.", voice: true },
+] as const;
 
 /**
  * Global header: Logo | Marketplace | Sell | AI Tools (mega menu) | For Business | region | theme | cart | Log in · Sign up.
@@ -28,6 +28,12 @@ export function SiteHeader({ account, overlay = false }: { account: Account; ove
   const [mobileOn, setMobileOn] = useState<string | null>(null);
   const mobile = mobileOn === pathname;
   const [mega, setMega] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoverMega = (open: boolean) => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    hoverTimer.current = setTimeout(() => setMega(open), open ? 80 : 180);
+  };
   const [accountOpen, setAccountOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [pastHero, setPastHero] = useState(!overlay);
@@ -76,38 +82,40 @@ export function SiteHeader({ account, overlay = false }: { account: Account; ove
 
         <nav aria-label={t("Navigimi kryesor", "Main navigation")} className="hidden items-center gap-0.5 lg:flex">
           {nav.map((n) => link(n.href, n.label))}
-          <div ref={megaRef} className="relative">
+          <div ref={megaRef} className="relative" onMouseEnter={() => hoverMega(true)} onMouseLeave={() => hoverMega(false)}>
             <button type="button" aria-expanded={mega} aria-controls="mega-ai" onClick={() => setMega((v) => !v)}
-              className={`flex items-center gap-1 rounded-full px-3 py-2 text-sm font-medium ${active("/ai") ? "bg-bg-2 text-ink" : "text-ink-2 hover:text-ink"}`}>
+              className={`flex items-center gap-1 rounded-full px-3 py-2 text-sm font-medium transition-colors ${mega || active("/ai") ? "text-ink" : "text-ink-2 hover:text-ink"} ${active("/ai") ? "bg-bg-2" : ""}`}>
               {t("Mjetet AI", "AI Tools")}
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden className={`transition ${mega ? "rotate-180" : ""}`}><path d="M2 3.5l3 3 3-3" strokeLinecap="round" /></svg>
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden className={`transition duration-200 ${mega ? "rotate-180" : ""}`}><path d="M2 3.5l3 3 3-3" strokeLinecap="round" /></svg>
             </button>
-            {mega && (
-              <div id="mega-ai" className="fixed inset-x-0 top-[5.75rem] z-50 mx-auto w-[min(980px,calc(100vw-2rem))] overflow-hidden rounded-[1.75rem] border border-line bg-card text-ink shadow-[0_30px_80px_-30px_rgba(6,34,30,0.45)]">
-                <div className="flex items-end justify-between gap-6 px-6 pt-5 pb-4">
-                  <div><p className="text-xs font-medium text-lime-dim">{t("Mjete me inteligjencë artificiale", "AI Tools")}</p><p className="mt-1 text-lg font-semibold tracking-tight">{t("Më shumë se një treg. Një mënyrë më e zgjuar për të ndërtuar.", "More than a marketplace. A smarter way to build.")}</p></div>
-                  <Link href="/ai" onClick={() => setMega(false)} className="shrink-0 rounded-full border border-line px-4 py-2 text-sm font-medium hover:border-lime">{t("Të gjitha mjetet", "All tools")}</Link>
-                </div>
-                <ul className="grid grid-cols-4 gap-3 px-4 pb-4">
-                  {TOOLS.map(({ href, name, tag, photo, voice, ...d }) => (
-                    <li key={name}>
-                      <Link href={href} data-open-assistant={voice ? "" : undefined} onClick={() => setMega(false)} className="group block rounded-2xl p-1.5 outline-none hover:bg-bg-2 focus-visible:bg-bg-2">
-                        <span className="relative block aspect-[4/5] overflow-hidden rounded-xl bg-bg-2">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={unsplash(photo, 480, 600)} alt="" loading="lazy" className="size-full object-cover transition duration-700 group-hover:scale-105" />
-                          <span className="absolute inset-0 bg-gradient-to-t from-[#04211d]/90 via-[#04211d]/20 to-transparent" />
-                          <span className="absolute top-3 left-3 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-md">{tag[lang]}</span>
-                          <span className="absolute inset-x-3 bottom-3 text-[17px] font-semibold tracking-tight text-white">{name}</span>
-                        </span>
-                        <span className="block px-1.5 pt-3 pb-1 text-[13px] leading-snug text-ink-2">{d[lang]}</span>
-                        <span className="block px-1.5 pb-1 text-xs font-semibold text-lime-dim group-hover:underline">{voice ? t("Hap asistentin", "Open assistant") : t("Hap mjetin", "Open tool")}</span>
-                      </Link>
-                    </li>
-                  ))}
+            {/* Compact Intelligence dropdown: two columns, icon + name + one line, whole row clickable. */}
+            <div id="mega-ai" inert={!mega} className={`absolute top-full left-1/2 z-50 w-[min(700px,calc(100vw-2rem))] -translate-x-1/2 pt-3 transition duration-200 ease-out ${mega ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"}`}>
+              <div className="overflow-hidden rounded-2xl border border-line bg-card text-ink shadow-[0_24px_60px_-24px_rgba(6,34,30,0.45)]">
+                <p className="px-5 pt-4 text-[11px] font-semibold tracking-[0.14em] text-lime-dim">ECONERA INTELLIGENCE</p>
+                <ul className="grid grid-cols-2 gap-1 p-2.5">
+                  {TOOLS.map((tool) => {
+                    const Icon = TOOL_ICON[tool.id];
+                    return (
+                      <li key={tool.id}>
+                        <Link href={tool.href} data-open-assistant={"voice" in tool ? "" : undefined} onClick={() => setMega(false)}
+                          className="group flex items-center gap-3.5 rounded-xl p-2.5 outline-none transition-colors hover:bg-bg-2 focus-visible:bg-bg-2 focus-visible:ring-2 focus-visible:ring-lime">
+                          <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-bg-2 text-lime transition-colors group-hover:border-lime/50 group-hover:bg-accent/60"><Icon /></span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-[15px] font-semibold tracking-tight">{tool.name}</span>
+                            <span className="block text-[13px] leading-snug text-ink-2">{tool[lang]}</span>
+                          </span>
+                          <ArrowIcon className="shrink-0 text-ink-2 transition duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-lime" />
+                        </Link>
+                      </li>
+                    );
+                  })}
                 </ul>
-                <div className="border-t border-line bg-bg-2/60 px-6 py-3 text-xs text-ink-2">{t("Mjetet punojnë me stokun real të tregut dhe kalojnë të dhënat nga njëri te tjetri.", "The tools work with real marketplace stock and pass data to each other.")}</div>
+                <Link href="/ai" onClick={() => setMega(false)} className="group flex items-center justify-between border-t border-line px-5 py-3.5 text-sm font-semibold text-lime outline-none transition-colors hover:bg-bg-2 focus-visible:bg-bg-2">
+                  {t("Eksploro të gjitha mjetet AI", "Explore all AI tools")}
+                  <span aria-hidden className="transition group-hover:translate-x-0.5">→</span>
+                </Link>
               </div>
-            )}
+            </div>
           </div>
           {link("/biznes", t("Për bizneset", "For Business"))}
         </nav>
@@ -144,11 +152,34 @@ export function SiteHeader({ account, overlay = false }: { account: Account; ove
 
       <nav id="menu-celular" aria-label={t("Menuja", "Menu")} hidden={!mobile} className="mx-auto mt-2 max-h-[calc(100dvh-6rem)] max-w-7xl overflow-y-auto rounded-card border border-line bg-card/95 p-3 text-ink shadow-xl backdrop-blur-xl lg:hidden">
         <ul className="grid gap-1">
-          {[...nav, { href: "/biznes", label: t("Për bizneset", "For Business") }].map((n) => <li key={n.href}><Link href={n.href} className="block rounded-xl px-3 py-3 text-base font-medium hover:bg-bg-2">{n.label}</Link></li>)}
-        </ul>
-        <p className="mt-3 px-3 text-xs font-medium text-ink-2">{t("Mjetet AI", "AI Tools")}</p>
-        <ul className="mt-1 grid grid-cols-2 gap-2">
-          {TOOLS.map((tool) => <li key={tool.name}><Link href={tool.href} data-open-assistant={tool.voice ? "" : undefined} className="relative block aspect-[16/10] overflow-hidden rounded-xl">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={unsplash(tool.photo, 360, 220)} alt="" loading="lazy" className="size-full object-cover" /><span className="absolute inset-0 bg-gradient-to-t from-[#04211d]/85 to-transparent" /><span className="absolute inset-x-2.5 bottom-2 text-sm font-semibold text-white">{tool.name}</span></Link></li>)}
+          {nav.map((n) => <li key={n.href}><Link href={n.href} onClick={() => setMobileOn(null)} className="flex min-h-12 items-center rounded-xl px-3 text-base font-medium hover:bg-bg-2">{n.label}</Link></li>)}
+          <li>
+            <button type="button" aria-expanded={aiOpen} aria-controls="menu-ai" onClick={() => setAiOpen((v) => !v)}
+              className={`flex min-h-12 w-full items-center gap-2 rounded-xl px-3 text-left text-base font-medium transition-colors ${aiOpen ? "bg-bg-2 text-lime" : "hover:bg-bg-2"}`}>
+              {t("Mjetet AI", "AI Tools")}
+              <svg width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden className={`ml-auto transition duration-200 ${aiOpen ? "rotate-180" : ""}`}><path d="M2 3.5l3 3 3-3" strokeLinecap="round" /></svg>
+            </button>
+            <div id="menu-ai" className={`grid transition-[grid-template-rows] duration-300 ease-out ${aiOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+              <div className="overflow-hidden" inert={!aiOpen}>
+                <ul className="grid gap-0.5 py-1.5 pl-2">
+                  {TOOLS.map((tool) => {
+                    const Icon = TOOL_ICON[tool.id];
+                    return (
+                      <li key={tool.id}>
+                        <Link href={tool.href} data-open-assistant={"voice" in tool ? "" : undefined} onClick={() => setMobileOn(null)} className="flex min-h-14 items-center gap-3 rounded-xl px-2 py-2 hover:bg-bg-2">
+                          <span className="grid size-10 shrink-0 place-items-center rounded-xl border border-line bg-bg-2 text-lime"><Icon /></span>
+                          <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">{tool.name}</span><span className="block text-[13px] text-ink-2">{tool[lang]}</span></span>
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden className="shrink-0 text-ink-2"><path d="M5 3l4 4-4 4" strokeLinecap="round" /></svg>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                  <li><Link href="/ai" onClick={() => setMobileOn(null)} className="flex min-h-12 items-center px-2 text-sm font-semibold text-lime">{t("Eksploro të gjitha mjetet", "Explore all tools")} <span aria-hidden className="ml-1">→</span></Link></li>
+                </ul>
+              </div>
+            </div>
+          </li>
+          <li><Link href="/biznes" onClick={() => setMobileOn(null)} className="flex min-h-12 items-center rounded-xl px-3 text-base font-medium hover:bg-bg-2">{t("Për bizneset", "For Business")}</Link></li>
         </ul>
         <div className="mt-3 flex items-center justify-between border-t border-line pt-3">
           <ThemeToggle />

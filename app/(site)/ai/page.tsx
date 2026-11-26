@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { tr } from "@/lib/lang";
 import { getLang } from "@/lib/lang-server";
+import { IntelligenceUniverse } from "@/components/tools/intelligence-universe";
 import { BasketVisual, CutVisual, RenovationVisual, VoiceVisual } from "@/components/tools/visuals";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -28,9 +29,10 @@ export default async function AiToolsPage() {
 
   return (
     <>
+      <IntelligenceUniverse />
       <section className="container-x pt-16 pb-12 text-center md:pt-24">
         <p className="eyebrow-pill">AI Tools</p>
-        <h1 className="display mx-auto mt-6 max-w-4xl text-[2.9rem] sm:text-6xl md:text-[5rem]">{t("Më shumë se një treg. Një mënyrë më e zgjuar për të ndërtuar.", "More than a marketplace. A smarter way to build.")}</h1>
+        <h2 className="display mx-auto mt-6 max-w-4xl text-[2.6rem] sm:text-5xl md:text-[4rem]">{t("Më shumë se një treg. Një mënyrë më e zgjuar për të ndërtuar.", "More than a marketplace. A smarter way to build.")}</h2>
         <p className="lead mx-auto mt-6 max-w-2xl text-balance">{t("Katër mjete që punojnë bashkë: nga ideja te materialet që mund t'i blesh sot, me më pak shpenzim dhe më pak mbetje.", "Four tools that work together: from an idea to materials you can buy today, spending less and wasting less.")}</p>
         <div className="mt-9 flex flex-wrap justify-center gap-3"><Link href="/ai/renovim" className="btn-primary">{t("Nis rinovimin tënd të zgjuar", "Start your smart renovation")}</Link><Link href="/projektet" className="btn-ghost">{t("Projektet e mia", "My projects")}</Link></div>
       </section>
