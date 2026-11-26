@@ -120,13 +120,13 @@ export default async function Marketplace({ searchParams }: { searchParams: Prom
         <div className="container-x relative">
           <nav aria-label="Breadcrumb" className="pt-5 text-xs text-white/60"><Link href="/" className="hover:text-white">{t("Kreu", "Home")}</Link> <span aria-hidden>›</span> {t("Tregu", "Marketplace")}</nav>
           <div className="grid items-center gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
-            <div className="py-6 md:py-10">
+            <div className="relative z-10 py-6 md:py-10">
               <p className="text-[11px] font-semibold tracking-[0.3em] text-[#c8f169]">{t("TREGU I MATERIALEVE", "MATERIALS MARKETPLACE")}</p>
               <h1 id="treg-title" className="display mt-3 text-[clamp(2.1rem,3.7vw,3.3rem)] leading-[1.04] text-white">{t("Zbulo materiale me ", "Discover materials with a ")}<span className="text-[#c8f169]">{t("jetë të dytë.", "second life.")}</span></h1>
               <p className="mt-4 max-w-md text-white/75">{t("Stok i tepërt, materiale të rikuperuara dhe copa nga shitës të shqyrtuar nga ECONERA.", "Surplus stock, reclaimed materials and offcuts from sellers reviewed by ECONERA.")}</p>
               {c && <div className="mt-5"><RegionMenu pill={regionText} /></div>}
             </div>
-            <div className="relative max-md:hidden">
+            <div className="relative min-w-0 overflow-hidden max-md:hidden [&_.ms-row]:[--w:clamp(52px,6.2vw,108px)]">
               <MaterialSlabs lang={lang} />
               <p className="absolute right-4 bottom-2 flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-4 py-2 text-xs text-white/85 backdrop-blur">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8f169" strokeWidth="1.7" strokeLinecap="round" aria-hidden><path d="M7 18H4.5l3-5.2M17 6h2.5l-3 5.2M12 3.5l2.6 4.5M9.4 8 12 3.5M20 16l-2.6 4.5h-5M4 16l2.6 4.5" /></svg>
