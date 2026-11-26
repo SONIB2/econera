@@ -60,8 +60,20 @@ export function SiteHeader({ account, overlay = false }: { account: Account; ove
   const onHero = overlay && !pastHero && !mobile;
   const active = (href: string) => pathname.startsWith(href);
   const nav = [
-    { href: "/treg", label: t("Tregu i materialeve", "Marketplace") },
+    { href: "/treg", label: t("Tregu", "Marketplace") },
     { href: "/shit", label: t("Shit", "Sell") },
+  ];
+  const clients = [
+    { href: "/treg", label: t("Gjej materiale", "Find materials"), desc: t("Materiale të tepërta dhe të rikuperuara", "Surplus and reclaimed materials") },
+    { href: "/ai/shporta", label: "Smart Basket", desc: t("Lista e projektit brenda buxhetit", "Your project list within budget") },
+    { href: "/ai/renovim", label: "AI Renovation", desc: t("Dizajno hapësirën tënde", "Design your space") },
+    { href: "/mbrojtja", label: t("Mbrojtja e klientit", "Customer protection"), desc: t("Raporto një problem", "Report a problem") },
+  ];
+  const companies = [
+    { href: "/biznes", label: t("Për bizneset", "For Business"), desc: t("Zgjidhje për kompanitë e ndërtimit", "Solutions for construction companies") },
+    { href: "/shit", label: t("Shit materiale", "Sell materials"), desc: t("Listo stokun e tepërt", "List your surplus stock") },
+    { href: "/furnitore", label: t("Për furnitorët", "For suppliers"), desc: t("Import stoku dhe profil biznesi", "Stock import and business profile") },
+    { href: "/cmimet", label: t("Çmimet", "Pricing"), desc: t("Planet për furnitorët", "Supplier plans") },
   ];
   const accountLinks = [
     ["/paneli", t("Paneli", "Dashboard")], ["/projektet", t("Projektet e mia", "My projects")], ["/ruajtura", t("Të ruajturat", "Saved materials")],
@@ -69,22 +81,22 @@ export function SiteHeader({ account, overlay = false }: { account: Account; ove
     ["/inventari", t("Listimet e mia", "My listings")], ["/verifikimi", t("Verifikimi i llogarisë", "Account verification")],
   ];
   const link = (href: string, label: string) => (
-    <Link key={href} href={href} aria-current={active(href) ? "page" : undefined} className={`whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium transition-colors ${active(href) ? "bg-[#dff5a8] text-[#0c2f2b] dark:bg-lime/15 dark:text-lime dark:ring-1 dark:ring-lime/35" : "text-ink-2 hover:text-ink"}`}>{label}</Link>
+    <Link key={href} href={href} aria-current={active(href) ? "page" : undefined} className={`whitespace-nowrap rounded-full px-2.5 py-2 text-[13.5px] font-medium transition-colors ${active(href) ? "bg-[#dff5a8] text-[#0c2f2b] dark:bg-lime/15 dark:text-lime dark:ring-1 dark:ring-lime/35" : "text-ink-2 hover:text-ink"}`}>{label}</Link>
   );
 
   return (
-    <header className={`${overlay ? "fixed inset-x-0" : "sticky"} top-0 z-40 px-3 pt-3 transition-[padding] sm:px-5 ${overlay || pathname === "/treg" || pathname === "/rreth-nesh" ? "theme-dark" : ""} ${onHero ? "!bg-transparent" : ""}`}>
+    <header className={`${overlay ? "fixed inset-x-0" : "sticky"} top-0 z-40 px-3 pt-3 transition-[padding] sm:px-5 ${overlay || pathname === "/treg" ? "theme-dark" : ""} ${onHero ? "!bg-transparent" : ""}`}>
       <div className={`mx-auto flex max-w-7xl items-center justify-between gap-4 rounded-full border pr-2 pl-5 transition-all duration-300 sm:pl-6 ${scrolled && !onHero ? "h-14" : "h-16"} ${onHero ? "border-transparent bg-transparent" : scrolled ? "border-line bg-card/85 shadow-[0_10px_30px_-18px_rgba(12,47,43,0.35)] backdrop-blur-xl" : "border-line/70 bg-card/60 backdrop-blur-md"}`}>
         <Link href="/" aria-label={t("ECONERA, kreu", "ECONERA, home")} className="flex shrink-0 items-center">
           <Image src="/brand/logo-light.svg" alt="" width={481} height={66} priority className="h-6 w-auto dark:hidden" />
           <Image src="/brand/logo-dark.svg" alt="" width={481} height={66} priority className="hidden h-6 w-auto dark:block" />
         </Link>
 
-        <nav aria-label={t("Navigimi kryesor", "Main navigation")} className="hidden items-center gap-0.5 lg:flex">
+        <nav aria-label={t("Navigimi kryesor", "Main navigation")} className="hidden items-center gap-0 xl:flex">
           {nav.map((n) => link(n.href, n.label))}
           <div ref={megaRef} className="relative" onMouseEnter={() => hoverMega(true)} onMouseLeave={() => hoverMega(false)}>
             <button type="button" aria-expanded={mega} aria-controls="mega-ai" onClick={() => setMega((v) => !v)}
-              className={`flex items-center gap-1 rounded-full px-3 py-2 text-sm font-medium transition-colors ${mega || active("/ai") ? "text-ink" : "text-ink-2 hover:text-ink"} ${active("/ai") ? "bg-bg-2" : ""}`}>
+              className={`flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-2 text-[13.5px] font-medium transition-colors ${mega || active("/ai") ? "text-ink" : "text-ink-2 hover:text-ink"} ${active("/ai") ? "bg-[#dff5a8] !text-[#0c2f2b] dark:bg-lime/15 dark:!text-lime" : ""}`}>
               {t("Mjetet AI", "AI Tools")}
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden className={`transition duration-200 ${mega ? "rotate-180" : ""}`}><path d="M2 3.5l3 3 3-3" strokeLinecap="round" /></svg>
             </button>
@@ -117,7 +129,10 @@ export function SiteHeader({ account, overlay = false }: { account: Account; ove
               </div>
             </div>
           </div>
-          {link("/biznes", t("Për bizneset", "For Business"))}
+          <NavDrop id="nav-clients" label={t("Për klientët", "For Clients")} items={clients} active={false} />
+          <NavDrop id="nav-companies" label={t("Për kompanitë", "For Companies")} items={companies} active={["/biznes", "/furnitore", "/cmimet"].some(active)} />
+          {link("/rreth-nesh", t("Rreth nesh", "About Us"))}
+          {link("/kontakt", t("Kontakt", "Contact"))}
         </nav>
 
         <div className="flex items-center gap-1">
@@ -143,14 +158,14 @@ export function SiteHeader({ account, overlay = false }: { account: Account; ove
               <Link href="/regjistrohu" className="btn-primary hidden whitespace-nowrap sm:inline-flex">{t("Regjistrohu", "Sign up")}</Link>
             </>
           )}
-          <button type="button" className="ml-1 grid size-10 place-items-center rounded-full border border-line text-ink lg:hidden" aria-expanded={mobile} aria-controls="menu-celular"
+          <button type="button" className="ml-1 grid size-10 place-items-center rounded-full border border-line text-ink xl:hidden" aria-expanded={mobile} aria-controls="menu-celular"
             aria-label={mobile ? t("Mbyll menunë", "Close menu") : t("Hap menunë", "Open menu")} onClick={() => setMobileOn(mobile ? null : pathname)}>
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">{mobile ? <path d="M4 4l10 10M14 4L4 14" /> : <path d="M2 5h14M2 9h14M2 13h14" />}</svg>
           </button>
         </div>
       </div>
 
-      <nav id="menu-celular" aria-label={t("Menuja", "Menu")} hidden={!mobile} className="mx-auto mt-2 max-h-[calc(100dvh-6rem)] max-w-7xl overflow-y-auto rounded-card border border-line bg-card/95 p-3 text-ink shadow-xl backdrop-blur-xl lg:hidden">
+      <nav id="menu-celular" aria-label={t("Menuja", "Menu")} hidden={!mobile} className="mx-auto mt-2 max-h-[calc(100dvh-6rem)] max-w-7xl overflow-y-auto rounded-card border border-line bg-card/95 p-3 text-ink shadow-xl backdrop-blur-xl xl:hidden">
         <ul className="grid gap-1">
           {nav.map((n) => <li key={n.href}><Link href={n.href} onClick={() => setMobileOn(null)} className="flex min-h-12 items-center rounded-xl px-3 text-base font-medium hover:bg-bg-2">{n.label}</Link></li>)}
           <li>
@@ -179,7 +194,16 @@ export function SiteHeader({ account, overlay = false }: { account: Account; ove
               </div>
             </div>
           </li>
-          <li><Link href="/biznes" onClick={() => setMobileOn(null)} className="flex min-h-12 items-center rounded-xl px-3 text-base font-medium hover:bg-bg-2">{t("Për bizneset", "For Business")}</Link></li>
+          {[[t("Për klientët", "For Clients"), clients], [t("Për kompanitë", "For Companies"), companies]].map(([title, items]) => (
+            <li key={title as string}>
+              <details className="group">
+                <summary className="flex min-h-12 cursor-pointer list-none items-center rounded-xl px-3 text-base font-medium hover:bg-bg-2 [&::-webkit-details-marker]:hidden">{title as string}<svg width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden className="ml-auto transition group-open:rotate-180"><path d="M2 3.5l3 3 3-3" strokeLinecap="round" /></svg></summary>
+                <ul className="grid gap-0.5 py-1 pl-3">{(items as typeof clients).map((i) => <li key={i.href + i.label}><Link href={i.href} onClick={() => setMobileOn(null)} className="block rounded-xl px-3 py-2.5 hover:bg-bg-2"><span className="block text-[15px] font-semibold">{i.label}</span><span className="block text-[13px] text-ink-2">{i.desc}</span></Link></li>)}</ul>
+              </details>
+            </li>
+          ))}
+          <li><Link href="/rreth-nesh" onClick={() => setMobileOn(null)} className="flex min-h-12 items-center rounded-xl px-3 text-base font-medium hover:bg-bg-2">{t("Rreth nesh", "About Us")}</Link></li>
+          <li><Link href="/kontakt" onClick={() => setMobileOn(null)} className="flex min-h-12 items-center rounded-xl px-3 text-base font-medium hover:bg-bg-2">{t("Kontakt", "Contact")}</Link></li>
         </ul>
         <div className="mt-3 flex items-center justify-between border-t border-line pt-3">
           <ThemeToggle />
@@ -187,5 +211,38 @@ export function SiteHeader({ account, overlay = false }: { account: Account; ove
         </div>
       </nav>
     </header>
+  );
+}
+
+/** Small dropdown for a nav group (For Clients, For Companies): opens on hover or click, closes on Escape or outside click. */
+function NavDrop({ id, label, items, active }: { id: string; label: string; items: { href: string; label: string; desc: string }[]; active: boolean }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hover = (v: boolean) => { if (timer.current) clearTimeout(timer.current); timer.current = setTimeout(() => setOpen(v), v ? 80 : 180); };
+  useEffect(() => {
+    if (!open) return;
+    const down = (e: PointerEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("pointerdown", down); window.addEventListener("keydown", key);
+    return () => { window.removeEventListener("pointerdown", down); window.removeEventListener("keydown", key); };
+  }, [open]);
+  return (
+    <div ref={ref} className="relative" onMouseEnter={() => hover(true)} onMouseLeave={() => hover(false)}>
+      <button type="button" aria-expanded={open} aria-controls={id} onClick={() => setOpen((v) => !v)}
+        className={`flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-2 text-[13.5px] font-medium transition-colors ${active ? "bg-[#dff5a8] text-[#0c2f2b] dark:bg-lime/15 dark:text-lime" : open ? "text-ink" : "text-ink-2 hover:text-ink"}`}>
+        {label}
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden className={`transition duration-200 ${open ? "rotate-180" : ""}`}><path d="M2 3.5l3 3 3-3" strokeLinecap="round" /></svg>
+      </button>
+      <div id={id} inert={!open} className={`absolute top-full left-1/2 z-50 w-72 -translate-x-1/2 pt-3 transition duration-200 ${open ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"}`}>
+        <ul className="grid gap-0.5 rounded-2xl border border-line bg-card p-2 text-ink shadow-[0_24px_60px_-24px_rgba(6,34,30,0.45)]">
+          {items.map((i) => (
+            <li key={i.href + i.label}><Link href={i.href} onClick={() => setOpen(false)} className="block rounded-xl px-3 py-2.5 transition-colors hover:bg-bg-2 focus-visible:bg-bg-2">
+              <span className="block text-sm font-semibold">{i.label}</span><span className="block text-[13px] text-ink-2">{i.desc}</span>
+            </Link></li>
+          ))}
+        </ul>
+      </div>
+    </div>
   );
 }
