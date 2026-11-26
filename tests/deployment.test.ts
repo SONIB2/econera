@@ -66,3 +66,13 @@ test("Netlify builds use the deploy origin and runtime configuration rejects loc
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://127.0.0.1:55321";
   assert.equal(supabaseSettings(), null);
 });
+
+test("Vercel production always uses the official domain, whatever APP_ORIGIN says", (context) => {
+  const keys = ["VERCEL", "VERCEL_ENV", "VERCEL_URL", "APP_ORIGIN"];
+  const previous = keys.map((key) => process.env[key]);
+  context.after(() => keys.forEach((key, index) => { const v = previous[index]; if (v === undefined) delete process.env[key]; else process.env[key] = v; }));
+  Object.assign(process.env, { VERCEL: "1", VERCEL_ENV: "production", VERCEL_URL: "econera-abc123.vercel.app", APP_ORIGIN: "https://econera.vercel.app" });
+  assert.equal(applicationOrigin(), "https://www.econera.al");
+  process.env.VERCEL_ENV = "preview";
+  assert.equal(applicationOrigin(), "https://econera.vercel.app");
+});

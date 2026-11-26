@@ -7,11 +7,12 @@ const hex = (h: string) => rgb(parseInt(h.slice(1, 3), 16) / 255, parseInt(h.sli
 export type CertificateData = { number: string; label: string; quantity: number; unit: string; co2Kg: number; massKg: number; factor: number; kgPerUnit: number; date: string; source: string };
 
 /** A4 green certificate. Fonts are embedded from /public/fonts (Inter, SIL OFL) so Albanian letters render correctly. */
-export async function certificatePdf(d: CertificateData) {
+export async function certificatePdf(d: CertificateData, lang: "sq" | "en" = "sq") {
+  const t = (sq: string, en: string) => (lang === "en" ? en : sq);
   const [regularBytes, boldBytes] = await Promise.all(["/fonts/Inter-Regular.ttf", "/fonts/Inter-Bold.ttf"].map((u) => fetch(u).then((r) => r.arrayBuffer())));
   const doc = await PDFDocument.create();
   doc.registerFontkit(fontkit);
-  doc.setTitle(`Certifikatë e gjelbër ${d.number}`);
+  doc.setTitle(`${t("Certifikatë e gjelbër", "Green certificate")} ${d.number}`);
   doc.setAuthor("ECONERA");
   const regular = await doc.embedFont(regularBytes, { subset: true });
   const bold = await doc.embedFont(boldBytes, { subset: true });
@@ -26,9 +27,9 @@ export async function certificatePdf(d: CertificateData) {
   const m = 56;
   page.drawText("ECONERA", { x: m, y: height - 80, size: 18, font: bold, color: ink });
   page.drawText(d.number, { x: width - m - bold.widthOfTextAtSize(d.number, 11), y: height - 78, size: 11, font: bold, color: lime });
-  page.drawText("CERTIFIKATË E GJELBËR", { x: m, y: height - 160, size: 11, font: bold, color: lime });
-  page.drawText("Materiale të ripërdorura,", { x: m, y: height - 205, size: 32, font: bold, color: ink });
-  page.drawText("ndikim i matshëm.", { x: m, y: height - 243, size: 32, font: bold, color: ink });
+  page.drawText(t("CERTIFIKATË E GJELBËR", "GREEN CERTIFICATE"), { x: m, y: height - 160, size: 11, font: bold, color: lime });
+  page.drawText(t("Materiale të ripërdorura,", "Reused materials,"), { x: m, y: height - 205, size: 32, font: bold, color: ink });
+  page.drawText(t("ndikim i matshëm.", "measurable impact."), { x: m, y: height - 243, size: 32, font: bold, color: ink });
   page.drawText(`${fmt(d.quantity)} ${d.unit} · ${d.label}`, { x: m, y: height - 285, size: 13, font: regular, color: muted });
 
   const boxY = height - 470, boxW = (width - m * 2 - 16) / 2;
@@ -37,14 +38,14 @@ export async function certificatePdf(d: CertificateData) {
     page.drawText(value, { x: x + 22, y: boxY + 72, size: 34, font: bold, color: lime });
     page.drawText(label, { x: x + 22, y: boxY + 36, size: 11, font: regular, color: ink });
   };
-  stat(m, `−${fmt(d.co2Kg / 1000, 2)} t`, "CO₂e e shmangur (vlerësim)");
-  stat(m + boxW + 16, `${fmt(d.massKg / 1000, 2)} t`, "mbetje të shmangura nga landfill-i");
+  stat(m, `−${fmt(d.co2Kg / 1000, 2)} t`, t("CO₂e e shmangur (vlerësim)", "CO₂e avoided (estimate)"));
+  stat(m + boxW + 16, `${fmt(d.massKg / 1000, 2)} t`, t("mbetje të shmangura nga landfill-i", "waste kept out of landfill"));
 
   const rows: [string, string][] = [
-    ["Data", d.date],
-    ["Masa e vlerësuar", `${fmt(d.kgPerUnit, 2)} kg për ${d.unit}`],
-    ["Faktori i emetimeve", `${fmt(d.factor, 3)} kg CO₂e/kg`],
-    ["Metoda", "Ripërdorimi zëvendëson të njëjtën masë materiali të ri"],
+    [t("Data", "Date"), d.date],
+    [t("Masa e vlerësuar", "Estimated mass"), `${fmt(d.kgPerUnit, 2)} kg ${t("për", "per")} ${d.unit}`],
+    [t("Faktori i emetimeve", "Emission factor"), `${fmt(d.factor, 3)} kg CO₂e/kg`],
+    [t("Metoda", "Method"), t("Ripërdorimi zëvendëson të njëjtën masë materiali të ri", "Reuse replaces the same mass of new material")],
   ];
   let y = boxY - 50;
   for (const [k, v] of rows) {
@@ -54,9 +55,9 @@ export async function certificatePdf(d: CertificateData) {
     y -= 30;
   }
 
-  const note = ["Shembull demonstrues për aplikimin në Startup Albania. Shifrat janë vlerësime", "dhe jo matje e certifikuar. Burimi i faktorëve: " + d.source.split(".")[0] + "."];
+  const note = [t("Shembull demonstrues. Shifrat janë vlerësime dhe jo matje e certifikuar.", "Demonstration example. Figures are estimates, not a certified measurement."), t("Burimi i faktorëve: ", "Source of factors: ") + d.source.split(".")[0] + "."];
   note.forEach((t, i) => page.drawText(t, { x: m, y: 92 - i * 14, size: 8.5, font: regular, color: muted }));
-  page.drawText("econera.al · AI propozon, njeriu konfirmon.", { x: m, y: 52, size: 9, font: bold, color: lime });
+  page.drawText(t("econera.al · AI propozon, njeriu konfirmon.", "econera.al · AI suggests, people confirm."), { x: m, y: 52, size: 9, font: bold, color: lime });
 
   return doc.save();
 }

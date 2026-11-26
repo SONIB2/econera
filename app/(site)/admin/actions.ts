@@ -139,3 +139,67 @@ export async function verifyMfa(form: FormData) {
   const { error } = await db.auth.mfa.challengeAndVerify({ factorId, code });
   redirect(error ? `/admin/mfa?r=code&factor=${encodeURIComponent(factorId)}` : "/admin");
 }
+
+/* Partner management. Row Level Security re-checks the staff role (support or super admin, with MFA) on every write. */
+const PARTNER_CATEGORY = z.enum(["supplier", "manufacturer", "construction", "architecture", "logistics", "institution", "other"]);
+const back = (r: string) => redirect(`/admin/partneret?r=${r}`);
+
+export async function reviewPartnerApplication(form: FormData) {
+  const s = await requireStaff(["support"]);
+  const lead = id.parse(form.get("lead"));
+  const status = z.enum(["info_requested", "approved", "rejected"]).parse(form.get("status"));
+  const note = String(form.get("note") ?? "").trim().slice(0, 1000) || null;
+  const { error } = await s.db.from("leads").update({ status, review_note: note }).eq("id", lead).eq("source", "partner");
+  back(error ? "failed" : "reviewed");
+}
+
+export async function savePartner(form: FormData) {
+  const s = await requireStaff(["support"]);
+  const parsed = z.object({
+    name: z.string().trim().min(2).max(120), category: PARTNER_CATEGORY,
+    description_sq: z.string().trim().max(600).optional(), description_en: z.string().trim().max(600).optional(),
+    website: z.union([z.literal(""), z.string().trim().regex(/^https:\/\/\S{3,200}$/)]).optional(),
+    confirmation_ref: z.string().trim().min(3).max(200), confirmed_on: z.iso.date(),
+  }).safeParse(Object.fromEntries(form));
+  if (!parsed.success) back("invalid");
+  const p = parsed.data!;
+  const partner = z.uuid().safeParse(form.get("partner")).data;
+  const application = z.uuid().safeParse(form.get("application")).data ?? null;
+  const authorized = form.get("logo_authorized") === "on";
+  let logo_path: string | undefined;
+  const file = form.get("logo");
+  if (file instanceof File && file.size) {
+    if (!authorized) back("logo_permission");
+    const checked = await checkFile(file);
+    if ("error" in checked || !["image/png", "image/jpeg", "image/webp"].includes(checked.mime) || checked.size > 1024 * 1024) back("logo_file");
+    const ok = checked as Exclude<typeof checked, { error: string }>;
+    logo_path = `${crypto.randomUUID()}.${ok.mime.split("/")[1].replace("jpeg", "jpg")}`;
+    const up = await s.db.storage.from("partner-logos").upload(logo_path, ok.bytes, { contentType: ok.mime, upsert: false });
+    if (up.error) back("storage");
+  }
+  const row = {
+    name: p.name, category: p.category, description_sq: p.description_sq || null, description_en: p.description_en || null, website: p.website || null,
+    confirmation_ref: p.confirmation_ref, confirmed_on: p.confirmed_on, logo_authorized: authorized, ...(logo_path ? { logo_path } : {}),
+    ...(authorized ? {} : { logo_path: null }),
+  };
+  const { error } = partner
+    ? await s.db.from("partners").update(row).eq("id", partner)
+    : await s.db.from("partners").insert({ ...row, application_id: application });
+  back(error ? "failed" : "saved");
+}
+
+export async function setPartnerPublished(form: FormData) {
+  const s = await requireStaff(["support"]);
+  const partner = id.parse(form.get("partner"));
+  const { error } = await s.db.from("partners").update({ published: form.get("published") === "1" }).eq("id", partner);
+  back(error ? "failed" : "saved");
+}
+
+export async function deletePartner(form: FormData) {
+  const s = await requireStaff(["support"]);
+  const partner = id.parse(form.get("partner"));
+  const { data, error } = await s.db.from("partners").delete().eq("id", partner).eq("published", false).select("logo_path");
+  const path = data?.[0]?.logo_path as string | null | undefined;
+  if (path) await s.db.storage.from("partner-logos").remove([path]);
+  back(error || !data?.length ? "failed" : "deleted");
+}

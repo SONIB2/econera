@@ -13,14 +13,14 @@ const MODEL = () => process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";
 type Content = { type: "text"; text: string } | { type: "image"; source: { type: "base64"; media_type: string; data: string } };
 
 /** Calls the Claude Messages API and returns the text of the reply. */
-export async function claude(system: string, content: Content[], maxTokens = 1200): Promise<string> {
+export async function claude(system: string, content: Content[], maxTokens = 1200, model = MODEL(), timeoutMs = 45000): Promise<string> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error("not-configured");
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
-    body: JSON.stringify({ model: MODEL(), max_tokens: maxTokens, system, messages: [{ role: "user", content }] }),
-    signal: AbortSignal.timeout(45000),
+    body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: "user", content }] }),
+    signal: AbortSignal.timeout(timeoutMs),
   });
   if (!res.ok) throw new Error(`claude-${res.status}`);
   const data = (await res.json()) as { content: { type: string; text?: string }[] };

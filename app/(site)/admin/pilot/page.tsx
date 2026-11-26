@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { adminLogout } from "@/app/(site)/actions";
 import { AdminLogin } from "@/components/site/admin-login";
-import { adminConfigured, isAdmin } from "@/lib/admin-auth";
+import { redirect } from "next/navigation";
+import { adminConfigured, pilotAccess } from "@/lib/admin-auth";
 import { formatDate } from "@/lib/format";
 import { INTERESTS, listLeads, ROLES, storageMode } from "@/lib/leads";
 
@@ -9,10 +10,12 @@ export const metadata: Metadata = { title: "Admin", robots: { index: false, foll
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  if (!adminConfigured()) {
-    return <Shell><div className="card p-8"><h1 className="display text-3xl">Admin nuk është konfiguruar.</h1><p className="mt-3 text-ink-2">Shto <code className="text-lime">ADMIN_PASSWORD</code> (të paktën 10 karaktere) te <code>.env.local</code> dhe rinis serverin.</p></div></Shell>;
+  const access = await pilotAccess();
+  if (!access) {
+    // Without the shared password configured, only personal staff accounts (with MFA) get in.
+    if (!adminConfigured()) redirect("/admin");
+    return <Shell><p className="mb-4 rounded-xl border border-line bg-bg-2 px-4 py-3 text-sm text-ink-2">Hyrja me fjalëkalim të përbashkët po hiqet. Përdor llogarinë personale të stafit (me MFA) te <a className="underline" href="/admin">/admin</a>.</p><AdminLogin /></Shell>;
   }
-  if (!(await isAdmin())) return <Shell><AdminLogin /></Shell>;
 
   const leads = await listLeads();
   const count = (k: string, v: string) => leads.filter((l) => (l as Record<string, unknown>)[k] === v).length;
@@ -26,7 +29,7 @@ export default async function AdminPage() {
         </div>
         <div className="flex gap-2">
           <a href="/admin/pilot/eksport" className="btn-primary">Eksporto CSV</a>
-          <form action={adminLogout}><button className="btn-ghost">Dil</button></form>
+          {access === "password" && <form action={adminLogout}><button className="btn-ghost">Dil</button></form>}
         </div>
       </div>
       <div className="mt-8 grid gap-3 sm:grid-cols-3">

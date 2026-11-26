@@ -28,6 +28,7 @@ export default async function Workspace() {
       <ul className="workspace-org-list">{organizations.data.slice(0, 5).map(({ organization, role }) => <li key={organization.id}><Link href={`/paneli/organizatat/${organization.id}`}>{organization.name}</Link><span>{organizationRole[role]}</span></li>)}</ul>}
     </section>
     {!profile.error && !profile.data && <section className="panel workspace-stack"><h2>Plotëso profilin</h2><p>Shto emrin e profilit për ta njohur më lehtë llogarinë tënde.</p><Link className="text-link" href="/inventari/profili">Hap profilin <ArrowRight size={17} aria-hidden /></Link></section>}
+    <section className="panel workspace-stack"><h2>Të dhënat e tua</h2><p>Shkarko një kopje të të dhënave të llogarisë tënde (JSON). Për fshirjen e llogarisë, na shkruaj nga <Link className="text-link" href="/kontakt">faqja e kontaktit</Link>.</p><a className="text-link" href="/api/account/export">Shkarko të dhënat e mia</a></section>
     <section className="panel workspace-stack"><h2>Modulet e ardhshme</h2><p>Projektet, porositë, analizat dhe ECONERA AI do të hapen pasi të përfundojnë rrjedhat e tyre të punës.</p></section>
   </>;
 }

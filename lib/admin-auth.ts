@@ -34,3 +34,14 @@ export async function setAdminSession(on: boolean) {
   if (!on) { store.delete(COOKIE); return; }
   store.set(COOKIE, sign(Math.floor(Date.now() / 1000))!, { httpOnly: true, sameSite: "strict", secure: process.env.NODE_ENV === "production", path: "/admin", maxAge: MAX_AGE });
 }
+
+/**
+ * Pilot list access. Personal staff accounts (support or super admin, with MFA) always work. The shared password
+ * still works only while ADMIN_PASSWORD is set; removing that variable in Vercel retires it.
+ */
+export async function pilotAccess(): Promise<"staff" | "password" | null> {
+  const { currentStaff, hasRole } = await import("@/lib/verify/staff");
+  const s = await currentStaff();
+  if (s.kind === "staff" && s.mfa && hasRole(s.roles, ["support"])) return "staff";
+  return (await isAdmin()) ? "password" : null;
+}

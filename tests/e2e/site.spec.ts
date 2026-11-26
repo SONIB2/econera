@@ -76,3 +76,57 @@ test("private areas redirect guests to sign in", async ({ request }) => {
   }
   expect((await request.post("/api/admin/prescreen", { data: {} })).status()).toBe(403);
 });
+
+// Browser zoom shrinks the CSS viewport: 1280px at 125/150/200% = 1024/853/640 CSS px. Plus phones held sideways.
+for (const [label, width, height] of [["zoom 125%", 1024, 640], ["zoom 150%", 853, 533], ["zoom 200%", 640, 400], ["phone landscape", 844, 390], ["small phone landscape", 667, 375]] as const) {
+  test(`${label}: no sideways scroll and the menu is reachable`, async ({ browser }) => {
+    const ctx = await browser.newContext({ viewport: { width, height }, extraHTTPHeaders: { cookie: "lang=en" } });
+    const page = await ctx.newPage();
+    for (const u of ["/cmimet", "/treg", "/ai/smartcut", "/partneret"]) {
+      await page.goto(u);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth), `${label} ${u}`).toBeLessThanOrEqual(width);
+    }
+    const menu = page.getByRole("button", { name: "Open menu" });
+    if (await menu.isVisible()) { await menu.click(); await expect(page.locator("#menu-celular")).toBeVisible(); }
+    else await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
+    await ctx.close();
+  });
+}
+
+test("keyboard: skip link, dropdown with Escape, assistant dialog focus", async ({ page, isMobile }) => {
+  test.skip(isMobile, "keyboard journey on desktop");
+  await page.goto("/cmimet");
+  await page.keyboard.press("Tab");
+  const skip = page.getByRole("link", { name: "Skip to content" });
+  await expect(skip).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#permbajtja")).toBeFocused();
+
+  const ai = page.getByRole("navigation", { name: "Main navigation" }).getByRole("button", { name: "AI Tools" });
+  await ai.focus();
+  await page.keyboard.press("Enter");
+  await expect(ai).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Escape");
+  await expect(ai).toHaveAttribute("aria-expanded", "false");
+
+  const assistant = page.getByRole("button", { name: "Assistant" });
+  await assistant.focus();
+  await page.keyboard.press("Enter");
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("textbox").first()).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+});
+
+test("assistant answers 'floor' with category buttons and opens the marketplace", async ({ page }) => {
+  await page.goto("/cmimet");
+  await page.getByRole("button", { name: "Assistant" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("textbox").first().fill("floor");
+  await dialog.getByRole("textbox").first().press("Enter");
+  const option = dialog.getByRole("link").filter({ hasText: /floor|tile|parquet|laminate/i }).first();
+  await expect(option).toBeVisible();
+  await option.click();
+  await expect(page).toHaveURL(/\/treg\?/);
+});

@@ -385,6 +385,7 @@ function List({ title, items }: { title: string; items: string[] }) {
 function aiMessage(code: string, t: (sq: string, en: string) => string) {
   if (code === "not-configured") return t("Shërbimi AI nuk është lidhur ende në server.", "The AI service is not connected on the server yet.");
   if (code === "rate") return t("Ke arritur kufirin e kërkesave për tani. Provo më vonë.", "You reached the request limit for now. Try later.");
+  if (code === "busy") return t("Mjeti AI ka arritur kufirin ditor të përdorimit. Provo nesër.", "The AI tool has reached today's usage limit. Try again tomorrow.");
   if (code === "photo") return t("Fotoja duhet të jetë JPG, PNG ose WEBP deri në 5 MB.", "The photo must be JPG, PNG or WEBP up to 5 MB.");
   return t("Shërbimi AI nuk u përgjigj. Provo përsëri pas pak.", "The AI service did not respond. Try again shortly.");
 }

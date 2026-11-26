@@ -14,6 +14,7 @@ import { getLang } from "@/lib/lang-server";
 import { CONDITION_UI, MARKET_CATEGORIES } from "@/lib/market/categories";
 import { galleryFor, liveMarket } from "@/lib/market/live";
 import { applicationOrigin } from "@/lib/supabase";
+import { PRODUCTION_ORIGIN } from "@/lib/deployment";
 import { EUR_TO_LEK, toolCategoryOf } from "@/lib/tools/inventory";
 import { DOC_TYPES, INTENDED_USE } from "@/lib/verify/labels";
 import { readVerification } from "@/lib/verify/public";
@@ -54,7 +55,7 @@ export default async function Product({ params }: { params: Promise<{ id: string
     [t("Mosha", "Age"), v?.age_years != null ? `${v.age_years} ${t("vite", "years")}` : null], [t("Përdorimi i synuar", "Intended use"), v ? INTENDED_USE[v.intended_use]?.[lang] : null],
     [t("Vendndodhja", "Location"), item.region], [t("Marrja", "Fulfilment"), fulfil],
   ];
-  const origin = applicationOrigin() ?? "https://www.econera.al";
+  const origin = applicationOrigin() ?? PRODUCTION_ORIGIN;
   const jsonLd = { "@context": "https://schema.org", "@type": "Product", name: item.title, description: item.description, image: photos.slice(0, 3), category: cat?.en, sku: v?.passport_code ?? item.id,
     offers: { "@type": "Offer", price: item.unitPrice, priceCurrency: item.currency, availability: "https://schema.org/InStock", itemCondition: item.condition === "reclaimed" ? "https://schema.org/UsedCondition" : "https://schema.org/NewCondition", url: `${origin}/treg/${item.id}` } };
 

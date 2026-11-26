@@ -1,7 +1,8 @@
+import { logError } from "@/lib/monitor";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { claude, firstJson, parsePhoto } from "@/lib/ai/providers";
-import { clientIp, rateLimited } from "@/lib/rate-limit";
+import { aiBudgetExceeded, clientIp, rateLimited } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -12,8 +13,9 @@ export type RoomAnalysis = { room: string; observations: string[]; currentMateri
 
 export async function POST(request: NextRequest) {
   const ip = clientIp(request.headers);
-  if (rateLimited(`room:${ip}`, 6, 60 * 60 * 1000)) return NextResponse.json({ error: "rate" }, { status: 429 });
+  if (await rateLimited(`room:${ip}`, 6, 60 * 60 * 1000)) return NextResponse.json({ error: "rate" }, { status: 429 });
   if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json({ error: "not-configured" }, { status: 503 });
+  if (await aiBudgetExceeded("room")) return NextResponse.json({ error: "busy" }, { status: 503 });
   const parsed = input.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "invalid" }, { status: 400 });
   const photo = parsePhoto(parsed.data.image);
@@ -25,7 +27,8 @@ export async function POST(request: NextRequest) {
     const json = firstJson<RoomAnalysis>(reply);
     if (!json) return NextResponse.json({ error: "format" }, { status: 502 });
     return NextResponse.json(json, { headers: { "Cache-Control": "no-store" } });
-  } catch {
+  } catch (error) {
+    logError("ai.room.failed", error);
     return NextResponse.json({ error: "upstream" }, { status: 502 });
   }
 }

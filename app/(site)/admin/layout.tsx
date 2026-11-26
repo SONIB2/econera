@@ -12,7 +12,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const nav = [
     ["/admin", t("Përmbledhja", "Overview")], ["/admin/listimet", t("Listimet", "Listings")], ["/admin/shitesit", t("Shitësit", "Sellers")],
     ["/admin/ankesat", t("Ankesat", "Complaints")], ["/admin/rregullat", t("Rregullat", "Requirements")], ["/admin/stafi", t("Stafi", "Staff")],
-    ["/admin/auditi", t("Auditi", "Audit log")], ["/admin/pilot", t("Lista e pilotit", "Pilot list")],
+    ["/admin/partneret", t("Partnerët", "Partners")], ["/admin/auditi", t("Auditi", "Audit log")], ["/admin/pilot", t("Lista e pilotit", "Pilot list")],
   ];
   return (
     <div className="container-x grid gap-8 py-10 lg:grid-cols-[220px_1fr]">

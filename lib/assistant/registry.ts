@@ -85,11 +85,14 @@ export function near(token: string, word: string) {
 }
 
 /** Categories mentioned in the text (most specific first). */
+/** Real words that sit one or two letters from a material word ("furnitor" = supplier, not "furniture"). */
+const NOT_MATERIALS = new Set(["furnitor", "furnitore", "furnitori", "furnitoret", "furnitorin", "furnizim", "furnizues"]);
+
 export function categoriesIn(text: string): string[] {
   const n = norm(text);
   const found = new Set<string>();
   for (const [p, c] of PHRASES) if (n.includes(p)) found.add(c);
-  const tokens = n.split(" ");
+  const tokens = n.split(" ").filter((tk) => !NOT_MATERIALS.has(tk));
   for (const [cat, words] of Object.entries(LEXICON)) if (tokens.some((tk) => words.some((w) => near(tk, w)))) found.add(cat);
   return [...found];
 }

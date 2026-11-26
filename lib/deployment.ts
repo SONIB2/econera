@@ -18,7 +18,11 @@ function isHosted() {
   return process.env.NETLIFY === "true" || process.env.ECONERA_HOSTED === "1" || process.env.VERCEL === "1";
 }
 
+/** The official public address. Production always uses it, so links, emails, sitemap and metadata never point at a vercel.app host. */
+export const PRODUCTION_ORIGIN = "https://www.econera.al";
+
 export function applicationOrigin() {
+  if (process.env.VERCEL_ENV === "production") return PRODUCTION_ORIGIN;
   const vercelHost = process.env.VERCEL_URL;
   const url = configuredUrl(process.env.APP_ORIGIN
     ?? (process.env.NETLIFY === "true" ? process.env.DEPLOY_PRIME_URL : undefined)

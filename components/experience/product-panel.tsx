@@ -31,7 +31,7 @@ export function ProductPanel({ id, onClose }: { id: ProductId; onClose: () => vo
         <div><h2 id="xp-product-title" className="text-2xl">{p.name}</h2><p className="mt-1 text-sm text-ink-2">{p.tag[lang]}</p></div>
         <button ref={close} type="button" onClick={onClose} aria-label={t("Mbyll", "Close")} className="grid size-9 shrink-0 place-items-center rounded-full border border-line hover:border-lime">✕</button>
       </div>
-      {VISUAL[id] && <div className="mt-4 aspect-[2/1] overflow-hidden rounded-xl border border-line">{VISUAL[id]}</div>}
+      {VISUAL[id] && <div className="mt-4 aspect-[2/1] overflow-hidden rounded-xl border border-line">{id === "basket" ? <BasketVisual lang={lang} /> : VISUAL[id]}</div>}
       <ul className="mt-4 grid gap-2 text-sm">{p.points.map((x) => <li key={x.en} className="flex gap-2"><span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-lime" aria-hidden />{x[lang]}</li>)}</ul>
       {p.voice
         ? <a href="#asistenti" data-open-assistant="" onClick={onClose} className="btn-primary mt-5 w-full">{p.cta[lang]}</a>

@@ -1,7 +1,8 @@
+import { logError } from "@/lib/monitor";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { claude, firstJson } from "@/lib/ai/providers";
-import { rateLimited } from "@/lib/rate-limit";
+import { aiBudgetExceeded, rateLimited } from "@/lib/rate-limit";
 import { currentStaff, hasRole } from "@/lib/verify/staff";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,8 @@ export async function POST(request: NextRequest) {
   const s = await currentStaff();
   if (s.kind !== "staff" || !s.mfa || !hasRole(s.roles, ["product_officer", "technical_reviewer"])) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json({ error: "not-configured" }, { status: 503 });
-  if (rateLimited(`prescreen:${s.user.id}`, 30, 60 * 60 * 1000)) return NextResponse.json({ error: "rate" }, { status: 429 });
+  if (await aiBudgetExceeded("prescreen")) return NextResponse.json({ error: "busy" }, { status: 503 });
+  if (await rateLimited(`prescreen:${s.user.id}`, 30, 60 * 60 * 1000)) return NextResponse.json({ error: "rate" }, { status: 429 });
   const parsed = z.object({ id: z.uuid(), lang: z.enum(["sq", "en"]) }).safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "invalid" }, { status: 400 });
   const { data: m } = await s.db.from("materials").select("title,description,category,intended_use,condition,quantity,unit,manufacturer,model_ref,batch_no,origin_country,age_years,storage_conditions,known_defects,length_mm,width_mm,thickness_mm,risk_level").eq("id", parsed.data.id).maybeSingle();
@@ -30,7 +32,8 @@ Consider EU Construction Products Regulation (EU) 2024/3110 logic: structural, f
     const json = firstJson<Record<string, unknown>>(reply);
     if (!json) return NextResponse.json({ error: "format" }, { status: 502 });
     return NextResponse.json({ ...json, preliminary: true }, { headers: { "Cache-Control": "no-store" } });
-  } catch {
+  } catch (error) {
+    logError("ai.prescreen.failed", error);
     return NextResponse.json({ error: "upstream" }, { status: 502 });
   }
 }

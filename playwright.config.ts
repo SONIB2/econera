@@ -19,6 +19,12 @@ export default defineConfig({
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },
     { name: "mobile", use: { ...devices["Pixel 7"] } },
+    // Other engines run in CI (ALL_BROWSERS=1), where Playwright can download them.
+    ...(process.env.ALL_BROWSERS ? [
+      { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+      { name: "webkit", use: { ...devices["Desktop Safari"] } },
+      { name: "iphone", use: { ...devices["iPhone 13"] } },
+    ] : []),
   ],
   webServer: previewURL ? undefined : {
     command: `node ./node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port ${port}`,

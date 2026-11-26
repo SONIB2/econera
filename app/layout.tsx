@@ -1,8 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import localFont from "next/font/local";
 import { cookies, headers } from "next/headers";
+import { ErrorReporter } from "@/components/error-reporter";
 import { LangProvider } from "@/components/lang-provider";
 import { LANG_COOKIE } from "@/lib/lang";
 import { applicationOrigin, isPreview } from "@/lib/deployment";
+
+const inter = localFont({ src: "../node_modules/@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2", variable: "--font-inter", weight: "100 900", display: "swap", adjustFontFallback: "Arial" });
+const sora = localFont({ src: "../node_modules/@fontsource-variable/sora/files/sora-latin-wght-normal.woff2", variable: "--font-sora", weight: "100 800", display: "swap", adjustFontFallback: "Arial" });
 
 export async function generateMetadata(): Promise<Metadata> {
   const origin = applicationOrigin();
@@ -28,12 +33,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   // A language in the URL (?lang=, /sq/, /en/) wins over the saved choice; new visitors get English.
   const locale = ((await headers()).get("x-econera-locale") || chosen || "en") === "sq" ? "sq" : "en";
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} className={`${inter.variable} ${sora.variable}`} suppressHydrationWarning>
       <head>
         {/* Applies the saved or system theme before paint, so there is no flash. */}
         <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem("econera.theme");if(t==="dark"||(!t||t==="system")&&matchMedia("(prefers-color-scheme: dark)").matches)document.documentElement.classList.add("dark")}catch(e){}` }} />
       </head>
-      <body><LangProvider lang={locale}>{children}</LangProvider></body>
+      <body><LangProvider lang={locale}>{children}</LangProvider><ErrorReporter /></body>
     </html>
   );
 }

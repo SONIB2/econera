@@ -6,6 +6,7 @@ import { PassportPdf } from "@/components/verify/passport-pdf";
 import { tr } from "@/lib/lang";
 import { getLang } from "@/lib/lang-server";
 import { applicationOrigin } from "@/lib/supabase";
+import { PRODUCTION_ORIGIN } from "@/lib/deployment";
 import { DOC_TYPES, INTENDED_USE, RISK } from "@/lib/verify/labels";
 import { readVerification } from "@/lib/verify/public";
 
@@ -20,7 +21,7 @@ export default async function VerificationRecord({ params }: { params: Promise<{
   const rec = await readVerification(id);
   if (!rec) notFound();
   const { v, m } = rec;
-  const url = `${applicationOrigin() ?? "https://www.econera.al"}/pasaporta/${v.passport_code ?? ""}`;
+  const url = `${applicationOrigin() ?? PRODUCTION_ORIGIN}/pasaporta/${v.passport_code ?? ""}`;
   const qr = v.passport_code ? await QRCode.toString(url, { type: "svg", margin: 1, color: { dark: "#0c2f2b", light: "#ffffff" } }) : null;
   const date = (d?: string | null) => (d ? new Date(d).toLocaleDateString("en-GB") : "—");
   const badge = (ok: boolean | null | undefined, sq: string, en: string, scopeSq: string, scopeEn: string) => (

@@ -4,6 +4,7 @@ import { BuildingIcon, CompassIcon, FactoryIcon, GrowthIcon, HandshakeIcon, Leaf
 import { tr } from "@/lib/lang";
 import { getLang } from "@/lib/lang-server";
 import { unsplash } from "@/lib/market/photos";
+import { PARTNER_CATEGORY, publishedPartners } from "@/lib/partners";
 
 export async function generateMetadata(): Promise<Metadata> {
   const lang = await getLang();
@@ -14,11 +15,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const PHOTO = "1793145781481-4ec728b40a5e";
-/** Official partners with signed agreements and logo permission. Empty until the first agreement is signed. */
-const PARTNERS: { name: string; logo: string; href?: string }[] = [];
 
 export default async function PartneretPage() {
-  const lang = await getLang();
+  const [lang, PARTNERS] = await Promise.all([getLang(), publishedPartners()]);
   const t = (sq: string, en: string) => tr(lang, sq, en);
   const ink = "text-[#0c2f2b] dark:text-ink";
   const types = [
@@ -73,13 +72,25 @@ export default async function PartneretPage() {
       <section aria-labelledby="rrjeti" className="container-x py-14 md:py-16">
         <h2 id="rrjeti" className={`display text-3xl md:text-4xl ${ink}`}>{t("Rrjeti ynë i partnerëve", "Our partner network")}</h2>
         {PARTNERS.length ? (
-          <ul className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-            {PARTNERS.map((p) => (
-              <li key={p.name} className="grid h-24 place-items-center rounded-xl border border-line bg-card p-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.logo} alt={p.name} className="max-h-12 w-auto object-contain" />
-              </li>
-            ))}
+          <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {PARTNERS.map((p) => {
+              const body = (
+                <>
+                  <span className="grid h-14 place-items-start">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {p.logo ? <img src={p.logo} alt={p.name} className="max-h-12 w-auto max-w-[180px] object-contain" /> : <span className={`text-lg font-semibold ${ink}`}>{p.name}</span>}
+                  </span>
+                  {p.logo && <span className={`mt-2 block font-semibold ${ink}`}>{p.name}</span>}
+                  <span className="block text-xs text-ink-2">{PARTNER_CATEGORY[p.category]?.[lang]}</span>
+                  {(lang === "en" ? p.description_en ?? p.description_sq : p.description_sq ?? p.description_en) && <span className="mt-2 block text-sm text-ink-2">{lang === "en" ? p.description_en ?? p.description_sq : p.description_sq ?? p.description_en}</span>}
+                </>
+              );
+              return (
+                <li key={p.id} className="rounded-xl border border-line bg-card p-5">
+                  {p.website ? <a href={p.website} target="_blank" rel="noopener noreferrer" className="block hover:opacity-90">{body}</a> : body}
+                </li>
+              );
+            })}
           </ul>
         ) : (
           <div className="mt-6 grid gap-5 rounded-2xl border border-dashed border-lime-dim/40 bg-[#f5f7f4] p-6 md:grid-cols-[1fr_auto] md:items-center md:p-8 dark:bg-bg-2">

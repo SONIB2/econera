@@ -10,8 +10,9 @@ export function RenovationVisual() {
     </svg>
   );
 }
-export function BasketVisual() {
-  const rows = [["Parket lisi", "#cfb387", 0.82], ["Pllaka bezhë", "#e5d6bb", 0.6], ["Dyer", "#9fb3a6", 0.44], ["Bojë", "#f3efe6", 0.3]] as const;
+export function BasketVisual({ lang = "en" }: { lang?: "sq" | "en" }) {
+  const en = lang === "en";
+  const rows = [[en ? "Oak flooring" : "Parket lisi", "#cfb387", 0.82], [en ? "Beige tiles" : "Pllaka bezhë", "#e5d6bb", 0.6], [en ? "Doors" : "Dyer", "#9fb3a6", 0.44], [en ? "Paint" : "Bojë", "#f3efe6", 0.3]] as const;
   return (
     <svg viewBox="0 0 400 200" className="size-full" aria-hidden>
       <rect width="400" height="200" fill="#e9f1ec" />

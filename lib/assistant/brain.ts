@@ -12,6 +12,7 @@ import { applyFilters, demoMarket, liveMarket, type MarketItem } from "@/lib/mar
 import { representativePhoto, unsplash } from "@/lib/market/photos";
 import { categoriesIn, categoryLabel, FLOOR_GROUP, mentionsFloor, norm, ROUTES, type Lang, type RouteId } from "./registry";
 import type { Action, Card, Ctx, Filters, Reply } from "./types";
+import { understand } from "./understand";
 
 export type Account = { signedIn: boolean; seller: "none" | "pending" | "approved" | "info" | "suspended" };
 
@@ -214,6 +215,16 @@ export async function answer(raw: string, lang: Lang, ctxIn: Ctx, account: Accou
       return r;
     }
     return search(filters, lang);
+  }
+
+  // Rules did not place the message: ask the language model for a structured intent, then answer with app data only.
+  const ai = await understand(text, lang);
+  if (ai?.intent === "route") return say(ROUTES[ai.route].label[lang], [link(ai.route, lang, true)], keep);
+  if (ai?.intent === "search" && (ai.category || ai.keywords)) {
+    return search({
+      category: ai.category ?? undefined, q: ai.category ? undefined : ai.keywords ?? undefined, near: ai.city ?? undefined,
+      qty: ai.quantity ?? undefined, unit: ai.quantity ? ai.unit ?? undefined : undefined, maxUnitLek: ai.max_price_lek ?? undefined, sort: "relevance",
+    }, lang);
   }
 
   return say(t("Nuk e kuptova plotësisht. Provo një nga këto:", "I didn't quite get that. Try one of these:"), [

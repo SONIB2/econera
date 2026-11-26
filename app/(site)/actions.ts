@@ -18,7 +18,7 @@ export async function submitLead(previous: LeadState, form: FormData): Promise<L
   const values = Object.fromEntries([...form.entries()].filter(([k]) => k !== "website").map(([k, v]) => [k, String(v).slice(0, 1000)]));
   // Honeypot: real people never fill the hidden field.
   if (String(form.get("website") ?? "")) return { status: "ok" };
-  if (rateLimited(`lead:${await clientKey()}`, 5, 10 * 60 * 1000)) return { status: "error", message: "Shumë dërgesa në pak kohë. Provo përsëri pas disa minutash.", values, attempt };
+  if (await rateLimited(`lead:${await clientKey()}`, 5, 10 * 60 * 1000)) return { status: "error", message: "Shumë dërgesa në pak kohë. Provo përsëri pas disa minutash.", values, attempt };
 
   const parsed = leadSchema.safeParse(Object.fromEntries(form));
   if (!parsed.success) {
@@ -37,7 +37,7 @@ export async function submitLead(previous: LeadState, form: FormData): Promise<L
 export type LoginState = { error?: string };
 
 export async function adminLogin(_: LoginState, form: FormData): Promise<LoginState> {
-  if (rateLimited(`admin:${await clientKey()}`, 8, 15 * 60 * 1000)) return { error: "Shumë përpjekje. Prit 15 minuta." };
+  if (await rateLimited(`admin:${await clientKey()}`, 8, 15 * 60 * 1000)) return { error: "Shumë përpjekje. Prit 15 minuta." };
   if (!passwordMatches(String(form.get("password") ?? ""))) return { error: "Fjalëkalimi nuk është i saktë." };
   await setAdminSession(true);
   redirect("/admin/pilot");
