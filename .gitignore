@@ -13,3 +13,7 @@ coverage/
 supabase/.temp/
 supabase/.branches/
 .data/
+
+# Staging test accounts and settings (never commit)
+.env.staging
+.staging-accounts.json

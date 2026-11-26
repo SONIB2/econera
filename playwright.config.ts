@@ -12,7 +12,10 @@ export default defineConfig({
   testDir: "./tests/e2e",
   workers: process.env.CI ? 1 : undefined,
   retries: process.env.CI ? 1 : 0,
-  use: { baseURL, trace: "retain-on-failure", channel: installedChannel, launchOptions: {
+  use: { baseURL, trace: "retain-on-failure", channel: installedChannel,
+    // Vercel previews are protected; the "Protection Bypass for Automation" secret lets the test browser in.
+    extraHTTPHeaders: process.env.VERCEL_PROTECTION_BYPASS ? { "x-vercel-protection-bypass": process.env.VERCEL_PROTECTION_BYPASS, "x-vercel-set-bypass-cookie": "true" } : undefined,
+    launchOptions: {
     executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
     args: ["--enable-unsafe-swiftshader", ...(process.env.CI && !installedChannel ? ["--use-angle=swiftshader"] : [])],
   } },

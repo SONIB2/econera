@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { aiStatus } from "@/lib/ai/providers";
-import { sharedLimits } from "@/lib/rate-limit";
+import { aiCaps, sharedLimits } from "@/lib/rate-limit";
 import { publicDatabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ export async function GET() {
   const body = {
     status: database === "error" ? "degraded" : "ok",
     database, databaseMs: Date.now() - started,
-    ai: aiStatus(), sharedRateLimits: sharedLimits(), errorMonitoring: Boolean(process.env.SENTRY_DSN),
+    ai: { ...aiStatus(), disabled: process.env.AI_DISABLED === "1", caps: aiCaps() }, sharedRateLimits: sharedLimits(), errorMonitoring: Boolean(process.env.SENTRY_DSN),
     environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV, version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "local",
   };
   return NextResponse.json(body, { status: database === "error" ? 503 : 200, headers: { "Cache-Control": "no-store" } });
