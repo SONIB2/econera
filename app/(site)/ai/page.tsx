@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 type Tool = {
   id: string; name: string; href: string; voice?: boolean; Icon: (p: { className?: string }) => React.JSX.Element; Preview: () => React.JSX.Element;
-  short: string; long: string; beta?: string; learn: [string, string][];
+  long: string; beta?: string; learn: [string, string][];
 };
 
 export default async function AiToolsPage() {
@@ -28,7 +28,6 @@ export default async function AiToolsPage() {
   const tools: Tool[] = [
     {
       id: "renovation", name: "AI Renovation", href: "/ai/renovim", Icon: RenovationIcon, Preview: RenovationPreview,
-      short: t("Ngarko foton e dhomës, merr ide dizajni dhe lidhe dizajnin me materiale reale nga tregu.", "Upload a room photo, get design ideas and connect the design to real marketplace materials."),
       long: t("Ktheje foton e një dhome në një koncept dizajni të qëndrueshëm, të lidhur me materiale reale nga tregu i ECONERA.", "Turn a room photo into a sustainable design concept, connected to real materials from the ECONERA Marketplace."),
       beta: ai.analysis ? undefined : t("Beta: llogaritja e materialeve nga përmasat funksionon; analiza e fotos me AI aktivizohet së shpejti.", "Beta: material estimates from room dimensions work today; AI photo analysis is being switched on."),
       learn: [
@@ -40,7 +39,6 @@ export default async function AiToolsPage() {
     },
     {
       id: "basket", name: "Smart Basket", href: "/ai/shporta", Icon: BasketIcon, Preview: BasketPreview,
-      short: t("Ndërto listën e materialeve, krahaso ofertat e shitësve dhe optimizo buxhetin e projektit.", "Build a material list, compare seller options and optimize your project budget."),
       long: t("Ndërto listën, krahaso shitësit dhe gjej kombinimin më të mirë të materialeve në dispozicion brenda buxhetit.", "Build your material list, compare sellers and find the best available combination of materials within your project budget."),
       learn: [
         [t("Si funksionon", "How it works"), t("Shkruaj listën ose ngarko CSV. Mjeti kërkon listimet e miratuara dhe propozon kombinimin më të lirë që mbulon sasitë.", "Write your list or upload a CSV. The tool searches approved listings and proposes the cheapest combination that covers the quantities.")],
@@ -51,7 +49,6 @@ export default async function AiToolsPage() {
     },
     {
       id: "smartcut", name: "SmartCut", href: "/ai/smartcut", Icon: CutIcon, Preview: CutPreview,
-      short: t("Optimizo prerjen e materialeve dhe gjej copa të ripërdorshme me plane prerjeje inteligjente.", "Optimize material cutting and discover reusable offcuts through intelligent cutting plans."),
       long: t("Krijo plane prerjeje të optimizuara, gjej copat e mbetura të përshtatshme dhe ul mbetjet e panevojshme.", "Generate optimized cutting plans, discover suitable leftover materials and minimize unnecessary material waste."),
       learn: [
         [t("Si funksionon", "How it works"), t("Fut copat që të duhen dhe përmasat e panelit. Algoritmi i vendos në panele dhe tregon përdorimin dhe mbetjet.", "Enter the pieces you need and the panel size. The algorithm places them on panels and shows utilisation and waste.")],
@@ -62,7 +59,6 @@ export default async function AiToolsPage() {
     },
     {
       id: "voice", name: "ECONERA Voice", href: "#asistenti", voice: true, Icon: VoiceIcon, Preview: VoicePreview,
-      short: t("Kërko, listo dhe menaxho materialet me komanda zanore në gjuhët e mbështetura.", "Search, list and manage materials using natural voice commands in supported languages."),
       long: t("Kërko, publiko dhe menaxho materialet e ndërtimit me komanda zanore natyrale.", "Search, publish and manage construction materials using natural voice commands."),
       beta: t("Beta: punon në shfletuesit që mbështesin njohjen e zërit (p.sh. Chrome); mikrofoni hapet vetëm kur e shtyp ti.", "Beta: works in browsers with speech recognition (e.g. Chrome); the microphone only opens when you press it."),
       learn: [
@@ -101,25 +97,10 @@ export default async function AiToolsPage() {
         </div>
       </section>
 
-      {/* Quick navigation */}
-      <section aria-labelledby="eksploro" className="container-x py-12">
-        <h2 id="eksploro" className={`display text-3xl md:text-4xl ${ink}`}>{t("Eksploro mjetet", "Explore the tools")}</h2>
-        <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {tools.map((tool) => (
-            <li key={tool.id}>
-              <a href={`#${tool.id}`} className="group flex h-full flex-col rounded-2xl border border-[#0c2f2b]/10 bg-white p-5 shadow-[0_10px_30px_-24px_rgba(12,47,43,0.5)] transition hover:border-[#7fb52a] dark:border-line dark:bg-card">
-                <span className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-[#e6f6c4] text-[#2f5d10] dark:bg-lime/15 dark:text-lime"><tool.Icon /></span><span className={`text-lg font-semibold ${ink}`}>{tool.name}</span></span>
-                <span className={`mt-3 flex-1 text-[15px] leading-relaxed ${soft}`}>{tool.short}</span>
-                <span className="mt-4 text-sm font-semibold text-[#3f7a17] dark:text-lime">{t("Eksploro", "Explore")} <span aria-hidden className="inline-block transition group-hover:translate-x-0.5">→</span></span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
-
       {/* Detailed showcases */}
-      <section id="mjetet" aria-label={t("Mjetet në detaje", "Tools in detail")} className="container-x scroll-mt-24 pb-14">
-        <div className="grid gap-5 lg:grid-cols-2">
+      <section id="mjetet" aria-labelledby="eksploro" className="container-x scroll-mt-24 pt-12 pb-14">
+        <h2 id="eksploro" className={`display text-3xl md:text-4xl ${ink}`}>{t("Eksploro mjetet", "Explore the tools")}</h2>
+        <div className="mt-6 grid gap-5 lg:grid-cols-2">
           {tools.map((tool) => (
             <article key={tool.id} id={tool.id} className="scroll-mt-24 rounded-[1.5rem] border border-[#0c2f2b]/10 bg-white p-5 shadow-[0_14px_40px_-30px_rgba(12,47,43,0.55)] md:p-6 dark:border-line dark:bg-card">
               <div className="grid gap-5 sm:grid-cols-[0.8fr_1.2fr] sm:items-center">
