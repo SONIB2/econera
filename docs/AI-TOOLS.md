@@ -12,7 +12,7 @@ Four modules live under `/ai`: **AI Renovation** (`/ai/renovim`), **Smart Basket
 | Variable | Enables | Notes |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | Photo analysis in AI Renovation | Optional `ANTHROPIC_MODEL` (default `claude-sonnet-5-5`). |
-| `OPENAI_API_KEY` | AI design images (before/after) | Optional `OPENAI_IMAGE_MODEL` (default `gpt-image-1`). Paid per image. |
+| `OPENAI_API_KEY` | AI design images (before/after) | Optional `OPENAI_IMAGE_MODEL` (default `gpt-image-2.5-flare`; `gpt-image-1` was shut down on 23 Oct 2026). Paid per image. |
 | `NEXT_PUBLIC_EUR_TO_LEK` | EUR → lekë conversion | Default 100. |
 
 Photos are resized in the browser and sent only after the user ticks the consent box. The server does not store them. Limits: 6 analyses per hour and 4 images per day per IP (in-memory).

@@ -39,7 +39,7 @@ export async function editImage(photo: { mediaType: string; data: Buffer }, prom
   const key = process.env.OPENAI_API_KEY;
   if (!key) throw new Error("not-configured");
   const form = new FormData();
-  form.append("model", process.env.OPENAI_IMAGE_MODEL || "gpt-image-1");
+  form.append("model", process.env.OPENAI_IMAGE_MODEL || "gpt-image-2.5-flare");
   form.append("prompt", prompt);
   form.append("size", "1024x1024");
   form.append("image", new Blob([new Uint8Array(photo.data)], { type: photo.mediaType }), "room.png");
