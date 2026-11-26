@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "@/app/(legacy)/account-actions";
 import { useLang } from "@/components/lang-provider";
-import { ArrowIcon, BasketIcon, BuildingIcon, CutIcon, MarketIcon, PriceIcon, RenovationIcon, SellIcon, VoiceIcon } from "./tool-icons";
+import { ArrowIcon, BasketIcon, CutIcon, MarketIcon, RenovationIcon, SellIcon, VoiceIcon } from "./tool-icons";
 import { CartButton, RegionMenu, ThemeToggle } from "./header-controls";
 
 export type Account = { email: string; seller: boolean } | null;
@@ -36,15 +36,9 @@ function useNav() {
         { href: "#asistenti", label: "ECONERA Voice", desc: t("Kërko dhe lundro me zë.", "Search and navigate by voice."), Icon: VoiceIcon, voice: true },
       ],
     },
-    {
-      id: "nav-business", label: t("Për bizneset", "For Business"), href: undefined, match: ["/biznes", "/furnitore", "/cmimet"],
-      items: [
-        { href: "/biznes", label: t("Kompani ndërtimi", "Construction Companies"), desc: t("Stoku, kantieret dhe porositë në një vend.", "Stock, sites and orders in one place."), Icon: BuildingIcon },
-        { href: "/cmimet", label: t("Planet dhe çmimet", "Plans & Pricing"), desc: t("Abonime për furnitorët, falas për blerësit.", "Supplier plans, free for buyers."), Icon: PriceIcon },
-      ],
-    },
   ];
   const links = [
+    { href: "/cmimet", label: t("Për bizneset", "For Business") },
     { href: "/partneret", label: t("Partnerët", "Our Partners") },
     { href: "/rreth-nesh", label: t("Rreth nesh", "About Us") },
     { href: "/kontakt", label: t("Kontakt", "Contact") },
