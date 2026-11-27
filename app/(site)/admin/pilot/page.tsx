@@ -48,7 +48,7 @@ export default async function AdminPage() {
                 <td className="px-4 py-3">{l.contact}<span className="block text-xs text-ink-2">{l.email}{l.phone && ` · ${l.phone}`}</span></td>
                 <td className="px-4 py-3">{ROLES[l.role]}</td>
                 <td className="px-4 py-3">{l.city}</td>
-                <td className="px-4 py-3">{INTERESTS[l.interest]}</td>
+                <td className="px-4 py-3">{l.source === "roadmap" ? "Plani i produkteve" : l.source === "partner" ? "Partneritet" : INTERESTS[l.interest]}</td>
                 <td className="max-w-xs px-4 py-3 text-ink-2">{l.materials}</td>
               </tr>
             ))}

@@ -5,7 +5,7 @@ import { liveMarket } from "@/lib/market/live";
 export const revalidate = 3600;
 
 const PAGES = ["/", "/treg", "/shit", "/biznes", "/cmimet", "/ai", "/ai/shporta", "/ai/smartcut", "/ai/renovim", "/verify", "/certifikata", "/furnitore",
-  "/partneret", "/rreth-nesh", "/kontakt", "/privatesia", "/kushtet", "/cookies", "/qasshmeria", "/materiale"];
+  "/partneret", "/roadmap", "/rreth-nesh", "/kontakt", "/privatesia", "/kushtet", "/cookies", "/qasshmeria", "/materiale"];
 
 /** Public pages plus every approved live listing; demo examples, drafts and private areas are never listed. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

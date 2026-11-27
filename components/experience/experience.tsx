@@ -13,6 +13,7 @@ import type { Phase } from "./scene";
 import { StaticFallback } from "./static-fallback";
 import { BasketIcon, CutIcon, MarketIcon, RenovationIcon, VerifyIcon, VoiceIcon } from "@/components/site/tool-icons";
 import { LogoDraw } from "./logo-draw";
+import { WhatsNext, WhatsNextLink } from "@/components/roadmap/whats-next";
 import "./experience.css";
 
 const Scene = dynamic(() => import("./scene"), { ssr: false });
@@ -219,9 +220,11 @@ export function Experience() {
                 </button>
                 <Link href="/treg" className="inline-flex h-13 items-center rounded-full border border-white/40 bg-white/[0.03] px-7 text-base font-semibold text-white backdrop-blur transition hover:border-[#c8f169] hover:text-[#c8f169]">{t("Shko te tregu", "Go to Marketplace")}</Link>
               </div>
-              <ul className="xp-rise-soft mt-9 hidden max-w-md grid-cols-4 divide-x divide-white/10 sm:grid [animation-delay:1.3s]">
+              <ul className="xp-rise-soft mt-9 hidden max-w-md grid-cols-4 [@media(max-height:820px)]:mt-6 divide-x divide-white/10 sm:grid [animation-delay:1.3s]">
                 {HERO_POINTS.map((p) => <li key={p.en} className="flex flex-col items-center gap-2 px-2 text-center text-xs text-white/80"><span className="text-[#c8f169]">{p.icon}</span>{p[lang]}</li>)}
               </ul>
+              <div className="xp-rise-soft hidden sm:block [animation-delay:1.4s]"><WhatsNext /></div>
+              <div className="xp-rise-soft mt-5 sm:hidden [animation-delay:1.3s]"><WhatsNextLink /></div>
               <div className="xp-rise-soft mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-white/55 [animation-delay:1.45s]">
                 <a href="#asistenti" data-open-assistant="" className="underline-offset-4 hover:text-white hover:underline">{t("Fol me ECONERA AI", "Talk to ECONERA AI")}</a>
                 <button type="button" onClick={() => { setProduct(null); setPhase("welcome"); }} className="underline-offset-4 hover:text-white hover:underline">{t("Rishiko hyrjen", "Replay intro")}</button>

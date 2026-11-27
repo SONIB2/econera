@@ -20,7 +20,7 @@ export function SiteFooter({ email }: { email?: string }) {
   const cols: { title: string; Icon: (p: { className?: string }) => React.ReactElement; links: [string, string][] }[] = [
     { title: t("Platforma", "Platform"), Icon: MarketIcon, links: [["/treg", t("Tregu", "Marketplace")], ["/shit", t("Shit materiale", "Sell Materials")], ["/ai", t("Mjetet AI", "AI Tools")], ["/verify", "ECONERA Verify"], ["/biznes", t("Për bizneset", "For Business")]] },
     { title: t("Burime", "Resources"), Icon: BookIcon, links: [["/ai#bashke", t("Si funksionon", "How it works")], ["/cmimet", t("Planet dhe çmimet", "Plans & Pricing")], ["/kontakt", t("Mbështetja", "Support")], ["/mbrojtja", t("Qendra e ndihmës", "Help Center")]] },
-    { title: t("Kompania", "Company"), Icon: BuildingIcon, links: [["/rreth-nesh", t("Rreth ECONERA", "About ECONERA")], ["/partneret", t("Partnerët", "Our Partners")], ["/partneret#apliko", t("Bëhu partner", "Become a Partner")], ["/kontakt", t("Kontakt", "Contact")]] },
+    { title: t("Kompania", "Company"), Icon: BuildingIcon, links: [["/rreth-nesh", t("Rreth ECONERA", "About ECONERA")], ["/roadmap", t("Plani i produkteve", "Product roadmap")], ["/partneret", t("Partnerët", "Our Partners")], ["/partneret#apliko", t("Bëhu partner", "Become a Partner")], ["/kontakt", t("Kontakt", "Contact")]] },
   ];
   const contact: { Icon: (p: { className?: string }) => React.ReactElement; node: React.ReactNode }[] = [
     { Icon: MailIcon, node: email ? <a className="hover:text-white" href={`mailto:${email}`}>{email}</a> : <Link className="hover:text-white" href="/kontakt">{t("Formulari i kontaktit", "Contact form")}</Link> },
